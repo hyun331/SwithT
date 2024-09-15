@@ -2,7 +2,7 @@ server:
   port: 0
 spring:
   application:
-    name: speech-service
+    name: lecture-service
 
 eureka:
   client:

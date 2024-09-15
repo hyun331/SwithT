@@ -20,15 +20,15 @@ spring:
               - DELETE
               - OPTIONS
       routes:
-        - id: swithtchat-service
-          #         predicates =  product-service로 요청이 들어오면
+        - id: payment-service
+          #         predicates =  payment-service로 요청이 들어오면
           predicates:
-            - Path=/swithtchat-service/**
-          #         filter = 앞 1개 (/product-service) 를 제거하고 product-service로 요청을 보낸다
+            - Path=/payment-service/**
+          #         filter = 앞 1개 (/payment-service) 를 제거하고 payment-service로 요청을 보낸다
           filters:
             - StripPrefix=1
           #          아래 uri는 eureka에 등록된 서비스명, 각 서비스마다 spring.application.name으로 등록되어있음
-          uri: lb://swithtchat-service
+          uri: lb://payment-service
 
         - id: member-service
           predicates:
@@ -37,12 +37,12 @@ spring:
             - StripPrefix=1
           uri: lb://member-service
 
-        - id: speech-service
+        - id: lecture-service
           predicates:
-            - Path=/speech-service/**
+            - Path=/lecture-service/**
           filters:
             - StripPrefix=1
-          uri: lb://speech-service
+          uri: lb://lecture-service
 
         - id: lesson-service
           predicates:

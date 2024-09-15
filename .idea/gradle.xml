@@ -20,6 +20,14 @@
         </option>
       </GradleProjectSettings>
       <GradleProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/lecture" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/lecture" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$/lesson" />
         <option name="modules">
           <set>
@@ -36,18 +44,10 @@
         </option>
       </GradleProjectSettings>
       <GradleProjectSettings>
-        <option name="externalProjectPath" value="$PROJECT_DIR$/speech" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/payment" />
         <option name="modules">
           <set>
-            <option value="$PROJECT_DIR$/speech" />
-          </set>
-        </option>
-      </GradleProjectSettings>
-      <GradleProjectSettings>
-        <option name="externalProjectPath" value="$PROJECT_DIR$/swithtchat" />
-        <option name="modules">
-          <set>
-            <option value="$PROJECT_DIR$/swithtchat" />
+            <option value="$PROJECT_DIR$/payment" />
           </set>
         </option>
       </GradleProjectSettings>
