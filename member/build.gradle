@@ -30,6 +30,15 @@ dependencies {
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 //  dto 값 검증을 위한 어노테이션 추가
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	//	google mail
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	//	redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	//	로그인 관련 시큐리티 의존성 추가
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+//	jwt token관련 라이브러리 추가
+	implementation 'io.jsonwebtoken:jjwt:0.9.1'
 }
 
 ext{
