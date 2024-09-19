@@ -64,13 +64,10 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false)
     private Gender gender = Gender.MAN;
 
-    // default Tutee로 설정
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
     @Column(nullable = false)
     private Role role = Role.TUTEE;
-
-
-
 
 }
