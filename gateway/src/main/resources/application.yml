@@ -5,8 +5,8 @@ spring:
   session:
     storage-type: redis
   redis:
-    host: localhost
-    port: 6379
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT}
   application:
     name: api-gateway
   cloud:
@@ -63,7 +63,7 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
 
 jwt:
-  expiration: 30
-  secretKey: my_token_secret
-  expirationRt: 14400
-  secretKeyRt: refreshTk_secret
+  expiration: ${JWT_EXPIRATION}
+  secretKey: ${JWT_SECRETKEY}
+  expirationRt: ${JWT_RT_EXPIRATION}
+  secretKeyRt: ${JWT_RT_SECRETKEY}
