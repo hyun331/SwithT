@@ -1,6 +1,12 @@
 server:
   port: 8080
+
 spring:
+  session:
+    storage-type: redis
+  redis:
+    host: localhost
+    port: 6379
   application:
     name: api-gateway
   cloud:
@@ -55,3 +61,9 @@ eureka:
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka/
+
+jwt:
+  expiration: 30
+  secretKey: my_token_secret
+  expirationRt: 14400
+  secretKeyRt: refreshTk_secret
