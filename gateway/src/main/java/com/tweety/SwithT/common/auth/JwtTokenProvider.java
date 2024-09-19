@@ -1,4 +1,4 @@
-package com.tweety.SwithT.auth;
+package com.tweety.SwithT.common.auth;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
