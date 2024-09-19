@@ -1,6 +1,5 @@
-package com.tweety.SwithT.tutee.controller;
+package com.tweety.SwithT.common.controller;
 
-import com.tweety.SwithT.tutee.service.TuteeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 

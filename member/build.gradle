@@ -28,6 +28,8 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+//  dto 값 검증을 위한 어노테이션 추가
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 }
 
 ext{

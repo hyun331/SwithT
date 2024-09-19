@@ -1,21 +1,21 @@
-package com.tweety.SwithT.tutee.domain;
+package com.tweety.SwithT.member.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
-import com.tweety.SwithT.common.domain.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class Tutee extends BaseTimeEntity {
+public class Member extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,19 +34,43 @@ public class Tutee extends BaseTimeEntity {
     private String nickName;
 
     @Column(nullable = false)
-    private String phoneNumber;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate birthday;
 
     @Column(nullable = false)
-    private LocalDateTime birthday;
+    private String phoneNumber;
 
     @Column(nullable = true)
     private String address;
-    //프로필에 정확히 어떤 정보가 들어가는건지?
+
     @Column(nullable = true)
     private String profileImage;
 
+    //튜터 컬럼
+    @Column(nullable = true)
+    private String education;
+
+    //튜터 컬럼
+    @Column(precision = 2, scale = 1, nullable = false)
+    private BigDecimal avgScore = BigDecimal.valueOf(0.0);
+
+    //튜터 컬럼
+    @Column(nullable = true)
+    Long availableMoney = 0L;
+
+    // default MAN으로 설정
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    private Role gender = Role.MAN;
+    @Column(nullable = false)
+    private Gender gender = Gender.MAN;
+
+    // default Tutee로 설정
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(nullable = false)
+    private Role role = Role.TUTEE;
+
+
+
 
 }
