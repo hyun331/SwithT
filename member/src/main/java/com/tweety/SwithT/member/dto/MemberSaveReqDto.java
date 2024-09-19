@@ -1,5 +1,6 @@
 package com.tweety.SwithT.member.dto;
 
+import com.tweety.SwithT.member.domain.Gender;
 import com.tweety.SwithT.member.domain.Member;
 import com.tweety.SwithT.member.domain.Role;
 import jakarta.annotation.Nullable;
@@ -52,11 +53,27 @@ public class MemberSaveReqDto {
     private String education;
 
     @NotEmpty(message = "성별은 필수 항목 입니다.")
-    private String gender;
+    private Gender gender;
 
     @NotEmpty(message = "회원 유형은 필수 항목 입니다.")
     private Role role;
 
+    public Member toEntity(String encodedPassword) {
 
+        return Member.builder()
+                .name(this.name)
+                .nickName(this.nickName)
+                .email(this.email)
+                .password(encodedPassword)
+                .birthday(this.birthday)
+                .phoneNumber(this.phoneNumber)
+                .address(this.address)
+                .profileImage(this.profileImage)
+                .education(this.education)
+                .gender(this.gender)
+                .role(this.role)
+                .build();
+
+    }
 
 }

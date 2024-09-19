@@ -34,13 +34,13 @@ public class MemberController {
         this.redisTemplate = redisTemplate;
     }
 
-    @PostMapping("/member/register")
-    public ResponseEntity<CommonResDto> memberCreatePost(@RequestPart(value = "data") MemberSaveReqDto dto) {
+    @PostMapping("/member/create")
+    public ResponseEntity<CommonResDto> memberCreatePost(MemberSaveReqDto dto) {
+
         CommonResDto commonResDto
                 = new CommonResDto(HttpStatus.OK, "회원가입 성공", memberService.memberCreate(dto).getId());
 
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
-
     }
 
 }
