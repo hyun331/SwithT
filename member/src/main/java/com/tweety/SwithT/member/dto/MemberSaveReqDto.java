@@ -1,5 +1,6 @@
 package com.tweety.SwithT.member.dto;
 
+import com.tweety.SwithT.member.domain.Member;
 import com.tweety.SwithT.member.domain.Role;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.*;
@@ -55,5 +56,7 @@ public class MemberSaveReqDto {
 
     @NotEmpty(message = "회원 유형은 필수 항목 입니다.")
     private Role role;
+
+
 
 }

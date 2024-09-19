@@ -72,4 +72,6 @@ public class Member extends BaseTimeEntity {
 
     // 연관관계 추가 예정 ERD 확정 시 작업하겠음.
 
+
+
 }
