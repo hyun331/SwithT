@@ -1,78 +1,50 @@
-package com.tweety.SwithT.common.configs;
-
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.ChannelTopic;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
-
-@Configuration
-public class RedisConfig {
-
-	@Value("${spring.redis.host}")
-	private String host;
-
-	@Value("${spring.redis.port}")
-	private int port;
-
-	public LettuceConnectionFactory redisConnectionFactory(int index) {
-		RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
-
-		redisStandaloneConfiguration.setHostName(host);
-
-		redisStandaloneConfiguration.setPort(port);
-
-		redisStandaloneConfiguration.setDatabase(index);
-
-		return new LettuceConnectionFactory(redisStandaloneConfiguration);
-	}
-
-	// 이메일 인증 (0번 데이터베이스)
-	@Bean
-	@Primary
-	LettuceConnectionFactory connectionFactoryEmail() {
-
-		return redisConnectionFactory(0);
-
-	}
-
-	@Bean
-	@Primary
-	public RedisTemplate<String, Object> redisTemplate() {
-		RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
-		redisTemplate.setConnectionFactory(connectionFactoryEmail());
-		redisTemplate.setKeySerializer(new StringRedisSerializer());
-		redisTemplate.setValueSerializer(new StringRedisSerializer());
-
-		return redisTemplate;
-	}
-
-	// 예약 시스템 (1번 데이터베이스)
-	@Bean
-	@Qualifier("2")
-	LettuceConnectionFactory connectionFactoryReservation() {
-		return redisConnectionFactory(1);
-	}
-
-	@Bean
-	@Qualifier("2")
-	public RedisTemplate<String, Object> redisTemplate1() {
-		RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
-		redisTemplate.setConnectionFactory(connectionFactoryReservation());
-		redisTemplate.setKeySerializer(new StringRedisSerializer());
-		redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-
-		return redisTemplate;
-	}
-
-
-}
+//package com.tweety.SwithT.common.configs;
+//
+//import org.springframework.beans.factory.annotation.Qualifier;
+//import org.springframework.beans.factory.annotation.Value;
+//import org.springframework.context.annotation.Bean;
+//import org.springframework.context.annotation.Configuration;
+//import org.springframework.data.redis.connection.RedisConnectionFactory;
+//import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+//import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+//import org.springframework.data.redis.core.RedisTemplate;
+//import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+//import org.springframework.data.redis.serializer.StringRedisSerializer;
+//
+//@Configuration
+//public class RedisConfig {
+//
+//	@Value("${spring.redis.host}")
+//	public String host;
+//
+//	@Value("${spring.redis.port}")
+//	public int port;
+//
+//	@Bean
+//	@Qualifier("2") //아마 디폴트가 1일 것 이다. 밑에는 1이라고하지만 여기는 2라고 표시하면 된다
+//	public RedisConnectionFactory redisConnectionFactory() {
+//
+//		RedisStandaloneConfiguration configuration
+//				= new RedisStandaloneConfiguration();
+//
+//		configuration.setHostName(host);
+//		configuration.setPort(port);
+//		//1번 db 사용한다 여기서 db 사용할 방 명시한다. 1번,2번,3번 무슨 용도 등등으로 쓰면 된다.
+//		configuration.setDatabase(1);
+//
+//		return new LettuceConnectionFactory(configuration);
+//
+//	}
+//
+//	@Qualifier("2")
+//	@Bean //여기에도 다 Qualifier를 설정해야한다.
+//	public RedisTemplate<String, Object> redisTemplate(@Qualifier("2") RedisConnectionFactory redisConnectionFactory){
+//		RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+//		redisTemplate.setKeySerializer(new StringRedisSerializer());
+//		redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+//		redisTemplate.setConnectionFactory(redisConnectionFactory);
+//		return redisTemplate;
+//
+//	}
+//
+//}
