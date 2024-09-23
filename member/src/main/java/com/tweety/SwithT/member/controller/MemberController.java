@@ -42,7 +42,6 @@ public class MemberController {
         this.memberService = memberService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.redisTemplate = redisTemplate;
-
     }
 
     @PostMapping("/member/create")
@@ -122,4 +121,7 @@ public class MemberController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
 
     }
+
+
+
 }
