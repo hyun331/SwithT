@@ -14,16 +14,13 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MemberListResDto {
-
     //회원 리스트 조회
     private Long id;
     private String email;
-    private String nickName;
+    private String name;
     private String phoneNumber;
     private String address;
     private BigDecimal avgScore;
     private Gender gender;
-
-
 
 }

@@ -44,23 +44,17 @@ public class JwtAuthFilter extends GenericFilter {
 
         try {
             if (bearerToken != null) {
-                // token은 관례적으로 Bearer 로 시작하는 문구를 넣어서 요청
                 if (!bearerToken.startsWith("Bearer ")) {
                     throw new AuthenticationServiceException("Bearer 형식이 아닙니다.");
                 }
                 String token = bearerToken.substring(7);
-                // token 검증 및 claims(사용자 정보) 추출
                 Claims claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
-                // Authentication 객체 생성(userDetails 객체도 필요)
                 List<GrantedAuthority> authorities = new ArrayList<>();
                 authorities.add(new SimpleGrantedAuthority("ROLE_" + claims.get("role")));
                 UserDetails userDetails = new User(claims.getSubject(), "", authorities);
-                // UserDetails 인터페이스를 상속한 User 객체를 통해 검증 후에 Authentication 생성
                 Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-
-            // filterchain 에서 그 다음 filtering으로 넘어가도록 하는 메서드
             filterChain.doFilter(servletRequest, servletResponse);
         } catch (SecurityException e) {
             log.error(e.getMessage());
