@@ -1,11 +1,12 @@
+# yml 추가
+*.yml
+
 HELP.md
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-member/src/main/resources/application.yml
-*.yml
 ### STS ###
 .apt_generated
 .classpath
