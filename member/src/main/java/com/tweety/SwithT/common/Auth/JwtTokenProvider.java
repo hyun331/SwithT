@@ -27,11 +27,12 @@ public class JwtTokenProvider {
 	@Value("${jwt.expirationRt}")
 	private int expirationRt;
 
-	public String createToken(String id, String email, String role) {
+	public String createToken(String id, String email, String role,String name) {
 
-		Claims claims = Jwts.claims().setSubject(email);
-		claims.put("id", id);  // 사용자 ID 추가
+		Claims claims = Jwts.claims().setSubject(id);
+		claims.put("email", email);  // 사용자 ID 추가
 		claims.put("role", role);
+		claims.put("name", name);
 
 		Date now = new Date();
 		String token = Jwts.builder()
@@ -44,10 +45,12 @@ public class JwtTokenProvider {
 	}
 
 	public String createRefreshToken(String id, String email, String role,String name) {
-		Claims claims = Jwts.claims().setSubject(email);
-		claims.put("id", id);  // 사용자 ID 추가
+
+		Claims claims = Jwts.claims().setSubject(id);
+		claims.put("email", email);  // 사용자 ID 추가
 		claims.put("role", role);
 		claims.put("name", name);
+
 		Date now = new Date();
 		String token = Jwts.builder()
 				.setClaims(claims)

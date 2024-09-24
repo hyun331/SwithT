@@ -1,5 +1,6 @@
 package com.tweety.SwithT.common.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +22,7 @@ public class S3Service {
 
 	private S3Client s3Client;
 
+	@Autowired
 	public S3Service(S3Client s3Client) {
 		this.s3Client = s3Client;
 	}

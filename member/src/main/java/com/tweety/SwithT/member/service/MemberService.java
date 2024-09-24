@@ -5,10 +5,12 @@ import com.tweety.SwithT.member.domain.Member;
 import com.tweety.SwithT.member.dto.MemberInfoResDto;
 import com.tweety.SwithT.member.dto.MemberLoginDto;
 import com.tweety.SwithT.member.dto.MemberSaveReqDto;
+import com.tweety.SwithT.member.dto.MemberUpdateDto;
 import com.tweety.SwithT.member.repository.MemberRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -55,12 +57,21 @@ public class MemberService {
 
     //내 정보 조회
     public MemberInfoResDto infoGet(){
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Member member = memberRepository.findByEmail(email).orElseThrow(EntityNotFoundException::new);
-        System.out.println(member.getIntroduce());
+        String id = tokenCheck();
+        Member member = memberRepository.findById(Long.valueOf(id)).orElseThrow(EntityNotFoundException::new);
         return member.infoFromEntity();
     }
 
+    public Member infoUpdate(MemberUpdateDto memberUpdateDto){
+        String id = tokenCheck();
+        Member member = memberRepository.findById(Long.valueOf(id))
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 이메일 입니다."));
+        return member.infoUpdate(memberUpdateDto);
+    }
 
+    // 토큰에서 id 체크 메서드.
+    public String tokenCheck(){
+        return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
 
 }

@@ -3,6 +3,7 @@ package com.tweety.SwithT.member.domain;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import com.tweety.SwithT.member.dto.MemberInfoResDto;
+import com.tweety.SwithT.member.dto.MemberUpdateDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -51,19 +52,15 @@ public class Member extends BaseTimeEntity {
     //튜터 컬럼, 자기소개 컬럼 추가
     @Column(nullable = true)
     private String introduce;
-
     //튜터 컬럼
     @Column(nullable = true)
     private String education;
-
     //튜터 컬럼
     @Column(precision = 2, scale = 1, nullable = true)
     private BigDecimal avgScore = BigDecimal.valueOf(0.0);
-
     //튜터 컬럼
     @Column(nullable = true)
     Long availableMoney = 0L;
-
     // default MAN으로 설정
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -92,6 +89,18 @@ public class Member extends BaseTimeEntity {
                 .build();
     }
 
+    public Member infoUpdate(MemberUpdateDto dto) {
+
+        this.name = dto.getName();
+        this.birthday = dto.getBirthday();
+        this.gender = Gender.valueOf(dto.getGender());
+        this.address = dto.getAddress();
+        this.phoneNumber = dto.getPhoneNumber();
+        this.education = dto.getEducation();
+        this.introduce = dto.getIntroduce();
+
+        return this;
+    }
 
 
 }
