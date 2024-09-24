@@ -7,6 +7,7 @@ import com.tweety.SwithT.member.dto.MemberLoginDto;
 import com.tweety.SwithT.member.dto.MemberSaveReqDto;
 import com.tweety.SwithT.member.dto.MemberUpdateDto;
 import com.tweety.SwithT.member.repository.MemberRepository;
+import io.lettuce.core.ScriptOutputType;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +56,23 @@ public class MemberService {
         return memberRepository.save(memberSaveReqDto.toEntity(encodedPassword, imageUrl));
     }
 
+    // 내 이미지 수정
+    public Member infoImageUpdate(MultipartFile imgfile){
+
+        String id = tokenCheck();
+
+        Member member = memberRepository.findById(Long.valueOf(id))
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 회원 입니다."));
+
+        System.out.println("수정전 : "+member.getProfileImage());
+        String imgUrl = s3Service.uploadFile(imgfile, "member");
+        System.out.println("수정후 : "+member.getProfileImage());
+
+        member.imageUpdate(imgUrl);
+
+        return memberRepository.save(member);
+    }
+
     //내 정보 조회
     public MemberInfoResDto infoGet(){
         String id = tokenCheck();
@@ -65,8 +83,10 @@ public class MemberService {
     public Member infoUpdate(MemberUpdateDto memberUpdateDto){
         String id = tokenCheck();
         Member member = memberRepository.findById(Long.valueOf(id))
-                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 이메일 입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 회원 입니다."));
+
         return member.infoUpdate(memberUpdateDto);
+
     }
 
     // 토큰에서 id 체크 메서드.

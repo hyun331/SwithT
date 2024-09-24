@@ -68,6 +68,7 @@ public class JwtTokenProvider {
 		authorities.add(new SimpleGrantedAuthority("ROLE_" + claims.get("role")));
 		UserDetails userDetails = new User(claims.getSubject(), "", authorities);
 		return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+
 	}
 
 	public boolean validateToken(String token) {

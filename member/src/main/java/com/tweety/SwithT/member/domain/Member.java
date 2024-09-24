@@ -56,9 +56,11 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = true)
     private String education;
     //튜터 컬럼
+    @Builder.Default
     @Column(precision = 2, scale = 1, nullable = true)
     private BigDecimal avgScore = BigDecimal.valueOf(0.0);
     //튜터 컬럼
+    @Builder.Default
     @Column(nullable = true)
     Long availableMoney = 0L;
     // default MAN으로 설정
@@ -90,7 +92,6 @@ public class Member extends BaseTimeEntity {
     }
 
     public Member infoUpdate(MemberUpdateDto dto) {
-
         this.name = dto.getName();
         this.birthday = dto.getBirthday();
         this.gender = Gender.valueOf(dto.getGender());
@@ -102,5 +103,9 @@ public class Member extends BaseTimeEntity {
         return this;
     }
 
+    public Member imageUpdate(String imgUrl){
+        this.profileImage = imgUrl;
+        return this;
+    }
 
 }

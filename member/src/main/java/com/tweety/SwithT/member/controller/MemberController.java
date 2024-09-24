@@ -89,6 +89,13 @@ public class MemberController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
+    @PostMapping("/imageUpdate")
+    public ResponseEntity<CommonResDto> imageUpdate(@RequestPart(value = "file") MultipartFile imgFile){
+
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "이미지 수정 성공", "수정 이미지 경로 : "+memberService.infoImageUpdate(imgFile).getProfileImage());
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+
+    }
 
     @PostMapping("/doLogin")
     public ResponseEntity<?> doLogin(@RequestBody MemberLoginDto dto){
