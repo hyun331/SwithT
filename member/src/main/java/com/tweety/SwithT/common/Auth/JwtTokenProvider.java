@@ -43,11 +43,11 @@ public class JwtTokenProvider {
 		return token;
 	}
 
-	public String createRefreshToken(String id, String email, String role) {
+	public String createRefreshToken(String id, String email, String role,String name) {
 		Claims claims = Jwts.claims().setSubject(email);
 		claims.put("id", id);  // 사용자 ID 추가
 		claims.put("role", role);
-
+		claims.put("name", name);
 		Date now = new Date();
 		String token = Jwts.builder()
 				.setClaims(claims)

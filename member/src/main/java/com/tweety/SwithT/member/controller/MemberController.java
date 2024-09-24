@@ -21,6 +21,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -47,19 +49,22 @@ public class MemberController {
     }
 
     @PostMapping("/member/create")
-    public ResponseEntity<?> memberCreate(@Valid @RequestBody MemberSaveReqDto dto) {
+    public ResponseEntity<?> memberCreate(
+            @Valid
+            @RequestPart(value = "data" ) MemberSaveReqDto dto,
+            @RequestPart(value = "file")MultipartFile imgFile)
+    {
         try {
-            Member member = memberService.memberCreate(dto);
-            CommonResDto commonResDto = new CommonResDto(HttpStatus.CREATED,
-                    "회원가입 성공.", " 회원 번호 : " + member.getId());
-            return new ResponseEntity<>(commonResDto, HttpStatus.CREATED);
 
+            CommonResDto commonResDto =
+                    new CommonResDto(HttpStatus.CREATED, "회원가입 성공.", " 회원 번호 : " + memberService.memberCreate(dto, imgFile).getId());
+
+            return new ResponseEntity<>(commonResDto, HttpStatus.CREATED);
         } catch (Exception e) {
             CommonResDto errorResponse = new CommonResDto(HttpStatus.INTERNAL_SERVER_ERROR,
                     "회원가입 실패.", e.getMessage());
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
     }
 
     @PostMapping("/doLogin")
@@ -72,7 +77,7 @@ public class MemberController {
                 jwtTokenProvider.createToken(String.valueOf(member.getId()),member.getEmail(), member.getRole().toString());
         // RefreshToken
         String refreshToken =
-                jwtTokenProvider.createRefreshToken(String.valueOf(member.getId()),member.getEmail(), member.getRole().toString());
+                jwtTokenProvider.createRefreshToken(member.getName(),String.valueOf(member.getId()),member.getEmail(), member.getRole().toString());
 
         redisTemplate.opsForValue().set(member.getEmail(), refreshToken, 240, TimeUnit.HOURS); // 240시간
 

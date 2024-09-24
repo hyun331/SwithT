@@ -1,6 +1,6 @@
 package com.tweety.SwithT.member.service;
 
-import com.tweety.SwithT.common.Service.RedisService;
+import com.tweety.SwithT.common.service.S3Service;
 import com.tweety.SwithT.member.domain.Member;
 import com.tweety.SwithT.member.dto.MemberInfoResDto;
 import com.tweety.SwithT.member.dto.MemberLoginDto;
@@ -19,14 +19,15 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class MemberService {
 
+    private final S3Service s3Service;
     private final MemberRepository memberRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    public MemberService(MemberRepository memberRepository, RedisService redisService, PasswordEncoder passwordEncoder) {
+    public MemberService(MemberRepository memberRepository,S3Service s3Service, PasswordEncoder passwordEncoder) {
         this.memberRepository = memberRepository;
+        this.s3Service = s3Service;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Member login(MemberLoginDto dto){
@@ -40,15 +41,16 @@ public class MemberService {
         return member;
     }
 
-    public Member memberCreate(MemberSaveReqDto memberSaveReqDto) {
+    public Member memberCreate(MemberSaveReqDto memberSaveReqDto,MultipartFile imgFile) {
 
         memberRepository.findByEmail(memberSaveReqDto.getEmail()).ifPresent(existingMember -> {
             throw new EntityExistsException("이미 존재하는 이메일입니다.");
         });
 
         String encodedPassword = passwordEncoder.encode(memberSaveReqDto.getPassword());
-        return memberRepository.save(memberSaveReqDto.toEntity(encodedPassword));
+        String imageUrl = s3Service.uploadFile(imgFile, "member");
 
+        return memberRepository.save(memberSaveReqDto.toEntity(encodedPassword, imageUrl));
     }
 
     //내 정보 조회

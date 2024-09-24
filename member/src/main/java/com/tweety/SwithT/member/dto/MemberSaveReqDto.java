@@ -61,7 +61,7 @@ public class MemberSaveReqDto {
 
     private Role role;
 
-    public Member toEntity(String encodedPassword) {
+    public Member toEntity(String encodedPassword,String imageUrl) {
 
         return Member.builder()
 
@@ -72,7 +72,7 @@ public class MemberSaveReqDto {
                 .birthday(this.birthday)
                 .phoneNumber(this.phoneNumber)
                 .address(this.address)
-                .profileImage(this.profileImage)
+                .profileImage(imageUrl) // s3 이미지 경로
                 .education(this.education)
                 .introduce(this.introduce)
                 .gender(this.gender)
