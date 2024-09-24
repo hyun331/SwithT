@@ -7,10 +7,13 @@ import com.tweety.SwithT.member.dto.MemberLoginDto;
 import com.tweety.SwithT.member.dto.MemberSaveReqDto;
 import com.tweety.SwithT.member.dto.MemberUpdateDto;
 import com.tweety.SwithT.member.repository.MemberRepository;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import io.lettuce.core.ScriptOutputType;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Transactional
 @Service
 public class MemberService {
+
 
     private final S3Service s3Service;
     private final MemberRepository memberRepository;
@@ -60,14 +64,10 @@ public class MemberService {
     public Member infoImageUpdate(MultipartFile imgfile){
 
         String id = tokenCheck();
-
         Member member = memberRepository.findById(Long.valueOf(id))
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 회원 입니다."));
 
-        System.out.println("수정전 : "+member.getProfileImage());
         String imgUrl = s3Service.uploadFile(imgfile, "member");
-        System.out.println("수정후 : "+member.getProfileImage());
-
         member.imageUpdate(imgUrl);
 
         return memberRepository.save(member);
@@ -75,6 +75,7 @@ public class MemberService {
 
     //내 정보 조회
     public MemberInfoResDto infoGet(){
+
         String id = tokenCheck();
         Member member = memberRepository.findById(Long.valueOf(id)).orElseThrow(EntityNotFoundException::new);
         return member.infoFromEntity();
@@ -89,7 +90,7 @@ public class MemberService {
 
     }
 
-    // 토큰에서 id 체크 메서드.
+    // 토큰에서 id 추출 후 체크하는 메서드  (subject)
     public String tokenCheck(){
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }

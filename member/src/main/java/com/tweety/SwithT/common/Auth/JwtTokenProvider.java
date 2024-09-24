@@ -62,6 +62,7 @@ public class JwtTokenProvider {
 	}
 
 	public Authentication getAuthentication(String token) {
+
 		Claims claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
 
 		List<GrantedAuthority> authorities = new ArrayList<>();
