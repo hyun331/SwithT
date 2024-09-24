@@ -2,12 +2,14 @@ package com.tweety.SwithT.member.service;
 
 import com.tweety.SwithT.common.Service.RedisService;
 import com.tweety.SwithT.member.domain.Member;
+import com.tweety.SwithT.member.dto.MemberInfoResDto;
 import com.tweety.SwithT.member.dto.MemberLoginDto;
 import com.tweety.SwithT.member.dto.MemberSaveReqDto;
 import com.tweety.SwithT.member.repository.MemberRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,4 +50,15 @@ public class MemberService {
         return memberRepository.save(memberSaveReqDto.toEntity(encodedPassword));
 
     }
+
+    //내 정보 조회
+    public MemberInfoResDto infoGet(){
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Member member = memberRepository.findByEmail(email).orElseThrow(EntityNotFoundException::new);
+        System.out.println(member.getIntroduce());
+        return member.infoFromEntity();
+    }
+
+
+
 }

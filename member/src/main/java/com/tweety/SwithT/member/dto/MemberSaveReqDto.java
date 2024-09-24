@@ -50,6 +50,9 @@ public class MemberSaveReqDto {
     private String profileImage;
 
     @Nullable
+    private String introduce;
+
+    @Nullable
     private String education;
 
 //  enum 타입에는 @NotEmpty 적용할 수 없음. 적용 시 에러 발생.
@@ -71,6 +74,7 @@ public class MemberSaveReqDto {
                 .address(this.address)
                 .profileImage(this.profileImage)
                 .education(this.education)
+                .introduce(this.introduce)
                 .gender(this.gender)
                 .role(this.role)
                 .build();

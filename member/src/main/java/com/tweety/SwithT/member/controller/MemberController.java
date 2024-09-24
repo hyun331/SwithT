@@ -4,12 +4,14 @@ import com.tweety.SwithT.common.Auth.JwtTokenProvider;
 import com.tweety.SwithT.common.dto.CommonErrorDto;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.member.domain.Member;
+import com.tweety.SwithT.member.dto.MemberInfoResDto;
 import com.tweety.SwithT.member.dto.MemberLoginDto;
 import com.tweety.SwithT.member.dto.MemberRefreshDto;
 import com.tweety.SwithT.member.dto.MemberSaveReqDto;
 import com.tweety.SwithT.member.service.MemberService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -122,6 +124,18 @@ public class MemberController {
 
     }
 
+
+    @GetMapping("myInfo") // 마이페이지 회원 정보 요청
+    public ResponseEntity<?> myInfoGet() {
+        try {
+            MemberInfoResDto memberInfoResDto = memberService.infoGet();
+            return new ResponseEntity<>(new CommonResDto(HttpStatus.OK, "내 정보 조회 성공", memberInfoResDto), HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            return new ResponseEntity<>(new CommonResDto(HttpStatus.NOT_FOUND, "회원 정보를 찾을 수 없습니다.", null), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new CommonResDto(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류", null), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 
 }
