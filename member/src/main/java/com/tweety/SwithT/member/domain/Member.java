@@ -80,7 +80,6 @@ public class Member extends BaseTimeEntity {
     private List<Scheduler> schedulers;
 
 
-
     // 내 정보 데이터 FromEntity 메서드
     public MemberInfoResDto infoFromEntity(){
         return MemberInfoResDto.builder()

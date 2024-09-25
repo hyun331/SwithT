@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Getter
@@ -29,6 +30,10 @@ public class Scheduler extends BaseTimeEntity {
     @Column(nullable = false)
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate schedulerDateTime;
+
+    @Column(nullable = false)
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime localTime;
 
     @Column(nullable = false)
     private String content;
