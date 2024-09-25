@@ -28,9 +28,11 @@ public class Member extends BaseTimeEntity {
     private Long id;
     // schedulers 연관 관계
     @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
+    @Builder.Default
     private List<Scheduler> schedulers = new ArrayList<>();
     // 출금 연관 관계
     @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
+    @Builder.Default
     private List<WithdrawalRequest> withdrawalRequests = new ArrayList<>();
 
 
@@ -71,8 +73,8 @@ public class Member extends BaseTimeEntity {
     private BigDecimal avgScore = BigDecimal.valueOf(0.0);
     //튜터 컬럼
     @Builder.Default
-    @Column(nullable = true)
-    Long availableMoney = 0L;
+    @Column(nullable = true) //출금 요청 테스트를 위해 금액 올림.
+    private Long availableMoney = 1000000L;
     // default MAN으로 설정
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -118,6 +120,11 @@ public class Member extends BaseTimeEntity {
     public Member imageUpdate(String imgUrl){
         this.profileImage = imgUrl;
         return this;
+    }
+
+    public void balanceUpdate(Long amount) {
+        this.availableMoney -= amount;
+        System.out.println("잔액 계산 후 금액 :"+this.availableMoney);
     }
 
 }

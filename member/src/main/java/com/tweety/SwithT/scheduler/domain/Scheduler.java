@@ -38,6 +38,8 @@ public class Scheduler extends BaseTimeEntity {
     @Column(nullable = false)
     private String content;
 
+    @Column(nullable = true)
+    @Builder.Default
     private char alertYn = 'N';
 
     @ManyToOne(fetch = FetchType.LAZY)
