@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import com.tweety.SwithT.member.dto.MemberInfoResDto;
 import com.tweety.SwithT.member.dto.MemberUpdateDto;
-import com.tweety.scheduler.domain.Scheduler;
+import com.tweety.SwithT.scheduler.domain.Scheduler;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
