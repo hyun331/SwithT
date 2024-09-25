@@ -1,18 +1,15 @@
 package com.tweety.SwithT.lecture.domain;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.lecture.dto.LectureDetailResDto;
 import com.tweety.SwithT.lecture.dto.LectureListResDto;
-import com.tweety.SwithT.lecture_assignment.domain.LectureAssignment;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,5 +75,9 @@ public class Lecture extends BaseTimeEntity {
     // @Builder.Default : 빌더 패턴에서도 ArrayList로 초기화 되도록하는 설정
     @Builder.Default
     private List<LectureGroup> lectureGroups = new ArrayList<>();
+
+    public void updateStatus(Status status){
+        this.status = status;
+    }
 
 }

@@ -1,4 +1,4 @@
-package com.tweety.SwithT.common.Service;
+package com.tweety.SwithT.common.service;
 
 
 import java.time.Duration;

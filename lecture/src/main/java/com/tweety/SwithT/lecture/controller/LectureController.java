@@ -1,9 +1,11 @@
 package com.tweety.SwithT.lecture.controller;
 
+import com.tweety.SwithT.common.dto.CommonErrorDto;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.dto.*;
 import com.tweety.SwithT.lecture.service.LectureService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -57,6 +59,19 @@ public class LectureController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
+//    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/lectures/{id}/status")
+    public ResponseEntity<?> updateLectureStatus(@PathVariable Long id,
+                                                 @RequestBody LectureStatusUpdateDto statusUpdateDto) {
+        try {
+            lectureService.updateLectureStatus(statusUpdateDto);
+            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 상태가 성공적으로 변경되었습니다", null);
+            return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.BAD_REQUEST.value(), "강의 정보를 불러오는 데 실패했습니다.");
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.BAD_REQUEST);
+        }
+    }
 //    과외 신청자 리스트
 //    @PreAuthorize("hasRole('TUTOR')")
 //    @GetMapping("/single-lecture-apply-list")
