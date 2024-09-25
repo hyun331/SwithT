@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import com.tweety.SwithT.member.dto.MemberInfoResDto;
 import com.tweety.SwithT.member.dto.MemberUpdateDto;
+import com.tweety.scheduler.domain.Scheduler;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,6 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Builder
@@ -73,7 +75,10 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false)
     private Role role = Role.TUTEE;
 
-    // 연관 관계 개발 진행하면서 필요 시 추가하겠습니다.
+    // schedulers 연관관계
+    @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
+    private List<Scheduler> schedulers;
+
 
 
     // 내 정보 데이터 FromEntity 메서드

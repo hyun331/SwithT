@@ -53,33 +53,18 @@ public class MemberController {
             @RequestPart(value = "data" ) MemberSaveReqDto dto,
             @RequestPart(value = "file", required = false) MultipartFile imgFile)
     {
-        try {
-
+            System.out.println("test");
             Member member = memberService.memberCreate(dto, imgFile);
-
             CommonResDto commonResDto =
                     new CommonResDto(HttpStatus.CREATED, "회원가입 성공.", " 회원 번호 : " + member.getId() );
-
             return new ResponseEntity<>(commonResDto, HttpStatus.CREATED);
-        } catch (Exception e) {
-            CommonResDto errorResponse = new CommonResDto(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "회원가입 실패.", e.getMessage());
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
     }
 
     // 회원 정보 조회
     @GetMapping("/infoGet") // 마이페이지 회원 정보 요청
     public ResponseEntity<?> infoGet() {
-
-        try {
             MemberInfoResDto memberInfoResDto = memberService.infoGet();
             return new ResponseEntity<>(new CommonResDto(HttpStatus.OK, "내 정보 조회 성공", memberInfoResDto), HttpStatus.OK);
-        } catch (EntityNotFoundException e) {
-            return new ResponseEntity<>(new CommonResDto(HttpStatus.NOT_FOUND, "회원 정보를 찾을 수 없습니다.", null), HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(new CommonResDto(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류", null), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
     }
 
     // 회원 정보 수정 ( 사진 제외 )
@@ -92,17 +77,14 @@ public class MemberController {
 
     @PostMapping("/imageUpdate")
     public ResponseEntity<CommonResDto> imageUpdate(@RequestPart(value = "file") MultipartFile imgFile){
-
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "이미지 수정 성공", "수정 이미지 경로 : "+memberService.infoImageUpdate(imgFile).getProfileImage());
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
-
     }
 
     @PostMapping("/doLogin")
     public ResponseEntity<?> doLogin(@RequestBody MemberLoginDto dto){
 
         Member member = memberService.login(dto);
-
         // AccesToken
         String jwtToken =
                 jwtTokenProvider.createToken(String.valueOf(member.getId()),member.getEmail(), member.getRole().toString(),member.getName());
@@ -162,9 +144,5 @@ public class MemberController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
 
     }
-
-
-
-
 
 }
