@@ -5,6 +5,7 @@ import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import com.tweety.SwithT.member.dto.MemberInfoResDto;
 import com.tweety.SwithT.member.dto.MemberUpdateDto;
 import com.tweety.SwithT.scheduler.domain.Scheduler;
+import com.tweety.SwithT.withdrawal.domain.WithdrawalRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -24,13 +26,19 @@ public class Member extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    // schedulers 연관 관계
+    @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
+    private List<Scheduler> schedulers = new ArrayList<>();
+    // 출금 연관 관계
+    @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
+    private List<WithdrawalRequest> withdrawalRequests = new ArrayList<>();
+
+
 
     @Column(nullable = false, unique = true)
     private String email;
-
     @Column(nullable = true)
     private String password;
-
     @Column(nullable = true) //동명이인 고려
     private String name;
 
@@ -75,9 +83,9 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false)
     private Role role = Role.TUTEE;
 
-    // schedulers 연관관계
-    @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
-    private List<Scheduler> schedulers;
+
+
+
 
 
     // 내 정보 데이터 FromEntity 메서드
