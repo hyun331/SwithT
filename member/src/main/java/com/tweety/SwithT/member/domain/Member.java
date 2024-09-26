@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import com.tweety.SwithT.member.dto.MemberInfoResDto;
 import com.tweety.SwithT.member.dto.MemberUpdateDto;
+import com.tweety.SwithT.review.domain.Review;
 import com.tweety.SwithT.scheduler.domain.Scheduler;
 import com.tweety.SwithT.withdrawal.domain.WithdrawalRequest;
 import jakarta.persistence.*;
@@ -26,6 +27,7 @@ public class Member extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     // schedulers 연관 관계
     @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
     @Builder.Default
@@ -34,8 +36,10 @@ public class Member extends BaseTimeEntity {
     @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
     @Builder.Default
     private List<WithdrawalRequest> withdrawalRequests = new ArrayList<>();
-
-
+    // 리뷰 연관 관계 필드
+    @OneToMany(mappedBy = "writerId", cascade = CascadeType.PERSIST)
+    @Builder.Default
+    private List<Review> reviews = new ArrayList<>();
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -43,25 +47,16 @@ public class Member extends BaseTimeEntity {
     private String password;
     @Column(nullable = true) //동명이인 고려
     private String name;
-
-//    닉네임 주석 처리
-//    @Column(nullable = false, unique = true)
-//    private String nickName;
-
     @Column(nullable = false)
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate birthday;
-
     @Column(nullable = false)
     private String phoneNumber;
-
     @Column(nullable = true)
     private String address;
-
     @Column(nullable = true)
     private String profileImage;
-
-    //튜터 컬럼, 자기소개 컬럼 추가
+    //튜터 컬럼
     @Column(nullable = true)
     private String introduce;
     //튜터 컬럼
