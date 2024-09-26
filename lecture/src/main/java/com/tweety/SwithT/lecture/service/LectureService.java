@@ -3,6 +3,7 @@ package com.tweety.SwithT.lecture.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
+import com.tweety.SwithT.common.service.S3Service;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
 import com.tweety.SwithT.lecture.dto.*;
@@ -34,6 +35,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,25 +43,29 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class LectureService {
+
     private final LectureRepository lectureRepository;
     private final LectureGroupRepository lectureGroupRepository;
     private final GroupTimeRepository groupTimeRepository;
     private final LectureApplyRepository lectureApplyRepository;
     private final MemberFeign memberFeign;
+    private final S3Service s3Service;
 
 
     // Create
     @Transactional
-    public Lecture lectureCreate(LectureCreateReqDto lectureCreateReqDto, List<LectureGroupReqDto> lectureGroupReqDtos){
-        Long memberId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
+    public Lecture lectureCreate(LectureCreateReqDto lectureCreateReqDto, List<LectureGroupReqDto> lectureGroupReqDtos, MultipartFile imgFile){
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
 
         CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
         ObjectMapper objectMapper = new ObjectMapper();
         MemberNameResDto memberNameResDto = objectMapper.convertValue(commonResDto.getResult(), MemberNameResDto.class);
         String memberName = memberNameResDto.getName();
 
+        String imageUrl = s3Service.uploadFile(imgFile, "lecture");
+
         // Lecture 정보 저장
-        Lecture createdLecture = lectureRepository.save(lectureCreateReqDto.toEntity(memberId, memberName));
+        Lecture createdLecture = lectureRepository.save(lectureCreateReqDto.toEntity(memberId, memberName, imageUrl));
 
         for (LectureGroupReqDto groupDto : lectureGroupReqDtos){
             // Lecture Group 정보 저장

@@ -19,8 +19,6 @@ public class LectureCreateReqDto {
     private String title;
     // 강의 정보
     private String contents;
-    // 강의 썸네일
-    private String image;
 
     private Status status;
     // 강의 분야
@@ -28,13 +26,13 @@ public class LectureCreateReqDto {
 
     private LectureType lectureType;
 
-    public Lecture toEntity(Long memberId, String memberName){
+    public Lecture toEntity(Long memberId, String memberName, String imageUrl){
         return Lecture.builder()
                 .memberId(memberId)
                 .memberName(memberName)
+                .image(imageUrl)
                 .title(this.title)
                 .contents(this.contents)
-                .image(this.image)
                 .category(this.category)
                 .status(this.status)
                 .lectureType(this.lectureType)

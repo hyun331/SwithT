@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import com.tweety.SwithT.lecture.dto.LectureSearchDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -23,8 +24,10 @@ public class LectureController {
     // 강의 Or 과외 생성
     @PreAuthorize("hasRole('TUTOR')")
     @PostMapping("/create")
-    public ResponseEntity<Object> lectureCreate(@RequestBody CreateReqDto lectureCreateDto) {
-        Lecture lecture = lectureService.lectureCreate(lectureCreateDto.getLectureReqDto(), lectureCreateDto.getLectureGroupReqDtos());
+    public ResponseEntity<Object> lectureCreate(
+            @RequestPart(value = "data") CreateReqDto lectureCreateDto,
+            @RequestPart(value = "file", required = false) MultipartFile imgFile) {
+        Lecture lecture = lectureService.lectureCreate(lectureCreateDto.getLectureReqDto(), lectureCreateDto.getLectureGroupReqDtos(), imgFile);
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "Lecture is successfully created", lecture.getId());
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
