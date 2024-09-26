@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.List;
 
 @Getter
 @Builder
@@ -29,11 +28,11 @@ public class Scheduler extends BaseTimeEntity {
 
     @Column(nullable = false)
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate schedulerDateTime;
+    private LocalDate schedulerDate;
 
     @Column(nullable = false)
     @JsonFormat(pattern = "HH:mm")
-    private LocalTime localTime;
+    private LocalTime schedulerTime;
 
     @Column(nullable = false)
     private String content;
@@ -46,5 +45,11 @@ public class Scheduler extends BaseTimeEntity {
     @JoinColumn(name = "member_id")
     private Member member;
 
+    private Long lectureGroupId;
 
+    private Long lectureAssignmentId;
+
+    public void deleteSchedule(){
+        updateDelYn();
+    }
 }
