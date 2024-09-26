@@ -93,6 +93,15 @@ public class MemberService {
 
     }
 
+    public void subtraction(Long amount){
+        String id = tokenCheck();
+        Member member = memberRepository.findById(Long.valueOf(id))
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 회원 입니다."));
+        System.out.println("sub 메서드->"+id);
+        member.balanceUpdate(amount);
+
+    }
+
     // 토큰에서 id 추출 후 체크하는 메서드  (subject)
     public String tokenCheck(){
         return SecurityContextHolder.getContext().getAuthentication().getName();

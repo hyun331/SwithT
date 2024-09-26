@@ -6,6 +6,19 @@ import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.common.service.S3Service;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tweety.SwithT.common.dto.CommonResDto;
+import com.tweety.SwithT.common.service.MemberFeign;
+import com.tweety.SwithT.common.service.S3Service;
+import com.tweety.SwithT.lecture.domain.Lecture;
+import com.tweety.SwithT.lecture.domain.LectureGroup;
+import com.tweety.SwithT.lecture.dto.*;
+import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
+import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
+import com.tweety.SwithT.lecture.repository.LectureRepository;
+import com.tweety.SwithT.lecture_apply.domain.LectureApply;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import com.tweety.SwithT.lecture.domain.GroupTime;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
@@ -34,6 +47,7 @@ import java.util.List;
 
 @Service
 public class LectureService {
+
     private final LectureRepository lectureRepository;
     private final LectureGroupRepository lectureGroupRepository;
     private final GroupTimeRepository groupTimeRepository;
@@ -176,39 +190,141 @@ public class LectureService {
             throw new IllegalArgumentException("로그인한 유저는 해당 과외의 튜터가 아닙니다.");
         }
 
-        Specification<LectureGroup> specification = new Specification<LectureGroup>() {
-            @Override
-            public Predicate toPredicate(Root<LectureGroup> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
-                List<Predicate> predicates = new ArrayList<>();
-                predicates.add(criteriaBuilder.equal(root.get("lecture"), lecture));
+    Specification<LectureGroup> specification = new Specification<LectureGroup>() {
+        @Override
+        public Predicate toPredicate(Root<LectureGroup> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(criteriaBuilder.equal(root.get("lecture"), lecture));
 
-                if(isAvailable != null && !isAvailable.isEmpty()){
-                    predicates.add(criteriaBuilder.equal(root.get("isAvailable"), isAvailable));
-                }
-                Predicate[] predicateArr = new Predicate[predicates.size()];
-                for(int i=0; i<predicateArr.length; i++){
-                    predicateArr[i] = predicates.get(i);
-                }
-                return criteriaBuilder.and(predicateArr);
+            if(isAvailable != null && !isAvailable.isEmpty()){
+                predicates.add(criteriaBuilder.equal(root.get("isAvailable"), isAvailable));
             }
-        };
-        Page<LectureGroup> lectureGroups = lectureGroupRepository.findAll(specification, pageable);
-        Page<LectureGroupListResDto> lectureGroupResDtos = lectureGroups.map((a)->{
-            List<GroupTime> groupTimeList = groupTimeRepository.findByLectureGroupId(a.getId());
-            StringBuilder groupTitle = new StringBuilder();
-            for(GroupTime groupTime : groupTimeList){
-                groupTitle.append(groupTime.getLectureDay()+" "+groupTime.getStartTime()+"-"+groupTime.getEndTime()+"  /  ");
+            Predicate[] predicateArr = new Predicate[predicates.size()];
+            for(int i=0; i<predicateArr.length; i++){
+                predicateArr[i] = predicates.get(i);
             }
+            return criteriaBuilder.and(predicateArr);
+        }
+    };
+    Page<LectureGroup> lectureGroups = lectureGroupRepository.findAll(specification, pageable);
+    Page<LectureGroupListResDto> lectureGroupResDtos = lectureGroups.map((a)->{
+        List<GroupTime> groupTimeList = groupTimeRepository.findByLectureGroupId(a.getId());
+        StringBuilder groupTitle = new StringBuilder();
+        for(GroupTime groupTime : groupTimeList){
+            groupTitle.append(groupTime.getLectureDay()+" "+groupTime.getStartTime()+"-"+groupTime.getEndTime()+"  /  ");
+        }
 
-            if (groupTitle.length() > 0) {
-                groupTitle.setLength(groupTitle.length() - 5);
-            }
+        if (groupTitle.length() > 0) {
+            groupTitle.setLength(groupTitle.length() - 5);
+        }
 
-            return LectureGroupListResDto.builder()
-                    .title(groupTitle.toString())
-                    .lectureGroupId(a.getId())
-                    .build();
-        });
+        return LectureGroupListResDto.builder()
+                .title(groupTitle.toString())
+                .lectureGroupId(a.getId())
+                .build();
+    });
+
+    return lectureGroupResDtos;
+}
+
+    // 강의 수정
+    @Transactional
+    public LectureDetailResDto lectureUpdate(Long id, LectureUpdateReqDto dto){
+        Lecture lecture = lectureRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Lecture is not found"));
+
+        if (dto.getTitle() != null) {
+            lecture.updateTitle(dto.getTitle());
+        }
+        if (dto.getContents() != null) {
+            lecture.updateContents(dto.getContents());
+        }
+        if (dto.getImage() != null) {
+            lecture.updateImage(dto.getImage());
+        }
+        if (dto.getCategory() != null) {
+            lecture.updateCategory(dto.getCategory());
+        }
+        System.out.println(lecture.fromEntityToLectureDetailResDto());
+        return lecture.fromEntityToLectureDetailResDto();
+    }
+
+    // 강의 삭제
+    @Transactional
+    public void lectureDelete(Long lectureId) {
+        Lecture lecture = lectureRepository.findById(lectureId)
+                .orElseThrow(() -> new EntityNotFoundException("Lecture is not found"));
+
+        List<LectureGroup> lectureGroups = lectureGroupRepository.findByLectureId(lectureId);
+
+        for (LectureGroup group : lectureGroups) {
+            List<LectureApply> lectureApplies = group.getLectureApplies();
+
+            // LectureApply가 하나라도 존재한다면 삭제 불가
+            if (!lectureApplies.isEmpty()) {
+                throw new IllegalArgumentException("LectureApply가 존재하여 Lecture를 삭제할 수 없습니다.");
+            }
+        }
+
+        // 모든 LectureGroup의 LectureApply가 없을 경우, Lecture와 각각의 LectureGroup 삭제
+        lecture.updateDelYn();
+        for (LectureGroup group : lectureGroups) {
+            group.updateDelYn();
+            // LectureGroup의 GroupTime 삭제
+            for (GroupTime groupTime : group.getGroupTimes()){
+                groupTime.updateDelYn();
+            }
+        }
+    }
+
+    // 강의 그룹 수정
+    @Transactional
+    public void lectureGroupUpdate(Long lectureGroupId, LectureGroupReqDto dto){
+        LectureGroup lectureGroup = lectureGroupRepository.findById(lectureGroupId)
+                .orElseThrow(()->new EntityNotFoundException("Lecture group is not found"));
+
+        // LectureApply가 하나라도 존재한다면 수정 불가
+        if (!lectureGroup.getLectureApplies().isEmpty()) {
+            throw new IllegalArgumentException("LectureApply가 존재하여 Lecture를 삭제할 수 없습니다.");
+        }
+        if (dto.getPrice() != null) {
+            lectureGroup.updatePrice(dto.getPrice());
+        }
+        if (dto.getLimitPeople() != null) {
+            lectureGroup.updateLimitPeople(dto.getLimitPeople());
+        }
+        if (dto.getLatitude() != null && dto.getLongitude() != null) {
+            lectureGroup.updatePoint(dto.getLatitude(), dto.getLongitude());
+        }
+        if (dto.getStartDate() != null && dto.getEndDate() != null) {
+            lectureGroup.updateDate(dto.getStartDate(), dto.getEndDate());
+        }
+        if (dto.getGroupTimeReqDtos() != null){
+            for (GroupTime groupTime : groupTimeRepository.findByLectureGroupId(lectureGroupId)){
+                groupTime.updateDelYn();
+            }
+            for (GroupTimeReqDto timeDto : dto.getGroupTimeReqDtos()){
+                groupTimeRepository.save(timeDto.toEntity(lectureGroup));
+            }
+        }
+
+    }
+
+    // 강의 그룹 삭제
+    @Transactional
+    public void lectureGroupDelete(Long lectureGroupId){
+        LectureGroup lectureGroup = lectureGroupRepository.findById(lectureGroupId)
+                .orElseThrow(()->new EntityNotFoundException("Lecture group is not found"));
+
+        // LectureApply가 하나라도 존재한다면 삭제 불가
+        if (!lectureGroup.getLectureApplies().isEmpty()) {
+            throw new IllegalArgumentException("LectureApply가 존재하여 Lecture를 삭제할 수 없습니다.");
+        }
+        lectureGroup.updateDelYn();
+        for (GroupTime groupTime : lectureGroup.getGroupTimes()){
+            groupTime.updateDelYn();
+        }
+    }
 
         return lectureGroupResDtos;
     }
@@ -237,7 +353,7 @@ public class LectureService {
         // 강의 상태를 업데이트하고 저장
         lecture.updateStatus(newStatus);
         if(newStatus.equals(Status.ADMIT)){
-            getGroupTimes(statusUpdateDto.getLectureId());   
+            getGroupTimes(statusUpdateDto.getLectureId());
         }
         lectureRepository.save(lecture);
     }

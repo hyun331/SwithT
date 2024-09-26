@@ -80,4 +80,18 @@ public class Lecture extends BaseTimeEntity {
         this.status = status;
     }
 
+    // update
+    public void updateTitle(String title){
+        this.title = title;
+    }
+    public void updateContents(String contents){
+        this.contents = contents;
+    }
+    public void updateImage(String image){
+        this.image = image;
+    }
+    public void updateCategory(Category category){
+        this.category = category;
+    }
+
 }

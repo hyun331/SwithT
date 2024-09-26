@@ -3,6 +3,7 @@ package com.tweety.SwithT.lecture.domain;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import com.tweety.SwithT.lecture.dto.LectureGroupListResDto;
+import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -52,4 +53,24 @@ public class LectureGroup extends BaseTimeEntity {
     @Builder.Default
     private List<GroupTime> groupTimes = new ArrayList<>();
 
+    @OneToMany(mappedBy = "lectureGroup", cascade = CascadeType.PERSIST)
+    @Builder.Default
+    private List<LectureApply> lectureApplies = new ArrayList<>();
+
+
+    // update
+    public void updatePrice(Integer price){
+        this.price = price;
+    }
+    public void updateLimitPeople(Integer limitPeople){
+        this.limitPeople = limitPeople;
+    }
+    public void updatePoint(String latitude, String longitude){
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+    public void updateDate(LocalDate startDate, LocalDate endDate){
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
 }
