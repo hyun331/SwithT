@@ -8,10 +8,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface LectureGroupRepository extends JpaRepository<LectureGroup, Long> {
+    List<LectureGroup> findByLectureId(Long lectureId);
 
     Optional<LectureGroup> findByIdAndIsAvailable(Long lectureGroupId, String isAvailable);
 

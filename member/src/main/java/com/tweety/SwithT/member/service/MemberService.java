@@ -1,20 +1,17 @@
 package com.tweety.SwithT.member.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tweety.SwithT.common.domain.Status;
+import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.service.S3Service;
 import com.tweety.SwithT.member.domain.Member;
-import com.tweety.SwithT.member.dto.MemberInfoResDto;
-import com.tweety.SwithT.member.dto.MemberLoginDto;
-import com.tweety.SwithT.member.dto.MemberSaveReqDto;
-import com.tweety.SwithT.member.dto.MemberUpdateDto;
+import com.tweety.SwithT.member.dto.*;
 import com.tweety.SwithT.member.repository.MemberRepository;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.lettuce.core.ScriptOutputType;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,12 +26,18 @@ public class MemberService {
     private final S3Service s3Service;
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final LectureFeign lectureFeign;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    public MemberService(MemberRepository memberRepository,S3Service s3Service, PasswordEncoder passwordEncoder) {
+    public MemberService(MemberRepository memberRepository, S3Service s3Service, PasswordEncoder passwordEncoder, LectureFeign lectureFeign, KafkaTemplate<String, Object> kafkaTemplate, ObjectMapper objectMapper) {
         this.memberRepository = memberRepository;
         this.s3Service = s3Service;
         this.passwordEncoder = passwordEncoder;
+        this.lectureFeign = lectureFeign;
+        this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
     }
 
     public Member login(MemberLoginDto dto){
@@ -104,4 +107,49 @@ public class MemberService {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 
+//    public void lectureStatusUpdate(Long lectureId, Status newStatus){
+//        LectureStatusUpdateDto statusUpdateDto = LectureStatusUpdateDto.builder()
+//                .lectureId(lectureId)
+//                .status(newStatus)
+//                .build();
+//
+//        lectureFeign.updateLectureStatus(lectureId, statusUpdateDto);
+//
+//        // Kafka 메시지 전송
+//        try {
+//            // LectureStatusUpdateDto를 JSON 문자열로 변환
+//            String message = objectMapper.writeValueAsString(statusUpdateDto);
+//
+//            // Kafka로 메시지 전송
+//            kafkaTemplate.send("lecture-status-update", message);
+//
+//            System.out.println("Kafka 메시지 전송됨: " + message);
+//        } catch (JsonProcessingException e) {
+//            System.err.println("Kafka 메시지 전송 실패: " + e.getMessage());
+//        }
+//    }
+
+    public void lectureStatusUpdate(Long lectureId, Status newStatus) {
+        // Enum인 Status를 String으로 변환하여 LectureStatusUpdateDto 생성
+        LectureStatusUpdateDto statusUpdateDto = LectureStatusUpdateDto.builder()
+                .lectureId(lectureId)
+                .status(newStatus.name())  // Enum Status를 String으로 변환
+                .build();
+
+        // Kafka 메시지 전송
+        try {
+            String message = objectMapper.writeValueAsString(statusUpdateDto);
+
+            kafkaTemplate.send("lecture-status-update", message);  // JSON 문자열 전송
+
+            System.out.println("Kafka 메시지 전송됨: " + message);
+        } catch (JsonProcessingException e) {
+            System.err.println("Kafka 메시지 변환 및 전송 실패: " + e.getMessage());
+        }
+    }
+
+//    강의 정보를 가져옴
+    private CommonResDto getLectureInfo(Long lecturePayId) {
+        return lectureFeign.getLectureById(lecturePayId);
+    }
 }
