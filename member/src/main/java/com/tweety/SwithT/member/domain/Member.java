@@ -36,10 +36,14 @@ public class Member extends BaseTimeEntity {
     @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
     @Builder.Default
     private List<WithdrawalRequest> withdrawalRequests = new ArrayList<>();
-    // 리뷰 연관 관계 필드
+    // 리뷰 작성자 연관 관계 필드
     @OneToMany(mappedBy = "writerId", cascade = CascadeType.PERSIST)
     @Builder.Default
     private List<Review> reviews = new ArrayList<>();
+    // 튜터 연관 관계 필드
+    @OneToMany(mappedBy = "tutorId", cascade = CascadeType.PERSIST)
+    @Builder.Default
+    private List<Review> tutors = new ArrayList<>();
 
     @Column(nullable = false, unique = true)
     private String email;
