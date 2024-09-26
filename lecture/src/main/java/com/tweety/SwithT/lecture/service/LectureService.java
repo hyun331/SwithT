@@ -1,9 +1,11 @@
 package com.tweety.SwithT.lecture.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweety.SwithT.common.domain.Status;
+import com.tweety.SwithT.common.dto.CommonResDto;
+import com.tweety.SwithT.common.service.MemberFeign;
+import com.tweety.SwithT.common.service.S3Service;
 import com.tweety.SwithT.lecture.domain.GroupTime;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
@@ -21,9 +23,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,37 +39,46 @@ public class LectureService {
     private final GroupTimeRepository groupTimeRepository;
     private final LectureApplyRepository lectureApplyRepository;
     private final ObjectMapper objectMapper;
+    private final KafkaTemplate kafkaTemplate;
+    private final MemberFeign memberFeign;
+    private final S3Service s3Service;
 
-    public LectureService(LectureRepository lectureRepository, LectureGroupRepository lectureGroupRepository, GroupTimeRepository groupTimeRepository, LectureApplyRepository lectureApplyRepository, ObjectMapper objectMapper){
+    public LectureService(LectureRepository lectureRepository, LectureGroupRepository lectureGroupRepository, GroupTimeRepository groupTimeRepository, LectureApplyRepository lectureApplyRepository, ObjectMapper objectMapper, KafkaTemplate kafkaTemplate, MemberFeign memberFeign, S3Service s3Service){
 
         this.lectureRepository = lectureRepository;
         this.lectureGroupRepository = lectureGroupRepository;
         this.groupTimeRepository = groupTimeRepository;
         this.lectureApplyRepository = lectureApplyRepository;
         this.objectMapper = objectMapper;
+        this.kafkaTemplate = kafkaTemplate;
+        this.memberFeign = memberFeign;
+        this.s3Service = s3Service;
     }
     // Create
     @Transactional
-    public Lecture lectureCreate(LectureCreateReqDto lectureCreateReqDto, List<LectureGroupReqDto> lectureGroupReqDtos){
-        Long memberId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
+    public Lecture lectureCreate(LectureCreateReqDto lectureCreateReqDto, List<LectureGroupReqDto> lectureGroupReqDtos, MultipartFile imgFile){
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+
+        CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
+        ObjectMapper objectMapper = new ObjectMapper();
+        MemberNameResDto memberNameResDto = objectMapper.convertValue(commonResDto.getResult(), MemberNameResDto.class);
+        String memberName = memberNameResDto.getName();
+
+        String imageUrl = s3Service.uploadFile(imgFile, "lecture");
 
         // Lecture 정보 저장
-        Lecture createdLecture = lectureRepository.save(lectureCreateReqDto.toEntity(memberId));
+        Lecture createdLecture = lectureRepository.save(lectureCreateReqDto.toEntity(memberId, memberName, imageUrl));
 
         for (LectureGroupReqDto groupDto : lectureGroupReqDtos){
             // Lecture Group 정보 저장
             LectureGroup createdGroup = lectureGroupRepository.save(groupDto.toEntity(createdLecture));
-            System.out.println(createdGroup.getId());
             for (GroupTimeReqDto timeDto : groupDto.getGroupTimeReqDtos()){
-                System.out.println(timeDto.getEndTime());
-                System.out.println(timeDto.getStartTime());
                 groupTimeRepository.save(timeDto.toEntity(createdGroup));
             }
         }
 
         return createdLecture;
     }
-
 
     // Update: limitPeople=0
 //    public void lectureUpdate(LectureUpdateReqDto lectureUpdateReqDto, List<LectureGroupReqDto> lectureGroupReqDtos){
@@ -223,10 +236,14 @@ public class LectureService {
 
         // 강의 상태를 업데이트하고 저장
         lecture.updateStatus(newStatus);
+        if(newStatus.equals(Status.ADMIT)){
+            getGroupTimes(statusUpdateDto.getLectureId());   
+        }
         lectureRepository.save(lecture);
     }
 
     @KafkaListener(topics = "lecture-status-update", groupId = "lecture-group", containerFactory = "kafkaListenerContainerFactory")
+    @Transactional
     public void lectureStatusUpdateFromKafka(String message) {
         try {
 //            System.out.println("수신된 Kafka 메시지: " + message);
@@ -246,8 +263,46 @@ public class LectureService {
 //            System.out.println("Kafka 메시지 처리 완료: " + statusUpdateDto);
         } catch (JsonProcessingException e) {
             System.err.println("Kafka 메시지 변환 중 오류 발생: " + e.getMessage());
-        } catch (Exception e) {
-            System.err.println("Lecture 상태 업데이트 중 오류 발생: " + e.getMessage());
         }
+    }
+
+    public List<GroupTimeResDto> getGroupTimes(Long lectureId){
+        Lecture lecture = lectureRepository.findById(lectureId).orElseThrow(
+                ()-> new EntityNotFoundException("강의 정보 불러오기 실패"));
+        List<LectureGroup> lectureGroups = lecture.getLectureGroups();
+
+        List<GroupTimeResDto> groupTimesDto = new ArrayList<>();
+
+        for(LectureGroup lectureGroup: lectureGroups){
+            for(GroupTime groupTime: lectureGroup.getGroupTimes()){
+                GroupTimeResDto groupTimeResDto = GroupTimeResDto.builder()
+                        .memberId(lecture.getMemberId())
+                        .groupTimeId(groupTime.getId())
+                        .lectureGroupId(lectureGroup.getId())
+                        .lectureType(lecture.getLectureType().toString())
+                        .lectureDay(groupTime.getLectureDay().name()) // MON, TUE, 등
+                        .startTime(groupTime.getStartTime().toString()) // HH:mm
+                        .endTime(groupTime.getEndTime().toString()) // HH:mm
+                        .startDate(lectureGroup.getStartDate().toString()) // 강의 시작 날짜
+                        .endDate(lectureGroup.getEndDate().toString()) // 강의 종료 날짜
+                        .schedulerTitle(lectureGroup.getLecture().getTitle()) // 강의 제목을 일정 제목으로 설정
+                        .alertYn('N') // 기본값 'N'
+                        .build();
+
+                groupTimesDto.add(groupTimeResDto);
+            }
+        }
+
+        try {
+            String message = objectMapper.writeValueAsString(groupTimesDto);
+
+            kafkaTemplate.send("schedule-update", message);  // JSON 문자열 전송
+
+            System.out.println("Kafka 메시지 전송됨: " + message);
+        } catch (JsonProcessingException e) {
+            System.err.println("Kafka 메시지 변환 및 전송 실패: " + e.getMessage());
+        }
+
+        return groupTimesDto;
     }
 }

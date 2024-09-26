@@ -1,5 +1,11 @@
 package com.tweety.SwithT.lecture.domain;
 
 public enum LectureDay {
-    MON, TUE, WED, THU, FRI, SAT, SUN
+    MONDAY,
+    TUESDAY,
+    WEDNESDAY,
+    THURSDAY,
+    FRIDAY,
+    SATURDAY,
+    SUNDAY;
 }
