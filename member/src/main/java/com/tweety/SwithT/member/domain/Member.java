@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import com.tweety.SwithT.member.dto.MemberInfoResDto;
 import com.tweety.SwithT.member.dto.MemberUpdateDto;
+import com.tweety.SwithT.review.domain.Review;
 import com.tweety.SwithT.scheduler.domain.Scheduler;
+import com.tweety.SwithT.withdrawal.domain.WithdrawalRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,6 +14,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -25,33 +28,35 @@ public class Member extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // schedulers 연관 관계
+    @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
+    @Builder.Default
+    private List<Scheduler> schedulers = new ArrayList<>();
+    // 출금 연관 관계
+    @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
+    @Builder.Default
+    private List<WithdrawalRequest> withdrawalRequests = new ArrayList<>();
+    // 리뷰 연관 관계 필드
+    @OneToMany(mappedBy = "writerId", cascade = CascadeType.PERSIST)
+    @Builder.Default
+    private List<Review> reviews = new ArrayList<>();
+
     @Column(nullable = false, unique = true)
     private String email;
-
     @Column(nullable = true)
     private String password;
-
     @Column(nullable = true) //동명이인 고려
     private String name;
-
-//    닉네임 주석 처리
-//    @Column(nullable = false, unique = true)
-//    private String nickName;
-
     @Column(nullable = false)
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate birthday;
-
     @Column(nullable = false)
     private String phoneNumber;
-
     @Column(nullable = true)
     private String address;
-
     @Column(nullable = true)
     private String profileImage;
-
-    //튜터 컬럼, 자기소개 컬럼 추가
+    //튜터 컬럼
     @Column(nullable = true)
     private String introduce;
     //튜터 컬럼
@@ -63,8 +68,8 @@ public class Member extends BaseTimeEntity {
     private BigDecimal avgScore = BigDecimal.valueOf(0.0);
     //튜터 컬럼
     @Builder.Default
-    @Column(nullable = true)
-    Long availableMoney = 0L;
+    @Column(nullable = true) //출금 요청 테스트를 위해 금액 올림.
+    private Long availableMoney = 1000000L;
     // default MAN으로 설정
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -75,9 +80,9 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false)
     private Role role = Role.TUTEE;
 
-    // schedulers 연관관계
-    @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
-    private List<Scheduler> schedulers;
+
+
+
 
 
     // 내 정보 데이터 FromEntity 메서드
@@ -110,6 +115,11 @@ public class Member extends BaseTimeEntity {
     public Member imageUpdate(String imgUrl){
         this.profileImage = imgUrl;
         return this;
+    }
+
+    public void balanceUpdate(Long amount) {
+        this.availableMoney -= amount;
+        System.out.println("잔액 계산 후 금액 :"+this.availableMoney);
     }
 
 }
