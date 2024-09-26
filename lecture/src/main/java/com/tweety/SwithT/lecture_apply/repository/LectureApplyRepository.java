@@ -12,4 +12,6 @@ import java.util.Optional;
 public interface LectureApplyRepository extends JpaRepository<LectureApply, Long> {
 
     List<LectureApply> findByMemberIdAndLectureGroup(Long memberId, LectureGroup lectureGroup);
+
+    Optional<LectureApply> findByLectureGroupId(Long lectureGroupId);
 }

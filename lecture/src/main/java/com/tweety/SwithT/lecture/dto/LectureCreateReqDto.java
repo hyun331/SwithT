@@ -29,8 +29,6 @@ public class LectureCreateReqDto {
 
     private LectureType lectureType;
 
-
-
     public Lecture toEntity(Long memberId){
         return Lecture.builder()
                 .memberId(memberId)

@@ -79,4 +79,18 @@ public class Lecture extends BaseTimeEntity {
     @Builder.Default
     private List<LectureGroup> lectureGroups = new ArrayList<>();
 
+    // update
+    public void updateTitle(String title){
+        this.title = title;
+    }
+    public void updateContents(String contents){
+        this.contents = contents;
+    }
+    public void updateImage(String image){
+        this.image = image;
+    }
+    public void updateCategory(Category category){
+        this.category = category;
+    }
+
 }

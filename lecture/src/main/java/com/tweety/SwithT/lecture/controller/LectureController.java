@@ -12,6 +12,8 @@ import com.tweety.SwithT.lecture.dto.LectureSearchDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 public class LectureController {
@@ -62,6 +64,38 @@ public class LectureController {
 //    @GetMapping("/single-lecture-apply-list")
 //    public ResponseEntity<?> showSingleLectureApplyList
 
+    // 강의 수정
+    @PostMapping("/update/{id}")
+    public ResponseEntity<?> lectureUpdate(@PathVariable Long id, @RequestBody LectureUpdateReqDto dto){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 업데이트", lectureService.lectureUpdate(id, dto));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+    // 강의 삭제
+    //// 강의, 강의 그룹, 그룹 시간 삭제
+    @PostMapping("/delete/{id}")
+    public ResponseEntity<?> lectureDelete(@PathVariable Long id){
+        lectureService.lectureDelete(id);
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 삭제", id);
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+    // 강의 그룹 수정
+    @PostMapping("/update/lecture-group/{id}")
+    public ResponseEntity<?> lectureGroupUpdate(@PathVariable Long id, @RequestBody LectureGroupReqDto dto){
+        lectureService.lectureGroupUpdate(id, dto);
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 그룹 업데이트", id);
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+    // 강의 그룹 삭제
+    ////  강의 그룹, 그룹 시간 삭제
+    @PostMapping("/delete/lecture-group/{id}")
+    public ResponseEntity<?> lectureGroupDelete(@PathVariable Long id){
+        lectureService.lectureGroupDelete(id);
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 그룹 삭제", id);
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
 
 
 }
