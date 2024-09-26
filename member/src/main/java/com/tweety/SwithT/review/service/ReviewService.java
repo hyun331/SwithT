@@ -44,25 +44,27 @@ public class ReviewService {
         return review;
     }
 
+    @Transactional(readOnly = true)
     public Page<ReviewListResDto> getReviews(Pageable pageable) {
         Page<Review> reviews = reviewRepository.findAll(pageable);
         return reviews.map(Review::fromEntity);
     }
 
-    public Review updateReview(Long id,ReviewUpdateDto dto) {
+    public ReviewUpdateDto updateReview(Long id, ReviewUpdateDto updateDto) {
+
+        Member member = memberRepository
+                .findById(Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName()))
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 회원 정보 입니다."));
 
         Review review = reviewRepository
-                .findById(Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName()))
-                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 리뷰 입니다."));
+                .findById(id).orElseThrow(() -> new EntityNotFoundException("존재하지 않는 리뷰 입니다."));
 
-        if (!review.getId().equals(id)) {
+        if ( !review.getWriterId().getId().equals(member.getId())) {
             throw new IllegalArgumentException("본인의 리뷰만 수정할 수 있습니다.");
         }
 
-        review.updateReview(dto);
-        Review reviewResult = reviewRepository.save(review);
-
-        return reviewResult;
+        review.updateReview(updateDto);
+        return updateDto;
     }
 
 }
