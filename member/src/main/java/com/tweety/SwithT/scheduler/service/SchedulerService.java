@@ -94,6 +94,7 @@ public class SchedulerService {
     }
 
     public Scheduler addSchedule(ScheduleCreateDto dto){
+
         Member member = memberRepository.findById(
                 Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName())).orElseThrow(
                 ()-> new EntityNotFoundException("존재하지 않는 회원 정보입니다."));

@@ -29,10 +29,9 @@ public class Review {
     @JoinColumn(name = "tutor_id",nullable = false)
     private Member tutorId;
 
-
     @Builder.Default
     @Column(precision = 2, scale = 1, nullable = false)
-    private BigDecimal star = BigDecimal.valueOf(0.0);
+    private BigDecimal star;
 
     @Column(nullable = false)
     private String title;
