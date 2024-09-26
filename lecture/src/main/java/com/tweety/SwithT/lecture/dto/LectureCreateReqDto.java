@@ -14,8 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LectureCreateReqDto {
-//    private Long memberId;
-    private String memberName;
+
     // 강의 제목
     private String title;
     // 강의 정보
@@ -29,10 +28,10 @@ public class LectureCreateReqDto {
 
     private LectureType lectureType;
 
-    public Lecture toEntity(Long memberId){
+    public Lecture toEntity(Long memberId, String memberName){
         return Lecture.builder()
                 .memberId(memberId)
-                .memberName(this.memberName)    // 수정 필요함
+                .memberName(memberName)
                 .title(this.title)
                 .contents(this.contents)
                 .image(this.image)

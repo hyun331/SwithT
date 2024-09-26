@@ -1,5 +1,8 @@
 package com.tweety.SwithT.lecture.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tweety.SwithT.common.dto.CommonResDto;
+import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
 import com.tweety.SwithT.lecture.dto.*;
@@ -42,14 +45,21 @@ public class LectureService {
     private final LectureGroupRepository lectureGroupRepository;
     private final GroupTimeRepository groupTimeRepository;
     private final LectureApplyRepository lectureApplyRepository;
+    private final MemberFeign memberFeign;
+
 
     // Create
     @Transactional
     public Lecture lectureCreate(LectureCreateReqDto lectureCreateReqDto, List<LectureGroupReqDto> lectureGroupReqDtos){
         Long memberId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
 
+        CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
+        ObjectMapper objectMapper = new ObjectMapper();
+        MemberNameResDto memberNameResDto = objectMapper.convertValue(commonResDto.getResult(), MemberNameResDto.class);
+        String memberName = memberNameResDto.getName();
+
         // Lecture 정보 저장
-        Lecture createdLecture = lectureRepository.save(lectureCreateReqDto.toEntity(memberId));
+        Lecture createdLecture = lectureRepository.save(lectureCreateReqDto.toEntity(memberId, memberName));
 
         for (LectureGroupReqDto groupDto : lectureGroupReqDtos){
             // Lecture Group 정보 저장
