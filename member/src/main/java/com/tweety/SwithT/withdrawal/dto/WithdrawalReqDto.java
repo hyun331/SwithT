@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class WithdrwalReqDto {
+public class WithdrawalReqDto {
 
     private Long memberId;
     @Nullable
