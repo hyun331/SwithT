@@ -5,6 +5,7 @@ import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
 import com.tweety.SwithT.lecture.domain.LectureType;
+import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyListDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,6 +48,15 @@ public class LectureApply extends BaseTimeEntity {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     private Status status = Status.STANDBY;
+
+
+    public SingleLectureApplyListDto fromEntityToSingleLectureApplyListDto(){
+        return SingleLectureApplyListDto.builder()
+                .tuteeName(this.memberName)
+                .memberId(this.memberId)
+                .applyId(this.id)
+                .build();
+    }
 
 
 }

@@ -4,12 +4,11 @@ import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.service.LectureApplyService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,6 +24,14 @@ public class LectureApplyController {
         CommonResDto commonResDto = new CommonResDto(HttpStatus.CREATED, "튜티의 과외 신청 완료", lectureApplyService.tuteeSingleLectureApply(dto));
         return new ResponseEntity<>(commonResDto, HttpStatus.CREATED);
 
+    }
+
+    //    과외 신청자 리스트
+    @PreAuthorize("hasRole('TUTOR')")
+    @GetMapping("/single-lecture-apply-list/{id}")
+    public ResponseEntity<?> showSingleLectureApplyList(@PathVariable Long id, Pageable pageable){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "튜티의 과외 신청자 리스트", lectureApplyService.singleLectureApplyList(id, pageable));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
 }

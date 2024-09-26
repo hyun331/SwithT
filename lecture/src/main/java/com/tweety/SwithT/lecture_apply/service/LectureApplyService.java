@@ -11,15 +11,19 @@ import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyAfterResDto;
+import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyListDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -80,6 +84,23 @@ public class LectureApplyService {
 
         return SingleLectureApplyAfterResDto.builder().lectureTitle(lecture.getTitle()).build();
 
+
+    }
+
+    //튜터가 보는 강의그룹 신청자 리스트
+    public Page<SingleLectureApplyListDto> singleLectureApplyList(Long id, Pageable pageable) {
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+
+        LectureGroup lectureGroup = lectureGroupRepository.findById(id).orElseThrow(()->{
+            throw new EntityNotFoundException("해당 강의 그룹이 없습니다");
+        });
+        Lecture lecture = lectureGroup.getLecture();
+        if(lecture.getMemberId() != memberId){  //소유자가 아닌 경우
+            throw new IllegalArgumentException("접근할 수 없는 강의 그룹입니다");
+        }
+        Page<LectureApply> lectureApplies = lectureApplyRepository.findByLectureGroup(lectureGroup, pageable);
+        lectureApplies.stream().filter(a-> a.getStatus()==Status.WAITING || a.getStatus()==Status.STANDBY);
+        return lectureApplies.map(a->a.fromEntityToSingleLectureApplyListDto());
 
     }
 }
