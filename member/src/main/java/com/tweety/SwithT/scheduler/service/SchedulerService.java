@@ -7,9 +7,11 @@ import com.tweety.SwithT.member.domain.Member;
 import com.tweety.SwithT.member.repository.MemberRepository;
 import com.tweety.SwithT.scheduler.domain.Scheduler;
 import com.tweety.SwithT.scheduler.dto.GroupTimeResDto;
+import com.tweety.SwithT.scheduler.dto.ScheduleCreateDto;
 import com.tweety.SwithT.scheduler.repository.SchedulerRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Transactional
 public class SchedulerService {
 
     private final SchedulerRepository schedulerRepository;
@@ -33,7 +36,6 @@ public class SchedulerService {
     }
 
     @KafkaListener(topics = "schedule-update", groupId = "member-group", containerFactory = "kafkaListenerContainerFactory")
-    @Transactional
     public void updateScheduleFromKafka(String message) {
         try {
             System.out.println("수신된 Kafka 메시지: " + message);
@@ -70,11 +72,12 @@ public class SchedulerService {
                             // 요일이 일치하면 스케줄러 생성
                             Scheduler scheduler = Scheduler.builder()
                                     .title(groupTimeResDto.getSchedulerTitle())
-                                    .schedulerDateTime(date)
-                                    .localTime(LocalTime.parse(groupTimeResDto.getStartTime()))  // 강의 시작 시간 설정
+                                    .schedulerDate(date)
+                                    .schedulerTime(LocalTime.parse(groupTimeResDto.getStartTime()))  // 강의 시작 시간 설정
                                     .content(groupTimeResDto.getSchedulerTitle() + "가 있는 날입니다.")
                                     .alertYn(groupTimeResDto.getAlertYn())
                                     .member(member)
+                                    .lectureGroupId(groupTimeResDto.getLectureGroupId())
                                     .build();
 
                             schedulers.add(scheduler);
@@ -88,5 +91,30 @@ public class SchedulerService {
         } catch (Exception e) {
             System.err.println("Lecture 상태 업데이트 중 오류 발생: " + e.getMessage());
         }
+    }
+
+    public Scheduler addSchedule(ScheduleCreateDto dto){
+        Member member = memberRepository.findById(
+                Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName())).orElseThrow(
+                ()-> new EntityNotFoundException("존재하지 않는 회원 정보입니다."));
+
+        Scheduler scheduler = dto.toEntity(member);
+        schedulerRepository.save(scheduler);
+
+        return scheduler;
+    }
+
+    public void deleteSchedule(Long schedulerId){
+        Member member = memberRepository.findById(
+                Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName())).orElseThrow(
+                ()-> new EntityNotFoundException("존재하지 않는 회원 정보입니다."));
+
+        Scheduler scheduler = schedulerRepository.findById(schedulerId).orElseThrow(
+                ()-> new EntityNotFoundException("스케줄 정보 불러오기에 실패했습니다"));
+        if(!scheduler.getMember().equals(member)){
+            throw new IllegalArgumentException("접근 권한이 없습니다.");
+        }
+        scheduler.deleteSchedule();
+        schedulerRepository.save(scheduler);
     }
 }
