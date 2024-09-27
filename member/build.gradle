@@ -46,6 +46,13 @@ dependencies {
 	implementation 'org.springframework.kafka:spring-kafka'
 //	feignClient 의존성
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+//	구글 SMTP 관련 의존성
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+//  sms 전송 의존성
+	implementation "com.twilio.sdk:twilio:8.31.1"
+//  rabbitMQ 의존성
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2' // Jackson 버전에 맞게 추가
 }
 
 dependencyManagement {
