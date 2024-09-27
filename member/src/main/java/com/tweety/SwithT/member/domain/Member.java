@@ -126,4 +126,10 @@ public class Member extends BaseTimeEntity {
         System.out.println("잔액 계산 후 금액 :"+this.availableMoney);
     }
 
+    // avgScore 설정 메서드
+    public void setAvgScore(BigDecimal avgScore) {
+        if (avgScore != null) {
+            this.avgScore = avgScore.setScale(1, BigDecimal.ROUND_HALF_UP); // 소수점 자리 맞추기
+        }
+    }
 }

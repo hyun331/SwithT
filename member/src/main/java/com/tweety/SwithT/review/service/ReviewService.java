@@ -16,6 +16,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 @Transactional
 @Service
 public class ReviewService {
@@ -65,6 +68,20 @@ public class ReviewService {
 
         review.updateReview(updateDto);
         return updateDto;
+    }
+
+    @Transactional
+    public void updateAvgScores() {
+
+        List<Member> tutors = memberRepository.findAll(); // 모든 튜터를 가져오면 됩니다.
+        for (Member tutor : tutors) {
+            // 튜터의 평균 점수를 계산
+            BigDecimal avgScore = reviewRepository.findAverageStarByTutorId(tutor.getId());
+            if (avgScore != null) {
+                tutor.setAvgScore(avgScore);  // setAvgScore는 @Setter가 필요합니다.
+                memberRepository.save(tutor);  // 평균 점수를 업데이트
+            }
+        }
     }
 
 }
