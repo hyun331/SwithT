@@ -3,6 +3,7 @@ package com.tweety.SwithT.member.controller;
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.member.service.MemberService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,7 @@ public class MemberLectureController {
 
     private final MemberService memberService;
 
+    @Autowired
     public MemberLectureController(MemberService memberService) {
         this.memberService = memberService;
     }

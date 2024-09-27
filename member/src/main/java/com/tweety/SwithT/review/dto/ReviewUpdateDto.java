@@ -9,6 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReviewResDto {
+public class ReviewUpdateDto {
+
+    private String title;
+    private String contents;
 
 }

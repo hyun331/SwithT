@@ -4,12 +4,14 @@ import com.tweety.SwithT.member.domain.Gender;
 import com.tweety.SwithT.member.domain.Member;
 import com.tweety.SwithT.member.domain.Role;
 import jakarta.annotation.Nullable;
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
@@ -55,6 +57,10 @@ public class MemberSaveReqDto {
     @Nullable
     private String education;
 
+    @Builder.Default
+    @Column(precision = 2, scale = 1, nullable = true)
+    private BigDecimal avgScore = BigDecimal.valueOf(0.0);
+
 //  enum 타입에는 @NotEmpty 적용할 수 없음. 적용 시 에러 발생.
 //    @NotEmpty(message = "성별은 필수 항목 입니다.")
     private Gender gender;
@@ -66,7 +72,6 @@ public class MemberSaveReqDto {
         return Member.builder()
 
                 .name(this.name)
-//                .nickName(this.nickName)
                 .email(this.email)
                 .password(encodedPassword)
                 .birthday(this.birthday)
@@ -77,6 +82,7 @@ public class MemberSaveReqDto {
                 .introduce(this.introduce)
                 .gender(this.gender)
                 .role(this.role)
+                .avgScore(this.avgScore)
                 .build();
 
     }
