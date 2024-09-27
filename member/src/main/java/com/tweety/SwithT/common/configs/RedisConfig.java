@@ -39,6 +39,7 @@ public class RedisConfig {
 		return new LettuceConnectionFactory(configuration);
 	}
 
+=======
 	@Bean
 	@Qualifier("2")
 	public RedisTemplate<String, Object> redisTemplate(@Qualifier("2") RedisConnectionFactory redisConnectionFactory) {
@@ -69,6 +70,26 @@ public class RedisConfig {
 		redisTemplate.setHashKeySerializer(new StringRedisSerializer());
 		redisTemplate.setHashValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper())); // Hash 값에도 동일 적용
 		redisTemplate.setConnectionFactory(redisConnectionFactory);
+		return redisTemplate;
+	}
+
+	@Bean
+	@Qualifier("3")
+	public RedisConnectionFactory emailConnectionFactory() {
+		RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration();
+		configuration.setHostName(host);
+		configuration.setPort(port);
+		configuration.setDatabase(2);
+		return new LettuceConnectionFactory(configuration);
+	}
+
+	@Bean
+	@Qualifier("3")
+	public RedisTemplate<String, Object> emailRedisTemplate() {
+		RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+		redisTemplate.setKeySerializer(new StringRedisSerializer());
+		redisTemplate.setValueSerializer(new StringRedisSerializer());
+		redisTemplate.setConnectionFactory(emailConnectionFactory());
 		return redisTemplate;
 	}
 }
