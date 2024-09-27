@@ -6,19 +6,6 @@ import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.common.service.S3Service;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tweety.SwithT.common.dto.CommonResDto;
-import com.tweety.SwithT.common.service.MemberFeign;
-import com.tweety.SwithT.common.service.S3Service;
-import com.tweety.SwithT.lecture.domain.Lecture;
-import com.tweety.SwithT.lecture.domain.LectureGroup;
-import com.tweety.SwithT.lecture.dto.*;
-import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
-import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
-import com.tweety.SwithT.lecture.repository.LectureRepository;
-import com.tweety.SwithT.lecture_apply.domain.LectureApply;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import com.tweety.SwithT.lecture.domain.GroupTime;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
@@ -26,6 +13,7 @@ import com.tweety.SwithT.lecture.dto.*;
 import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
+import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -190,42 +178,42 @@ public class LectureService {
             throw new IllegalArgumentException("로그인한 유저는 해당 과외의 튜터가 아닙니다.");
         }
 
-    Specification<LectureGroup> specification = new Specification<LectureGroup>() {
-        @Override
-        public Predicate toPredicate(Root<LectureGroup> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
-            List<Predicate> predicates = new ArrayList<>();
-            predicates.add(criteriaBuilder.equal(root.get("lecture"), lecture));
+        Specification<LectureGroup> specification = new Specification<LectureGroup>() {
+            @Override
+            public Predicate toPredicate(Root<LectureGroup> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> predicates = new ArrayList<>();
+                predicates.add(criteriaBuilder.equal(root.get("lecture"), lecture));
 
-            if(isAvailable != null && !isAvailable.isEmpty()){
-                predicates.add(criteriaBuilder.equal(root.get("isAvailable"), isAvailable));
+                if(isAvailable != null && !isAvailable.isEmpty()){
+                    predicates.add(criteriaBuilder.equal(root.get("isAvailable"), isAvailable));
+                }
+                Predicate[] predicateArr = new Predicate[predicates.size()];
+                for(int i=0; i<predicateArr.length; i++){
+                    predicateArr[i] = predicates.get(i);
+                }
+                return criteriaBuilder.and(predicateArr);
             }
-            Predicate[] predicateArr = new Predicate[predicates.size()];
-            for(int i=0; i<predicateArr.length; i++){
-                predicateArr[i] = predicates.get(i);
+        };
+        Page<LectureGroup> lectureGroups = lectureGroupRepository.findAll(specification, pageable);
+        Page<LectureGroupListResDto> lectureGroupResDtos = lectureGroups.map((a)->{
+            List<GroupTime> groupTimeList = groupTimeRepository.findByLectureGroupId(a.getId());
+            StringBuilder groupTitle = new StringBuilder();
+            for(GroupTime groupTime : groupTimeList){
+                groupTitle.append(groupTime.getLectureDay()+" "+groupTime.getStartTime()+"-"+groupTime.getEndTime()+"  /  ");
             }
-            return criteriaBuilder.and(predicateArr);
-        }
-    };
-    Page<LectureGroup> lectureGroups = lectureGroupRepository.findAll(specification, pageable);
-    Page<LectureGroupListResDto> lectureGroupResDtos = lectureGroups.map((a)->{
-        List<GroupTime> groupTimeList = groupTimeRepository.findByLectureGroupId(a.getId());
-        StringBuilder groupTitle = new StringBuilder();
-        for(GroupTime groupTime : groupTimeList){
-            groupTitle.append(groupTime.getLectureDay()+" "+groupTime.getStartTime()+"-"+groupTime.getEndTime()+"  /  ");
-        }
 
-        if (groupTitle.length() > 0) {
-            groupTitle.setLength(groupTitle.length() - 5);
-        }
+            if (groupTitle.length() > 0) {
+                groupTitle.setLength(groupTitle.length() - 5);
+            }
 
-        return LectureGroupListResDto.builder()
-                .title(groupTitle.toString())
-                .lectureGroupId(a.getId())
-                .build();
-    });
+            return LectureGroupListResDto.builder()
+                    .title(groupTitle.toString())
+                    .lectureGroupId(a.getId())
+                    .build();
+        });
 
-    return lectureGroupResDtos;
-}
+        return lectureGroupResDtos;
+    }
 
     // 강의 수정
     @Transactional
@@ -324,9 +312,6 @@ public class LectureService {
         for (GroupTime groupTime : lectureGroup.getGroupTimes()){
             groupTime.updateDelYn();
         }
-    }
-
-        return lectureGroupResDtos;
     }
 
 //    @KafkaListener(topics = "lecture-status-update", groupId = "lecture-group",
