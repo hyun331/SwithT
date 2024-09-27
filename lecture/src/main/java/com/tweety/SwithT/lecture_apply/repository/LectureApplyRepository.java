@@ -1,5 +1,6 @@
 package com.tweety.SwithT.lecture_apply.repository;
 
+import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import org.springframework.data.domain.Page;
@@ -16,4 +17,6 @@ public interface LectureApplyRepository extends JpaRepository<LectureApply, Long
     List<LectureApply> findByMemberIdAndLectureGroup(Long memberId, LectureGroup lectureGroup);
 
     Page<LectureApply> findByLectureGroup(LectureGroup lectureGroup, Pageable pageable);
+
+    Optional<LectureApply> findByLectureGroupAndStatus(LectureGroup lectureGroup, Status status);
 }

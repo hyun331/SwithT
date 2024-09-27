@@ -59,4 +59,9 @@ public class LectureApply extends BaseTimeEntity {
     }
 
 
+    public void updateStatus(Status updateStatus){
+        this.status = updateStatus;
+    }
+
+
 }
