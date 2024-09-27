@@ -20,7 +20,7 @@ public class LectureGroupReqDto {
 
     private Integer price;
 
-    private Integer limit;
+    private Integer limitPeople;
 
     private String latitude;
 
@@ -30,12 +30,14 @@ public class LectureGroupReqDto {
 
     private LocalDate endDate;
 
+    private List<GroupTimeReqDto> groupTimeReqDtos;
 
     public LectureGroup toEntity(Lecture lecture) {
         return LectureGroup.builder()
                 .lecture(lecture)
                 .price(this.price)
                 .isAvailable("Y")
+                .limitPeople(this.limitPeople)
                 .latitude(this.latitude)
                 .longitude(this.longitude)
                 .startDate(this.startDate)
@@ -43,6 +45,6 @@ public class LectureGroupReqDto {
                 .build();
     }
 
-    private List<GroupTimeReqDto> groupTimeReqDtos;
+
 
 }

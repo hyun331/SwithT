@@ -1,6 +1,6 @@
 package com.tweety.SwithT.member.controller;
 
-import com.tweety.SwithT.common.Auth.JwtTokenProvider;
+import com.tweety.SwithT.common.auth.JwtTokenProvider;
 import com.tweety.SwithT.common.dto.CommonErrorDto;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.member.domain.Member;
@@ -8,8 +8,6 @@ import com.tweety.SwithT.member.dto.*;
 import com.tweety.SwithT.member.service.MemberService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -110,6 +108,12 @@ public class MemberController {
         System.out.println("Refresh Token: " + refreshToken);
 
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+    @GetMapping("/get-token")
+    public String token(){
+        System.out.println(SecurityContextHolder.getContext());
+        return (String) SecurityContextHolder.getContext().getAuthentication().getCredentials();
     }
 
     @PostMapping("/refresh-token")

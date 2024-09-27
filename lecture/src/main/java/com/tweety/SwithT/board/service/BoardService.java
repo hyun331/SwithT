@@ -78,8 +78,4 @@ public class BoardService {
         return BoardDeleteResponse.fromEntity(board);
     }
 
-
-
-
-
 }

@@ -1,7 +1,7 @@
 package com.tweety.SwithT.common.configs;
 
 
-import com.tweety.SwithT.common.Auth.JwtAuthFilter;
+import com.tweety.SwithT.common.auth.JwtAuthFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

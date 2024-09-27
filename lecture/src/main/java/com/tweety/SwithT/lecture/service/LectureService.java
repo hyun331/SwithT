@@ -1,20 +1,28 @@
 package com.tweety.SwithT.lecture.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tweety.SwithT.common.domain.Status;
+import com.tweety.SwithT.common.dto.CommonResDto;
+import com.tweety.SwithT.common.service.MemberFeign;
+import com.tweety.SwithT.common.service.S3Service;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tweety.SwithT.common.dto.CommonResDto;
+import com.tweety.SwithT.common.service.MemberFeign;
+import com.tweety.SwithT.common.service.S3Service;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
 import com.tweety.SwithT.lecture.dto.*;
 import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
+import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.tweety.SwithT.lecture.domain.GroupTime;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
-import com.tweety.SwithT.lecture.dto.LectureDetailResDto;
-import com.tweety.SwithT.lecture.dto.LectureGroupListResDto;
-import com.tweety.SwithT.lecture.dto.LectureListResDto;
-import com.tweety.SwithT.lecture.dto.LectureSearchDto;
+import com.tweety.SwithT.lecture.dto.*;
 import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
@@ -27,43 +35,64 @@ import jakarta.persistence.criteria.Root;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class LectureService {
+
     private final LectureRepository lectureRepository;
     private final LectureGroupRepository lectureGroupRepository;
     private final GroupTimeRepository groupTimeRepository;
     private final LectureApplyRepository lectureApplyRepository;
+    private final ObjectMapper objectMapper;
+    private final KafkaTemplate kafkaTemplate;
+    private final MemberFeign memberFeign;
+    private final S3Service s3Service;
 
+    public LectureService(LectureRepository lectureRepository, LectureGroupRepository lectureGroupRepository, GroupTimeRepository groupTimeRepository, LectureApplyRepository lectureApplyRepository, ObjectMapper objectMapper, KafkaTemplate kafkaTemplate, MemberFeign memberFeign, S3Service s3Service){
+
+        this.lectureRepository = lectureRepository;
+        this.lectureGroupRepository = lectureGroupRepository;
+        this.groupTimeRepository = groupTimeRepository;
+        this.lectureApplyRepository = lectureApplyRepository;
+        this.objectMapper = objectMapper;
+        this.kafkaTemplate = kafkaTemplate;
+        this.memberFeign = memberFeign;
+        this.s3Service = s3Service;
+    }
     // Create
     @Transactional
-    public Lecture lectureCreate(LectureCreateReqDto lectureCreateReqDto, List<LectureGroupReqDto> lectureGroupReqDtos){
-        Long memberId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
+    public Lecture lectureCreate(LectureCreateReqDto lectureCreateReqDto, List<LectureGroupReqDto> lectureGroupReqDtos, MultipartFile imgFile){
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+
+        CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
+        ObjectMapper objectMapper = new ObjectMapper();
+        MemberNameResDto memberNameResDto = objectMapper.convertValue(commonResDto.getResult(), MemberNameResDto.class);
+        String memberName = memberNameResDto.getName();
+
+        String imageUrl = s3Service.uploadFile(imgFile, "lecture");
 
         // Lecture 정보 저장
-        Lecture createdLecture = lectureRepository.save(lectureCreateReqDto.toEntity(memberId));
+        Lecture createdLecture = lectureRepository.save(lectureCreateReqDto.toEntity(memberId, memberName, imageUrl));
 
         for (LectureGroupReqDto groupDto : lectureGroupReqDtos){
             // Lecture Group 정보 저장
             LectureGroup createdGroup = lectureGroupRepository.save(groupDto.toEntity(createdLecture));
-            System.out.println(createdGroup.getId());
             for (GroupTimeReqDto timeDto : groupDto.getGroupTimeReqDtos()){
-                System.out.println(timeDto.getEndTime());
-                System.out.println(timeDto.getStartTime());
                 groupTimeRepository.save(timeDto.toEntity(createdGroup));
             }
         }
 
         return createdLecture;
     }
-
 
     // Update: limitPeople=0
 //    public void lectureUpdate(LectureUpdateReqDto lectureUpdateReqDto, List<LectureGroupReqDto> lectureGroupReqDtos){
@@ -201,4 +230,199 @@ public class LectureService {
 
     return lectureGroupResDtos;
 }
+
+    // 강의 수정
+    @Transactional
+    public LectureDetailResDto lectureUpdate(Long id, LectureUpdateReqDto dto){
+        Lecture lecture = lectureRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Lecture is not found"));
+
+        if (dto.getTitle() != null) {
+            lecture.updateTitle(dto.getTitle());
+        }
+        if (dto.getContents() != null) {
+            lecture.updateContents(dto.getContents());
+        }
+        if (dto.getImage() != null) {
+            lecture.updateImage(dto.getImage());
+        }
+        if (dto.getCategory() != null) {
+            lecture.updateCategory(dto.getCategory());
+        }
+        System.out.println(lecture.fromEntityToLectureDetailResDto());
+        return lecture.fromEntityToLectureDetailResDto();
+    }
+
+    // 강의 삭제
+    @Transactional
+    public void lectureDelete(Long lectureId) {
+        Lecture lecture = lectureRepository.findById(lectureId)
+                .orElseThrow(() -> new EntityNotFoundException("Lecture is not found"));
+
+        List<LectureGroup> lectureGroups = lectureGroupRepository.findByLectureId(lectureId);
+
+        for (LectureGroup group : lectureGroups) {
+            List<LectureApply> lectureApplies = group.getLectureApplies();
+
+            // LectureApply가 하나라도 존재한다면 삭제 불가
+            if (!lectureApplies.isEmpty()) {
+                throw new IllegalArgumentException("LectureApply가 존재하여 Lecture를 삭제할 수 없습니다.");
+            }
+        }
+
+        // 모든 LectureGroup의 LectureApply가 없을 경우, Lecture와 각각의 LectureGroup 삭제
+        lecture.updateDelYn();
+        for (LectureGroup group : lectureGroups) {
+            group.updateDelYn();
+            // LectureGroup의 GroupTime 삭제
+            for (GroupTime groupTime : group.getGroupTimes()){
+                groupTime.updateDelYn();
+            }
+        }
+    }
+
+    // 강의 그룹 수정
+    @Transactional
+    public void lectureGroupUpdate(Long lectureGroupId, LectureGroupReqDto dto){
+        LectureGroup lectureGroup = lectureGroupRepository.findById(lectureGroupId)
+                .orElseThrow(()->new EntityNotFoundException("Lecture group is not found"));
+
+        // LectureApply가 하나라도 존재한다면 수정 불가
+        if (!lectureGroup.getLectureApplies().isEmpty()) {
+            throw new IllegalArgumentException("LectureApply가 존재하여 Lecture를 삭제할 수 없습니다.");
+        }
+        if (dto.getPrice() != null) {
+            lectureGroup.updatePrice(dto.getPrice());
+        }
+        if (dto.getLimitPeople() != null) {
+            lectureGroup.updateLimitPeople(dto.getLimitPeople());
+        }
+        if (dto.getLatitude() != null && dto.getLongitude() != null) {
+            lectureGroup.updatePoint(dto.getLatitude(), dto.getLongitude());
+        }
+        if (dto.getStartDate() != null && dto.getEndDate() != null) {
+            lectureGroup.updateDate(dto.getStartDate(), dto.getEndDate());
+        }
+        if (dto.getGroupTimeReqDtos() != null){
+            for (GroupTime groupTime : groupTimeRepository.findByLectureGroupId(lectureGroupId)){
+                groupTime.updateDelYn();
+            }
+            for (GroupTimeReqDto timeDto : dto.getGroupTimeReqDtos()){
+                groupTimeRepository.save(timeDto.toEntity(lectureGroup));
+            }
+        }
+
+    }
+
+    // 강의 그룹 삭제
+    @Transactional
+    public void lectureGroupDelete(Long lectureGroupId){
+        LectureGroup lectureGroup = lectureGroupRepository.findById(lectureGroupId)
+                .orElseThrow(()->new EntityNotFoundException("Lecture group is not found"));
+
+        // LectureApply가 하나라도 존재한다면 삭제 불가
+        if (!lectureGroup.getLectureApplies().isEmpty()) {
+            throw new IllegalArgumentException("LectureApply가 존재하여 Lecture를 삭제할 수 없습니다.");
+        }
+        lectureGroup.updateDelYn();
+        for (GroupTime groupTime : lectureGroup.getGroupTimes()){
+            groupTime.updateDelYn();
+        }
+    }
+
+        return lectureGroupResDtos;
+    }
+
+//    @KafkaListener(topics = "lecture-status-update", groupId = "lecture-group",
+//            containerFactory = "kafkaListenerContainerFactory")
+//    public void lectureStatusUpdate(String message) throws JsonProcessingException {
+//        ObjectMapper objectMapper = new ObjectMapper();
+//
+//        LectureStatusUpdateDto statusUpdateDto = objectMapper.convertValue(
+//                message, LectureStatusUpdateDto.class);
+//        Lecture lecture = lectureRepository.findById(statusUpdateDto.getLectureId()).orElseThrow(
+//                ()-> new EntityNotFoundException("강의 정보 가져오기에 실패했습니다."));
+//        lecture.updateStatus(statusUpdateDto);
+//
+//    }
+
+    @Transactional
+    public void updateLectureStatus(LectureStatusUpdateDto statusUpdateDto) {
+        Lecture lecture = lectureRepository.findById(statusUpdateDto.getLectureId())
+                .orElseThrow(() -> new EntityNotFoundException("강의 정보 가져오기에 실패했습니다."));
+
+        // String으로 받은 status를 다시 Enum으로 변환
+        Status newStatus = Status.valueOf(statusUpdateDto.getStatus().toUpperCase());
+
+        // 강의 상태를 업데이트하고 저장
+        lecture.updateStatus(newStatus);
+        if(newStatus.equals(Status.ADMIT)){
+            getGroupTimes(statusUpdateDto.getLectureId());
+        }
+        lectureRepository.save(lecture);
+    }
+
+    @KafkaListener(topics = "lecture-status-update", groupId = "lecture-group", containerFactory = "kafkaListenerContainerFactory")
+    @Transactional
+    public void lectureStatusUpdateFromKafka(String message) {
+        try {
+//            System.out.println("수신된 Kafka 메시지: " + message);
+
+//            아래 코드 없으면 "{\"lectureId\":1,\"status\":\"ADMIT\"}" 이중 직렬화 되어있어 계속 에러 발생
+            if (message.startsWith("\"") && message.endsWith("\"")) {
+                // 이스케이프 문자와 이중 직렬화를 제거
+                message = message.substring(1, message.length() - 1).replace("\\", "");
+//                System.out.println("이중 직렬화 제거 후 메시지: " + message);
+            }
+
+            // JSON 메시지를 LectureStatusUpdateDto로 변환
+            LectureStatusUpdateDto statusUpdateDto = objectMapper.readValue(message, LectureStatusUpdateDto.class);
+
+            // 상태 업데이트
+            updateLectureStatus(statusUpdateDto);
+//            System.out.println("Kafka 메시지 처리 완료: " + statusUpdateDto);
+        } catch (JsonProcessingException e) {
+            System.err.println("Kafka 메시지 변환 중 오류 발생: " + e.getMessage());
+        }
+    }
+
+    public List<GroupTimeResDto> getGroupTimes(Long lectureId){
+        Lecture lecture = lectureRepository.findById(lectureId).orElseThrow(
+                ()-> new EntityNotFoundException("강의 정보 불러오기 실패"));
+        List<LectureGroup> lectureGroups = lecture.getLectureGroups();
+
+        List<GroupTimeResDto> groupTimesDto = new ArrayList<>();
+
+        for(LectureGroup lectureGroup: lectureGroups){
+            for(GroupTime groupTime: lectureGroup.getGroupTimes()){
+                GroupTimeResDto groupTimeResDto = GroupTimeResDto.builder()
+                        .memberId(lecture.getMemberId())
+                        .groupTimeId(groupTime.getId())
+                        .lectureGroupId(lectureGroup.getId())
+                        .lectureType(lecture.getLectureType().toString())
+                        .lectureDay(groupTime.getLectureDay().name()) // MON, TUE, 등
+                        .startTime(groupTime.getStartTime().toString()) // HH:mm
+                        .endTime(groupTime.getEndTime().toString()) // HH:mm
+                        .startDate(lectureGroup.getStartDate().toString()) // 강의 시작 날짜
+                        .endDate(lectureGroup.getEndDate().toString()) // 강의 종료 날짜
+                        .schedulerTitle(lectureGroup.getLecture().getTitle()) // 강의 제목을 일정 제목으로 설정
+                        .alertYn('N') // 기본값 'N'
+                        .build();
+
+                groupTimesDto.add(groupTimeResDto);
+            }
+        }
+
+        try {
+            String message = objectMapper.writeValueAsString(groupTimesDto);
+
+            kafkaTemplate.send("schedule-update", message);  // JSON 문자열 전송
+
+            System.out.println("Kafka 메시지 전송됨: " + message);
+        } catch (JsonProcessingException e) {
+            System.err.println("Kafka 메시지 변환 및 전송 실패: " + e.getMessage());
+        }
+
+        return groupTimesDto;
+    }
 }
