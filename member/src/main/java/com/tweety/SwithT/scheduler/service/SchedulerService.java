@@ -13,7 +13,6 @@ import com.tweety.SwithT.scheduler.dto.ScheduleUpdateDto;
 import com.tweety.SwithT.scheduler.repository.SchedulerAlertRepository;
 import com.tweety.SwithT.scheduler.repository.SchedulerRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +40,7 @@ public class SchedulerService {
         this.schedulerAlertRepository = schedulerAlertRepository;
     }
 
-    @KafkaListener(topics = "schedule-update", groupId = "member-group", containerFactory = "kafkaListenerContainerFactory")
+//    @KafkaListener(topics = "schedule-update", groupId = "member-group", containerFactory = "kafkaListenerContainerFactory")
     public void updateScheduleFromKafka(String message) {
         try {
 //            System.out.println("수신된 Kafka 메시지: " + message);
@@ -100,6 +99,7 @@ public class SchedulerService {
     }
 
     public Scheduler addSchedule(ScheduleCreateDto dto){
+
         Member member = memberRepository.findById(
                 Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName())).orElseThrow(
                 ()-> new EntityNotFoundException("존재하지 않는 회원 정보입니다."));

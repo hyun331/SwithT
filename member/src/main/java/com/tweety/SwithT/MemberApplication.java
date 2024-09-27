@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+@EnableScheduling//스케쥴러 어노테이션
 @SpringBootApplication
 @EnableFeignClients
 @EnableScheduling

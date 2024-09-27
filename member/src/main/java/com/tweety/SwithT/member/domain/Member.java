@@ -41,9 +41,14 @@ public class Member extends BaseTimeEntity {
     @Builder.Default
     private List<WithdrawalRequest> withdrawalRequests = new ArrayList<>();
 
+    // 리뷰 작성자 연관 관계 필드
     @OneToMany(mappedBy = "writerId", cascade = CascadeType.PERSIST)
     @Builder.Default
     private List<Review> reviews = new ArrayList<>();
+    // 튜터 연관 관계 필드
+    @OneToMany(mappedBy = "tutorId", cascade = CascadeType.PERSIST)
+    @Builder.Default
+    private List<Review> tutors = new ArrayList<>();
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -124,5 +129,12 @@ public class Member extends BaseTimeEntity {
 
     public void balanceUpdate(Long amount) {
         this.availableMoney -= amount;
+    }
+
+    // avgScore 설정 메서드
+    public void setAvgScore(BigDecimal avgScore) {
+        if (avgScore != null) {
+            this.avgScore = avgScore.setScale(1, BigDecimal.ROUND_HALF_UP); // 소수점 자리 맞추기
+        }
     }
 }
