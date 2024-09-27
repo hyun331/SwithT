@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import com.tweety.SwithT.member.domain.Member;
+import com.tweety.SwithT.scheduler.dto.ScheduleResDto;
 import com.tweety.SwithT.scheduler.dto.ScheduleUpdateDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -60,11 +61,27 @@ public class Scheduler extends BaseTimeEntity {
         this.title = dto.getTitle();
         this.content = dto.getContent();
         this.schedulerDate = dto.getSchedulerDate();
-        this.schedulerTime = dto.getSchedulerTime();
+        this.schedulerTime = dto.getSchedulerTime().withSecond(0).withNano(0);
         return this;
     }
 
     public void makingAlert() {
         this.alertYn = 'Y';
+    }
+
+    public void cancelAlert(){
+        this.alertYn = 'N';
+    }
+
+    public ScheduleResDto fromEntity(){
+        return ScheduleResDto.builder()
+                .title(this.title)
+                .schedulerDate(this.schedulerDate)
+                .schedulerTime(this.schedulerTime)
+                .content(this.content)
+                .alertYn(this.alertYn)
+                .lectureAssignmentId(this.lectureAssignmentId)
+                .lectureGroupId(this.lectureGroupId)
+                .build();
     }
 }

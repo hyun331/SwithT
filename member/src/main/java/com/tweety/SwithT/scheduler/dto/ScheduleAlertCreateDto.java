@@ -23,7 +23,7 @@ public class ScheduleAlertCreateDto {
     public ScheduleAlert toEntity(Scheduler scheduler){
         return ScheduleAlert.builder()
                 .scheduler(scheduler)
-                .reserveTime(this.reserveTime)
+                .reserveTime(this.reserveTime.withSecond(0).withNano(0))
                 .reserveDay(this.reserveDay)
                 .sendYn('N')
                 .build();

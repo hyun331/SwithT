@@ -4,6 +4,7 @@ import com.tweety.SwithT.common.configs.RabbitMqConfig;
 import com.tweety.SwithT.scheduler.domain.ScheduleAlert;
 import com.tweety.SwithT.scheduler.dto.ScheduleAlertDto;
 import com.tweety.SwithT.scheduler.repository.SchedulerAlertRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,7 +97,8 @@ public class SchedulerAlertManager {
             }
 
             // 알림 ID로 DB에서 ScheduleAlert를 다시 조회
-            ScheduleAlert alert = schedulerAlertRepository.findById(alertId).orElse(null);
+            ScheduleAlert alert = schedulerAlertRepository.findById(alertId).orElseThrow(
+                    ()-> new EntityNotFoundException("error"));
 
             if (alert != null) {
                 // DTO로 변환하여 전송

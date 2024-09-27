@@ -26,7 +26,7 @@ public class ScheduleCreateDto {
         return Scheduler.builder()
                 .title(this.title)
                 .schedulerDate(this.schedulerDate)
-                .schedulerTime(this.schedulerTime)
+                .schedulerTime(this.schedulerTime.withSecond(0).withNano(0))
                 .content(this.content)
                 .alertYn('N')
                 .member(member)

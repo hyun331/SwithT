@@ -1,5 +1,7 @@
 package com.tweety.SwithT.scheduler.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.tweety.SwithT.scheduler.dto.ScheduleAlertUpdateDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,12 +27,23 @@ public class ScheduleAlert {
 
     private char sendYn;
 
+    @Column(nullable = false)
+    @JsonFormat(pattern = "HH:mm")
     private LocalTime reserveTime;
 
+    @Column(nullable = false)
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate reserveDay;
 
     public void sended(){
         this.sendYn = 'Y';
+    }
+
+    public ScheduleAlert updateAlert(ScheduleAlertUpdateDto dto){
+        this.reserveDay = dto.getNewReserveDay();
+        this.reserveTime = dto.getNewReserveTime().withSecond(0).withNano(0);
+
+        return this;
     }
 
 }

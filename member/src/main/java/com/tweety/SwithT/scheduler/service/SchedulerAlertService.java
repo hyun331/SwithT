@@ -8,6 +8,7 @@ import com.tweety.SwithT.scheduler.domain.ScheduleAlert;
 import com.tweety.SwithT.scheduler.domain.Scheduler;
 import com.tweety.SwithT.scheduler.dto.ScheduleAlertCreateDto;
 import com.tweety.SwithT.scheduler.dto.ScheduleAlertDto;
+import com.tweety.SwithT.scheduler.dto.ScheduleAlertUpdateDto;
 import com.tweety.SwithT.scheduler.repository.SchedulerAlertRepository;
 import com.tweety.SwithT.scheduler.repository.SchedulerRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -46,31 +47,32 @@ public class SchedulerAlertService {
     @RabbitListener(queues = RabbitMqConfig.SCHEDULER_ALERT_QUEUE)
     @Transactional
     public void receiveAndSendAlert(ScheduleAlertDto alertDto) {
-        try {
-            // ScheduleAlertDto를 ScheduleAlert로 변환
-            ScheduleAlert alert = schedulerAlertRepository.findById(alertDto.getId()).orElseThrow(
-                    ()-> new EntityNotFoundException("알림을 불러오는 데 실패했습니다"));
+        ScheduleAlert alert = schedulerAlertRepository.findById(alertDto.getId()).orElseThrow(
+                ()-> new EntityNotFoundException("알림을 불러오는 데 실패했습니다"));
+        if(alert.getSendYn()=='N'){
+            try {
+                String phoneNumber = alert.getScheduler().getMember().getPhoneNumber();  // 전화번호 가져오기
+                String sendPhoneNumber = "+82" + phoneNumber.substring(1,11);
+                System.out.println(sendPhoneNumber);
+                String name = alert.getScheduler().getMember().getName();
 
-            String phoneNumber = alert.getScheduler().getMember().getPhoneNumber();  // 전화번호 가져오기
-            String sendPhoneNumber = "+82" + phoneNumber.substring(3,11);
-            System.out.println(sendPhoneNumber);
-            String name = alert.getScheduler().getMember().getName();
+                // 메시지 내용 생성
+                String messageContent = name + "님, " + alert.getScheduler().getTitle() + " 가 곧 시작됩니다.";
 
-            // 메시지 내용 생성
-            String messageContent = name + "님, " + alert.getScheduler().getTitle() + " 가 곧 시작됩니다.";
+                // Twilio를 통해 SMS 전송
+                twilioService.sendSms(sendPhoneNumber, messageContent);
 
-            // Twilio를 통해 SMS 전송
-            twilioService.sendSms(sendPhoneNumber, messageContent);
+                // 알림이 성공적으로 전송된 경우, Redis에서 해당 알림 삭제
+                Long alertId = alert.getId(); // 명시적으로 Long 타입으로 변환
+                zSetOperations.remove(SCHEDULED_ALERTS_ZSET_KEY, alertId);
 
-            // 알림이 성공적으로 전송된 경우, Redis에서 해당 알림 삭제
-            zSetOperations.remove(SCHEDULED_ALERTS_ZSET_KEY, alert.getId());
+                // 알림 상태를 전송됨으로 업데이트
+                alert.sended();
 
-            // 알림 상태를 전송됨으로 업데이트
-            alert.sended();
-
-        } catch (Exception e) {
-            // 처리 중 오류 발생 시 로깅
-            System.err.println("MQ Listener에 문제 있음!! " + e.getMessage());
+            } catch (Exception e) {
+                // 처리 중 오류 발생 시 로깅
+                System.err.println("MQ Listener에 문제 있음!! " + e.getMessage());
+            }
         }
     }
 
@@ -103,5 +105,39 @@ public class SchedulerAlertService {
         scheduler.makingAlert();
 
         // 스케줄 업데이트는 더티 체킹에 의해 생략 가능 (필요 시 명시적으로 저장 가능)
+    }
+
+    public void cancelAlert(Long alertId){
+        Member member = memberRepository.findById(
+                Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName())).orElseThrow(
+                () -> new EntityNotFoundException("존재하지 않는 회원 정보입니다.")
+        );
+
+        ScheduleAlert scheduleAlert = schedulerAlertRepository.findById(alertId).orElseThrow(
+                () -> new EntityNotFoundException("알람 정보 불러오기에 실패했습니다.")
+        );
+
+        // 스케줄 정보를 가져옴
+        Scheduler scheduler = scheduleAlert.getScheduler();
+        scheduler.cancelAlert();
+
+        zSetOperations.remove(SCHEDULED_ALERTS_ZSET_KEY, scheduleAlert.getId());
+
+        schedulerAlertRepository.delete(scheduleAlert);
+    }
+
+    public ScheduleAlert updateAlert(ScheduleAlertUpdateDto dto){
+        Member member = memberRepository.findById(
+                Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName())).orElseThrow(
+                () -> new EntityNotFoundException("존재하지 않는 회원 정보입니다.")
+        );
+
+        ScheduleAlert scheduleAlert = schedulerAlertRepository.findById(dto.getScheduleId()).orElseThrow(
+                () -> new EntityNotFoundException("알람 정보 불러오기에 실패했습니다.")
+        );
+
+        scheduleAlert.updateAlert(dto);
+
+        return scheduleAlert;
     }
 }
