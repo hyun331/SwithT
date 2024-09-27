@@ -39,7 +39,6 @@ public class RedisConfig {
 		return new LettuceConnectionFactory(configuration);
 	}
 
-=======
 	@Bean
 	@Qualifier("2")
 	public RedisTemplate<String, Object> redisTemplate(@Qualifier("2") RedisConnectionFactory redisConnectionFactory) {
