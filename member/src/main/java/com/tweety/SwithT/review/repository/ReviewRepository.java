@@ -18,4 +18,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("SELECT AVG(r.star) FROM Review r WHERE r.tutorId.id = :tutorId")
     BigDecimal findAverageStarByTutorId(@Param("tutorId") Long tutorId);
 
+    @Query("SELECT AVG(r.star) FROM Review r WHERE r.tutorId.id = :tutorId")
+    BigDecimal findAverageScoreByTutorId(@Param("tutorId") Long tutorId);
+
 }
