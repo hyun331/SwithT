@@ -7,8 +7,13 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface LectureRepository extends JpaRepository<Lecture, Long> {
 
     Page<Lecture> findAll(Specification<Lecture> specification, Pageable pageable);
+
+
+    Optional<Lecture> findByIdAndDelYn(Long id, String delYn);
 }

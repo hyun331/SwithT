@@ -4,9 +4,11 @@ import lombok.Getter;
 
 @Getter
 public enum Status {
+    WAITING,
     STANDBY,
     REJECT,
     ADMIT,
     TERMINATE,
     CANCEL
+
 }

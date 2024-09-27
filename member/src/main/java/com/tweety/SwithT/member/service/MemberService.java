@@ -117,6 +117,17 @@ public class MemberService {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 
+
+    //회원 이름 가져오는 메서드(feignClient에서 사용)
+    public MemberNameResDto memberNameGet(Long id) {
+        Member member = memberRepository.findById(id).orElseThrow(()->{
+            throw new EntityExistsException("존재하지 않는 회원입니다.");
+        });
+
+        return MemberNameResDto.builder()
+                .name(member.getName())
+                .build();
+    }
 //    public void lectureStatusUpdate(Long lectureId, Status newStatus){
 //        LectureStatusUpdateDto statusUpdateDto = LectureStatusUpdateDto.builder()
 //                .lectureId(lectureId)
