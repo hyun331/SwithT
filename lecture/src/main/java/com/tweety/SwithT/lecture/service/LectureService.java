@@ -81,6 +81,8 @@ public class LectureService {
             public Predicate toPredicate(Root<Lecture> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
 
                 List<Predicate> predicates = new ArrayList<>();
+                predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
+
                 if(searchDto.getSearchTitle() != null){
                     predicates.add(criteriaBuilder.like(root.get("title"), "%"+searchDto.getSearchTitle()+"%"));
                 }
@@ -93,7 +95,6 @@ public class LectureService {
                 if(searchDto.getStatus() != null){
                     predicates.add(criteriaBuilder.like(root.get("status"), "%"+searchDto.getStatus()+"%"));
                 }
-
 
                 Predicate[] predicateArr = new Predicate[predicates.size()];
                 for(int i=0; i<predicateArr.length; i++){
@@ -108,6 +109,7 @@ public class LectureService {
     }
 
 
+    //튜터 - 자신의 강의 리스트
     public Page<LectureListResDto> showMyLectureList(LectureSearchDto searchDto, Pageable pageable) {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
         Specification<Lecture> specification = new Specification<Lecture>() {
@@ -116,6 +118,7 @@ public class LectureService {
 
                 List<Predicate> predicates = new ArrayList<>();
                 predicates.add(criteriaBuilder.equal(root.get("memberId"), memberId));
+                predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
 
                 if(searchDto.getSearchTitle() != null){
                     predicates.add(criteriaBuilder.like(root.get("title"), "%"+searchDto.getSearchTitle()+"%"));
@@ -145,7 +148,7 @@ public class LectureService {
 
     //강의 상세 화면
     public LectureDetailResDto lectureDetail(Long id) {
-        Lecture lecture = lectureRepository.findById(id).orElseThrow(()->{
+        Lecture lecture = lectureRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{
             throw new EntityNotFoundException("해당 id에 맞는 강의가 존재하지 않습니다.");
         });
         return lecture.fromEntityToLectureDetailResDto();
@@ -154,7 +157,7 @@ public class LectureService {
 
     public Page<LectureGroupListResDto> showLectureGroupList(Long id, String isAvailable, Pageable pageable) {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
-        Lecture lecture = lectureRepository.findById(id).orElseThrow(()->{
+        Lecture lecture = lectureRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{
            throw new EntityNotFoundException("해당 id에 맞는 강의/과외가 존재하지 않습니다.");
         });
         if(lecture.getMemberId() != memberId){
@@ -166,6 +169,7 @@ public class LectureService {
         public Predicate toPredicate(Root<LectureGroup> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(criteriaBuilder.equal(root.get("lecture"), lecture));
+            predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
 
             if(isAvailable != null && !isAvailable.isEmpty()){
                 predicates.add(criteriaBuilder.equal(root.get("isAvailable"), isAvailable));
