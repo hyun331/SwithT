@@ -2,6 +2,7 @@ package com.tweety.SwithT.withdrawal.controller;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.withdrawal.dto.WithdrawalReqDto;
 import com.tweety.SwithT.withdrawal.service.WithdrawalService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,7 @@ public class WithdrawalController {
 
     private final WithdrawalService withdrawalService;
 
+    @Autowired
     public WithdrawalController(WithdrawalService withdrawalService) {
         this.withdrawalService = withdrawalService;
     }
