@@ -4,6 +4,7 @@ import com.tweety.SwithT.common.dto.CommonErrorDto;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.scheduler.domain.Scheduler;
 import com.tweety.SwithT.scheduler.dto.ScheduleCreateDto;
+import com.tweety.SwithT.scheduler.dto.ScheduleUpdateDto;
 import com.tweety.SwithT.scheduler.service.SchedulerService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,25 @@ public class SchedulerController {
             CommonErrorDto commonErrorDto = new CommonErrorDto(
                     HttpStatus.NOT_FOUND.value(), e.getMessage());
             return new ResponseEntity<>(commonErrorDto, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PatchMapping("/scheduler/{id}/update")
+    public ResponseEntity<?> updateSchedule(@PathVariable Long id, @RequestBody ScheduleUpdateDto dto){
+        System.out.println(dto);
+        schedulerService.updateSchedule(id, dto);
+        try {
+            CommonResDto commonResDto = new CommonResDto(
+                    HttpStatus.OK, "스케줄이 변경되었습니다.", null);
+            return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+        } catch (EntityNotFoundException e){
+            CommonErrorDto commonErrorDto = new CommonErrorDto(
+                    HttpStatus.NOT_FOUND.value(), e.getMessage());
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException e){
+            CommonErrorDto commonErrorDto = new CommonErrorDto(
+                    HttpStatus.FORBIDDEN.value(), e.getMessage());
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.FORBIDDEN);
         }
     }
 
