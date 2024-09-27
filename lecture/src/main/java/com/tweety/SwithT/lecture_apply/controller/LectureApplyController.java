@@ -42,4 +42,11 @@ public class LectureApplyController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
+    @PreAuthorize("hasRole('TUTOR')")
+    @PatchMapping("/single-lecture-apply-reject/{id}")
+    public ResponseEntity<?> singleLectureApplyReject(@PathVariable Long id){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "과외 수강신청 거절", lectureApplyService.singleLectureApplyReject(id));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
 }

@@ -18,6 +18,8 @@ import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -97,12 +100,21 @@ public class LectureApplyService {
         if(lecture.getMemberId() != memberId){  //소유자가 아닌 경우
             throw new IllegalArgumentException("접근할 수 없는 강의 그룹입니다");
         }
-        Page<LectureApply> lectureApplies = lectureApplyRepository.findByLectureGroup(lectureGroup, pageable);
-        lectureApplies.stream().filter(a-> a.getStatus()==Status.WAITING || a.getStatus()==Status.STANDBY);
-        return lectureApplies.map(a->a.fromEntityToSingleLectureApplyListDto());
+        List<LectureApply> lectureApplyList = lectureApplyRepository.findByLectureGroupAndStatus(lectureGroup, Status.WAITING);
+        List<LectureApply> lectureApplyStandbyList = lectureApplyRepository.findByLectureGroupAndStatus(lectureGroup, Status.STANDBY);
+        lectureApplyList.addAll(lectureApplyStandbyList);
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        int start = (int) pageRequest.getOffset();
+        int end = Math.min((start + pageRequest.getPageSize()), lectureApplyList.size());
+        Page<LectureApply> lectureApplyPage = new PageImpl<>(lectureApplyList.subList(start, end), pageRequest, lectureApplyList.size());
+
+
+
+        return lectureApplyPage.map(a->a.fromEntityToSingleLectureApplyListDto());
 
     }
 
+    //튜터 - 튜티의 신청 승인
     @Transactional
     public String singleLecturePaymentRequest(Long id) {
         LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(()->{
@@ -110,7 +122,7 @@ public class LectureApplyService {
         });
         LectureGroup lectureGroup = lectureApply.getLectureGroup();
 
-        if(lectureApplyRepository.findByLectureGroupAndStatus(lectureGroup, Status.WAITING).isPresent()){
+        if(!lectureApplyRepository.findByLectureGroupAndStatus(lectureGroup, Status.WAITING).isEmpty()){
             throw new IllegalArgumentException("결제 대기 중인 튜티가 존재합니다.");
         }
 
@@ -120,6 +132,18 @@ public class LectureApplyService {
         redisStreamProducer.publishMessage(lectureApply.getMemberId().toString(), "결제요청", "수학천재가 되는 길에서 결제 요청을 했습니다.", lectureApply.getId().toString());
 
 
-        return "ok ok";
+        return "튜터가 해당 수강신청을 승인했습니다.";
+    }
+
+    //튜터 - 튜티의 신청 거절
+    @Transactional
+    public String singleLectureApplyReject(Long id) {
+        LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(()->{
+            throw new EntityNotFoundException("id에 맞는 수강을 찾을 수 없습니다.");
+        });
+
+        lectureApply.updateStatus(Status.REJECT);
+        return "튜터가 해당 수강신청을 거절했습니다.";
+
     }
 }

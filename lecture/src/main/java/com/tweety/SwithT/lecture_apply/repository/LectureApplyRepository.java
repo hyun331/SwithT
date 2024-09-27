@@ -18,5 +18,5 @@ public interface LectureApplyRepository extends JpaRepository<LectureApply, Long
 
     Page<LectureApply> findByLectureGroup(LectureGroup lectureGroup, Pageable pageable);
 
-    Optional<LectureApply> findByLectureGroupAndStatus(LectureGroup lectureGroup, Status status);
+    List<LectureApply> findByLectureGroupAndStatus(LectureGroup lectureGroup, Status status);
 }

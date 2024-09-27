@@ -55,6 +55,7 @@ public class LectureApply extends BaseTimeEntity {
                 .tuteeName(this.memberName)
                 .memberId(this.memberId)
                 .applyId(this.id)
+                .status(this.status)
                 .build();
     }
 
