@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling//스케쥴러 어노테이션
 @SpringBootApplication
 @EnableFeignClients
+@EnableScheduling
 public class  MemberApplication {
 
 	public static void main(String[] args) {
