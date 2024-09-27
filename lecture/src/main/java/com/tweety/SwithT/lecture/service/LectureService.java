@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
+import com.tweety.SwithT.common.dto.MemberNameResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.common.service.S3Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -330,9 +331,6 @@ public class LectureService {
         }
     }
 
-        return lectureGroupResDtos;
-    }
-
 //    @KafkaListener(topics = "lecture-status-update", groupId = "lecture-group",
 //            containerFactory = "kafkaListenerContainerFactory")
 //    public void lectureStatusUpdate(String message) throws JsonProcessingException {
@@ -426,3 +424,4 @@ public class LectureService {
         return groupTimesDto;
     }
 }
+
