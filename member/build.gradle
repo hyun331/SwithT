@@ -46,6 +46,8 @@ dependencies {
 	implementation 'org.springframework.kafka:spring-kafka'
 //	feignClient 의존성
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+//	구글 SMTP 관련 의존성
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 }
 
 dependencyManagement {
