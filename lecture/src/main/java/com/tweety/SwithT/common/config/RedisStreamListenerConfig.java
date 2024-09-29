@@ -3,11 +3,9 @@ package com.tweety.SwithT.common.config;
 import com.tweety.SwithT.common.service.RedisStreamSseConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.connection.stream.MapRecord;
-import org.springframework.data.redis.connection.stream.ObjectRecord;
 import org.springframework.data.redis.connection.stream.ReadOffset;
 import org.springframework.data.redis.connection.stream.StreamOffset;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -25,7 +23,7 @@ public class RedisStreamListenerConfig {
 
     @Autowired
     @Qualifier("4")
-    private RedisTemplate<String, Object >redisTemplate;
+    private RedisTemplate<String, String> redisTemplate;
 
     private static final String STREAM_NAME = "sse-notifications";
 

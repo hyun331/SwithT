@@ -10,12 +10,14 @@ import com.tweety.SwithT.common.service.S3Service;
 import com.tweety.SwithT.lecture.domain.GroupTime;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
+import com.tweety.SwithT.lecture.domain.LectureType;
 import com.tweety.SwithT.lecture.dto.*;
 import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
+import com.tweety.SwithT.lecture_apply.service.WaitingService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -45,8 +47,9 @@ public class LectureService {
     private final KafkaTemplate kafkaTemplate;
     private final MemberFeign memberFeign;
     private final S3Service s3Service;
+    private final WaitingService waitingService;
 
-    public LectureService(LectureRepository lectureRepository, LectureGroupRepository lectureGroupRepository, GroupTimeRepository groupTimeRepository, LectureApplyRepository lectureApplyRepository, ObjectMapper objectMapper, KafkaTemplate kafkaTemplate, MemberFeign memberFeign, S3Service s3Service){
+    public LectureService(LectureRepository lectureRepository, LectureGroupRepository lectureGroupRepository, GroupTimeRepository groupTimeRepository, LectureApplyRepository lectureApplyRepository, ObjectMapper objectMapper, KafkaTemplate kafkaTemplate, MemberFeign memberFeign, S3Service s3Service, WaitingService waitingService){
 
         this.lectureRepository = lectureRepository;
         this.lectureGroupRepository = lectureGroupRepository;
@@ -56,6 +59,7 @@ public class LectureService {
         this.kafkaTemplate = kafkaTemplate;
         this.memberFeign = memberFeign;
         this.s3Service = s3Service;
+        this.waitingService = waitingService;
     }
     // Create
     @Transactional
@@ -78,19 +82,14 @@ public class LectureService {
             for (GroupTimeReqDto timeDto : groupDto.getGroupTimeReqDtos()){
                 groupTimeRepository.save(timeDto.toEntity(createdGroup));
             }
+            if (createdLecture.getLectureType()== LectureType.LECTURE){
+                // LectureGroup 생성시 강의 타입이 Lecture일 경우 대기열 생성
+                waitingService.createQueue(createdGroup.getId(), createdGroup.getLimitPeople());
+            }
         }
 
         return createdLecture;
     }
-
-    // Update: limitPeople=0
-//    public void lectureUpdate(LectureUpdateReqDto lectureUpdateReqDto, List<LectureGroupReqDto> lectureGroupReqDtos){
-//        Long memberId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
-//        if (memberId == )
-//    }
-
-    // Delete: role=TUTOR & limitPeople=0
-
 
 
     public Page<LectureListResDto> showLectureList(LectureSearchDto searchDto, Pageable pageable) {

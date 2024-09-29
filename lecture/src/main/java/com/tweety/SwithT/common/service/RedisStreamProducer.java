@@ -1,20 +1,22 @@
 package com.tweety.SwithT.common.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.connection.stream.ObjectRecord;
 import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.stream.StreamReceiver;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class RedisStreamProducer {
 
-    @Autowired
+
+    @Qualifier("4")
     private RedisTemplate<String, String> redisTemplate;
 
     private static final String STREAM_NAME = "sse-notifications";
