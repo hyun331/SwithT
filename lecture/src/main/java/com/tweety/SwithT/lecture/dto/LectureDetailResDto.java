@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class LectureDetailResDto {
+    private Long id;
     private String title;
     private String contents;
     private String image;
