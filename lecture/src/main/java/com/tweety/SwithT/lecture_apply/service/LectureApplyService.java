@@ -4,37 +4,47 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
+import com.tweety.SwithT.common.service.RedisStreamProducer;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
-import com.tweety.SwithT.lecture.dto.MemberNameResDto;
+import com.tweety.SwithT.common.dto.MemberNameResDto;
+import com.tweety.SwithT.lecture.dto.TuteeMyLectureListResDto;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyAfterResDto;
+import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyListDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class LectureApplyService {
     private final LectureGroupRepository lectureGroupRepository;
     private final LectureApplyRepository lectureApplyRepository;
     private final LectureRepository lectureRepository;
     private final MemberFeign memberFeign;
+    private final RedisStreamProducer redisStreamProducer;
 
-    public LectureApplyService(LectureGroupRepository lectureGroupRepository, LectureApplyRepository lectureApplyRepository, LectureRepository lectureRepository, MemberFeign memberFeign) {
-        this.lectureGroupRepository = lectureGroupRepository;
-        this.lectureApplyRepository = lectureApplyRepository;
-        this.lectureRepository = lectureRepository;
-        this.memberFeign = memberFeign;
-    }
+
 
     @Value("${jwt.secretKey}")
     private String secretKey;
@@ -43,16 +53,14 @@ public class LectureApplyService {
     @Transactional
     public SingleLectureApplyAfterResDto tuteeSingleLectureApply(SingleLectureApplySavedDto dto) {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
-//        String token = ((UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication()).getCredentials().toString();
-//        Claims claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
-//        String memberName = (String) claims.get("name");
+
         CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
         ObjectMapper objectMapper = new ObjectMapper();
         MemberNameResDto memberNameResDto = objectMapper.convertValue(commonResDto.getResult(), MemberNameResDto.class);
         String memberName = memberNameResDto.getName();
 
 
-        LectureGroup lectureGroup = lectureGroupRepository.findById(dto.getLectureGroupId()).orElseThrow(()->{
+        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(dto.getLectureGroupId(), "N").orElseThrow(()->{
             throw new EntityNotFoundException("해당 과외는 존재하지 않습니다.");
         });
         if(lectureGroup.getIsAvailable().equals("N")){
@@ -76,11 +84,115 @@ public class LectureApplyService {
         }
         lectureApplyRepository.save(dto.toEntity(lectureGroup, memberId, memberName));
 
-        Lecture lecture = lectureRepository.findById(lectureGroup.getLecture().getId()).orElseThrow(()->{
+        Lecture lecture = lectureRepository.findByIdAndDelYn(lectureGroup.getLecture().getId(), "N").orElseThrow(()->{
             throw new EntityNotFoundException("해당 과외가 존재하지 않습니다.");
         });
 
         return SingleLectureApplyAfterResDto.builder().lectureTitle(lecture.getTitle()).build();
+
+
+    }
+
+    //튜터가 보는 강의그룹 신청자 리스트
+    public Page<SingleLectureApplyListDto> singleLectureApplyList(Long id, Pageable pageable) {
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+
+        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{
+            throw new EntityNotFoundException("해당 강의 그룹이 없습니다");
+        });
+        Lecture lecture = lectureGroup.getLecture();
+        if(lecture.getMemberId() != memberId){  //소유자가 아닌 경우
+            throw new IllegalArgumentException("접근할 수 없는 강의 그룹입니다");
+        }
+        List<LectureApply> lectureApplyList = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(lectureGroup, Status.WAITING, "N");
+        List<LectureApply> lectureApplyStandbyList = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(lectureGroup, Status.STANDBY, "N");
+        lectureApplyList.addAll(lectureApplyStandbyList);
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        int start = (int) pageRequest.getOffset();
+        int end = Math.min((start + pageRequest.getPageSize()), lectureApplyList.size());
+        Page<LectureApply> lectureApplyPage = new PageImpl<>(lectureApplyList.subList(start, end), pageRequest, lectureApplyList.size());
+
+
+
+        return lectureApplyPage.map(a->a.fromEntityToSingleLectureApplyListDto());
+
+    }
+
+    //튜터 - 튜티의 신청 승인
+    @Transactional
+    public String singleLecturePaymentRequest(Long id) {
+        LectureApply lectureApply = lectureApplyRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{
+            throw new EntityNotFoundException("id에 맞는 수강을 찾을 수 없습니다.");
+        });
+        LectureGroup lectureGroup = lectureApply.getLectureGroup();
+
+        if(!lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(lectureGroup, Status.WAITING, "N").isEmpty()){
+            throw new IllegalArgumentException("결제 대기 중인 튜티가 존재합니다.");
+        }
+
+        lectureApply.updateStatus(Status.WAITING);
+
+        //결제 요청 보내기
+        redisStreamProducer.publishMessage(lectureApply.getMemberId().toString(), "결제요청", "수학천재가 되는 길에서 결제 요청을 했습니다.", lectureApply.getId().toString());
+
+
+        return "튜터가 해당 수강신청을 승인했습니다.";
+    }
+
+    //튜터 - 튜티의 신청 거절
+    @Transactional
+    public String singleLectureApplyReject(Long id) {
+        LectureApply lectureApply = lectureApplyRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{
+            throw new EntityNotFoundException("id에 맞는 수강을 찾을 수 없습니다.");
+        });
+
+        lectureApply.updateStatus(Status.REJECT);
+        return "튜터가 해당 수강신청을 거절했습니다.";
+
+    }
+
+    //튜티 - 내 강의 리스트
+    public Page<TuteeMyLectureListResDto> myLectureList(String status, Pageable pageable) {
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+
+        Specification<LectureApply> specification = new Specification<LectureApply>() {
+            @Override
+            public Predicate toPredicate(Root<LectureApply> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> predicates = new ArrayList<>();
+                predicates.add(criteriaBuilder.equal(root.get("memberId"), memberId));
+                predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
+
+                if (status != null && !status.isEmpty()) {
+                    predicates.add(criteriaBuilder.equal(root.get("status"), status));
+                }
+                Predicate[] predicateArr = new Predicate[predicates.size()];
+                for(int i=0; i<predicateArr.length; i++){
+                    predicateArr[i] = predicates.get(i);
+                }
+                return criteriaBuilder.and(predicateArr);
+            }
+        };
+        Page<LectureApply> lectureApplyPage = lectureApplyRepository.findAll(specification, pageable);
+        List<TuteeMyLectureListResDto> tuteeMyLectureListResDtos = new ArrayList<>();
+        for(LectureApply lectureApply : lectureApplyPage){
+            tuteeMyLectureListResDtos.add(TuteeMyLectureListResDto.builder()
+                            .title(lectureApply.getLectureGroup().getLecture().getTitle())
+                            .startDate(lectureApply.getStartDate())
+                            .endDate(lectureApply.getEndDate())
+                            .tutorName(lectureApply.getLectureGroup().getLecture().getMemberName())
+                            .price(lectureApply.getLectureGroup().getPrice())
+                            .applyId(lectureApply.getId())
+                            .lectureGroupId(lectureApply.getLectureGroup().getId())
+                            .status(lectureApply.getStatus())
+                    .build());
+        }
+
+
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        int start = (int) pageRequest.getOffset();
+        int end = Math.min((start + pageRequest.getPageSize()), tuteeMyLectureListResDtos.size());
+        return new PageImpl<>(tuteeMyLectureListResDtos.subList(start, end), pageRequest, tuteeMyLectureListResDtos.size());
+
 
 
     }
