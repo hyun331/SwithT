@@ -58,11 +58,12 @@ public class Scheduler extends BaseTimeEntity {
         updateDelYn();
     }
 
-    public void updateSchedule(AssignmentUpdateReqDto dto){
+    public void updateSchedule(AssignmentUpdateReqDto dto) {
         this.title = dto.getTitle();
         this.content = dto.getContents();
         this.schedulerDate = LocalDate.parse(dto.getSchedulerDate());
         this.schedulerTime = LocalTime.parse(dto.getSchedulerTime());
+    }
     public Scheduler updateSchedule(ScheduleUpdateDto dto) {
         this.title = dto.getTitle();
         this.content = dto.getContent();
