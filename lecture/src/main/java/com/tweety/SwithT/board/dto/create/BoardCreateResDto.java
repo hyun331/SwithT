@@ -1,9 +1,7 @@
-package com.tweety.SwithT.board.dto.update;
+package com.tweety.SwithT.board.dto.create;
 
 import com.tweety.SwithT.board.domain.Board;
 import com.tweety.SwithT.board.domain.Type;
-import com.tweety.SwithT.common.domain.BaseTimeEntity;
-import jakarta.persistence.Entity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 @Getter
-public class BoardUpdateResponse {
+public class BoardCreateResDto {
     private Long id;
     private Long lectureGroupId;
     private Long memberId;
@@ -22,8 +20,8 @@ public class BoardUpdateResponse {
     private String contents;
     private Type type;
 
-    public static BoardUpdateResponse fromEntity(Board board){
-        return BoardUpdateResponse.builder()
+    public static BoardCreateResDto fromEntity(Board board){
+        return BoardCreateResDto.builder()
                 .id(board.getId())
                 .lectureGroupId(board.getLectureGroup().getId())
                 .contents(board.getContents())

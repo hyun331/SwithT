@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweety.SwithT.member.domain.Member;
 import com.tweety.SwithT.member.repository.MemberRepository;
 import com.tweety.SwithT.scheduler.domain.Scheduler;
+import com.tweety.SwithT.scheduler.dto.*;
 import com.tweety.SwithT.scheduler.dto.GroupTimeResDto;
 import com.tweety.SwithT.scheduler.dto.ScheduleResDto;
 import com.tweety.SwithT.scheduler.dto.ScheduleCreateDto;
@@ -141,6 +142,108 @@ public class SchedulerService {
         schedulerRepository.save(scheduler);
     }
 
+    // 과제 생성 관련 kafka 리스터 추가
+    @KafkaListener(topics = "assignment-create", groupId = "lecture-group", containerFactory = "kafkaListenerContainerFactory")
+    public void handleAssignmentCreateMessage(String message) {
+        try {
+//            System.out.println("Kafka 메시지 수신됨: " + message);
+//            String jsonString = "{\\\"tutorId\\\":3,\\\"tuteeList\\\":[2],\\\"assignmentId\\\":28,\\\"lectureGroupId\\\":1,\\\"title\\\":\\\"test3\\\",\\\"contents\\\":\\\"test3\\\",\\\"schedulerDate\\\":\\\"2024-10-01\\\",\\\"schedulerTime\\\":\\\"09:00:00\\\"}";
+//            System.out.println(jsonString.equals(message));
+            if (message.startsWith("\"") && message.endsWith("\"")) {
+                // 이중 직렬화로 인해 앞뒤의 쿼트와 역슬래시만 제거
+                message = message.substring(1, message.length() - 1).replace("\\\"", "\"");
+            }
+//            message = message.replaceAll("[\\\\\"]", "");
+            System.out.println(message);
+            AssignmentCreateReqDto dto = objectMapper.readValue(message, AssignmentCreateReqDto.class);
+            System.out.println(dto);
+            // 튜터 일정 생성
+            createSchedulerForMember(dto.getTutorId(), dto);
+            // 튜티들 일정 생성
+            for (Long tuteeId : dto.getTuteeList()) {
+                createSchedulerForMember(tuteeId, dto);
+            }
+
+        } catch (JsonProcessingException e) {
+            System.err.println("Kafka 메시지 변환 중 오류 발생: " + e.getMessage());
+        }
+    }
+
+    // 과제 스케줄 생성 메서드
+    private void createSchedulerForMember(Long memberId, AssignmentCreateReqDto dto) {
+        // member 찾기
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 회원은 존재하지 않습니다."));
+
+        // 스케줄러 엔티티 생성 및 저장
+        Scheduler scheduler = Scheduler.builder()
+                .title(dto.getTitle())
+                .lectureAssignmentId(dto.getAssignmentId())
+                .schedulerDate(LocalDate.parse(dto.getSchedulerDate()))
+                .schedulerTime(LocalTime.parse(dto.getSchedulerTime()))
+                .content(dto.getContents())
+                .member(member)
+                .lectureGroupId(dto.getLectureGroupId())
+                .build();
+
+        schedulerRepository.save(scheduler);
+        System.out.println("스케줄 저장 완료: " + scheduler.getTitle() + " - " + member.getId());
+    }
+
+    // 과제 수정 관련 kafka 리스너 추가 및 스케쥴 수정
+    @KafkaListener(topics = "assignment-update", groupId = "lecture-group", containerFactory = "kafkaListenerContainerFactory")
+    public void assignmentUpdate(String message) {
+        try {
+            System.out.println("Kafka 메시지 수신됨: " + message);
+            if (message.startsWith("\"") && message.endsWith("\"")) {
+                // 이중 직렬화로 인해 앞뒤의 쿼트와 역슬래시만 제거
+                message = message.substring(1, message.length() - 1).replace("\\\"", "\"");
+            }
+            // update용 dto..?
+            AssignmentUpdateReqDto dto = objectMapper.readValue(message, AssignmentUpdateReqDto.class);
+            System.out.println(dto);
+
+            // 튜터 일정 생성
+            Member member = memberRepository.findById(dto.getTutorId())
+                    .orElseThrow(() -> new EntityNotFoundException("해당 회원은 존재하지 않습니다."));
+
+            // 스케줄러 엔티티 찾기 -> assignmentId로 찾은 뒤 수정 내용 적용
+            List<Scheduler> updateSchedulerList = schedulerRepository.findByLectureAssignmentId(dto.getAssignmentId());
+            for(Scheduler scheduler : updateSchedulerList){
+                scheduler.updateSchedule(dto);
+                schedulerRepository.save(scheduler);
+                System.out.println("스케줄 저장 완료: " + scheduler.getTitle() + " - " + member.getId());
+            }
+
+        } catch (JsonProcessingException e) {
+            System.err.println("Kafka 메시지 변환 중 오류 발생: " + e.getMessage());
+        }
+    }
+
+// 과제 삭제 카프카 리스너 추가 및 assignment id 기준으로 삭제
+    @KafkaListener(topics = "assignment-delete", groupId = "lecture-group", containerFactory = "kafkaListenerContainerFactory")
+    public void assignmentDelete(String message) {
+        try {
+            System.out.println("Kafka 메시지 수신됨: " + message);
+            if (message.startsWith("\"") && message.endsWith("\"")) {
+                // 이중 직렬화로 인해 앞뒤의 쿼트와 역슬래시만 제거
+                message = message.substring(1, message.length() - 1).replace("\\\"", "\"");
+            }
+            // update용 dto..?
+            AssignmentDeleteReqDto dto = objectMapper.readValue(message, AssignmentDeleteReqDto.class);
+            System.out.println(dto);
+
+            // 스케줄러 엔티티 찾기
+            List<Scheduler> updateSchedulerList = schedulerRepository.findByLectureAssignmentId(dto.getAssignmentId());
+            for(Scheduler scheduler : updateSchedulerList){
+                scheduler.deleteSchedule();
+                schedulerRepository.save(scheduler);
+                System.out.println("스케줄 삭제 완료: " + scheduler.getTitle() +" - "+ scheduler.getMember().getId());
+            }
+        } catch (JsonProcessingException e) {
+            System.err.println("Kafka 메시지 변환 중 오류 발생: " + e.getMessage());
+        }
+    }
     public ScheduleResDto getScheduleDetail(Long id){
         Member member = memberRepository.findById(
                 Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName())).orElseThrow(

@@ -32,4 +32,7 @@ public interface LectureApplyRepository extends JpaRepository<LectureApply, Long
     Optional<LectureApply> findByIdAndDelYn(Long id, String delYn);
 
     Optional<LectureApply> findByLectureGroupId(Long lectureGroupId);
+    @Query("SELECT la FROM LectureApply la WHERE la.lectureGroup.id = :lectureGroupId AND la.status = 'ADMIT'")
+    List<LectureApply> findMemberIdsByLectureGroupIdAndStatusAdmit(@Param("lectureGroupId") Long lectureGroupId);
+
 }

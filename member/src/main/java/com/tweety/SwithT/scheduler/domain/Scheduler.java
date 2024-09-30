@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import com.tweety.SwithT.member.domain.Member;
+import com.tweety.SwithT.scheduler.dto.AssignmentUpdateReqDto;
 import com.tweety.SwithT.scheduler.dto.ScheduleResDto;
 import com.tweety.SwithT.scheduler.dto.ScheduleUpdateDto;
 import jakarta.persistence.*;
@@ -57,6 +58,11 @@ public class Scheduler extends BaseTimeEntity {
         updateDelYn();
     }
 
+    public void updateSchedule(AssignmentUpdateReqDto dto){
+        this.title = dto.getTitle();
+        this.content = dto.getContents();
+        this.schedulerDate = LocalDate.parse(dto.getSchedulerDate());
+        this.schedulerTime = LocalTime.parse(dto.getSchedulerTime());
     public Scheduler updateSchedule(ScheduleUpdateDto dto) {
         this.title = dto.getTitle();
         this.content = dto.getContent();
