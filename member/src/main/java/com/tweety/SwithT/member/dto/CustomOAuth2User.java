@@ -1,5 +1,6 @@
 package com.tweety.SwithT.member.dto;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
@@ -11,12 +12,14 @@ public class CustomOAuth2User implements OAuth2User {
 
     private final MemberSaveReqDto memberSaveReqDto;
 
+    @Autowired
     public CustomOAuth2User(MemberSaveReqDto memberSaveReqDto) {
         this.memberSaveReqDto = memberSaveReqDto;
     }
 
     @Override
     public Map<String, Object> getAttributes() {
+        System.out.println("여기오나? CustomOAuth2User");
         // 구글과 네이버의 데이터 반환이 동일하지 않기 떄문에 사용하지 않겟다. 여기에 OAuth2 를 통한 데이터가 담기는 것
         return null;
     }
@@ -39,20 +42,23 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public String getName() {
-
+        System.out.println("여기오나? CustomOAuth2User");
         return memberSaveReqDto.getName();
     }
 
     public String getEmail(){
+        System.out.println("여기오나? CustomOAuth2User");
 
         return memberSaveReqDto.getEmail();
     }
 
     public String getProvider(){
+        System.out.println("여기오나? CustomOAuth2User");
         return memberSaveReqDto.getProvider();
     }
 
     public String getProviderId(){
+        System.out.println("여기오나? CustomOAuth2User");
         return memberSaveReqDto.getProviderId();
     }
 

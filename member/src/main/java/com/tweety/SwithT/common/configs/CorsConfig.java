@@ -15,9 +15,8 @@ public class CorsConfig implements WebMvcConfigurer {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:8082")
+                        .allowedOrigins("http://localhost:8080")
                         .allowedOrigins("/member-service/login/oauth2/code/google")
-                        .allowedOrigins("http://host.docker.internal:12190/")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*");
             }

@@ -31,14 +31,31 @@ public class JwtAuthFilter extends GenericFilter {
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 
+        System.out.println("여기오냐?");
+
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         String bearerToken = request.getHeader("Authorization");
+
+        String path = request.getRequestURI();
+        System.out.println(path + " 여기에 path");
+        System.out.println(request.getRequestURI());
+        System.out.println(request.getAuthType());
+        System.out.println(request.getMethod());
+        // 구글 로그인 관련 요청을 제외
+        if (path.startsWith("/member-service/oauth2/authorization/google") || path.startsWith("/member-service/login/oauth2/code/google")) {
+            filterChain.doFilter(servletRequest, servletResponse);
+            return; // 필터를 여기서 종료
+        }
 
         // 1. 로그로 Authorization 헤더 확인
 //        log.info("Authorization Header: {}", bearerToken);
 
+        System.out.println("여기는?");
         try {
+            System.out.println("여기는? try");
             if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+
+                System.out.println("여기는 if");
                 String token = bearerToken.substring(7);
                 Claims claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
 
@@ -58,6 +75,7 @@ public class JwtAuthFilter extends GenericFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
             } else {
+                System.out.println("여기는 무조건오겟지");
                 log.warn("JWT Token is missing or does not start with Bearer");
             }
 

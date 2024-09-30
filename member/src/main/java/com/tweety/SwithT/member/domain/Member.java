@@ -63,8 +63,8 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = true) // 동명이인 고려
     private String name;
 
-    @Column(nullable = true)
     @JsonFormat(pattern = "yyyy-MM-dd")
+    @Column(nullable = true)
     private LocalDate birthday;
 
     @Column(nullable = true)  //소셜 로그인때문에 잠시 true
