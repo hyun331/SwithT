@@ -1,4 +1,4 @@
-package com.tweety.SwithT.lecture_assignment.dto.update;
+package com.tweety.SwithT.lecture_assignment.dto.create;
 
 import com.tweety.SwithT.lecture.domain.LectureGroup;
 import com.tweety.SwithT.lecture_assignment.domain.LectureAssignment;
@@ -14,12 +14,12 @@ import java.time.LocalTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LectureAssignmentUpdateRequest {
+public class LectureAssignmentCreateReqDto {
     private String title;
     private String contents;
     private LocalDate endDate;
     private LocalTime endTime;
-    public static LectureAssignment toEntity(LectureGroup lectureGroup, LectureAssignmentUpdateRequest dto){
+    public static LectureAssignment toEntity(LectureGroup lectureGroup, LectureAssignmentCreateReqDto dto){
         return LectureAssignment.builder()
                 .lectureGroup(lectureGroup)
                 .contents(dto.getContents())

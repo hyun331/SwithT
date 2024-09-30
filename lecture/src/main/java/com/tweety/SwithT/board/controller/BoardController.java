@@ -1,16 +1,14 @@
 package com.tweety.SwithT.board.controller;
 
-import com.tweety.SwithT.board.dto.create.BoardCreateRequest;
-import com.tweety.SwithT.board.dto.create.BoardCreateResponse;
-import com.tweety.SwithT.board.dto.delete.BoardDeleteResponse;
-import com.tweety.SwithT.board.dto.read.BoardDetailResponse;
-import com.tweety.SwithT.board.dto.read.BoardListResponse;
-import com.tweety.SwithT.board.dto.update.BoardUpdateRequest;
-import com.tweety.SwithT.board.dto.update.BoardUpdateResponse;
+import com.tweety.SwithT.board.dto.create.BoardCreateReqDto;
+import com.tweety.SwithT.board.dto.create.BoardCreateResDto;
+import com.tweety.SwithT.board.dto.delete.BoardDeleteResDto;
+import com.tweety.SwithT.board.dto.read.BoardDetailResDto;
+import com.tweety.SwithT.board.dto.read.BoardListResDto;
+import com.tweety.SwithT.board.dto.update.BoardUpdateReqDto;
+import com.tweety.SwithT.board.dto.update.BoardUpdateResDto;
 import com.tweety.SwithT.board.service.BoardService;
 import com.tweety.SwithT.common.dto.CommonResDto;
-import com.tweety.SwithT.common.dto.SuccessResponse;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,16 +25,16 @@ public class BoardController {
 
     // 게시글 생성
     @PostMapping("/lecture/{lectureGroupId}/board/create")
-    public ResponseEntity<CommonResDto> createBoard( @PathVariable("lectureGroupId") Long lectureGroupId, @RequestBody BoardCreateRequest boardCreateRequest) {
-        BoardCreateResponse boardCreateResponse = boardService.createBoard( lectureGroupId,boardCreateRequest);
+    public ResponseEntity<CommonResDto> createBoard( @PathVariable("lectureGroupId") Long lectureGroupId, @RequestBody BoardCreateReqDto boardCreateReqDto) {
+        BoardCreateResDto boardCreateResDto = boardService.createBoard( lectureGroupId, boardCreateReqDto);
 
-        return new ResponseEntity<>(new CommonResDto(HttpStatus.CREATED, "게시글이 등록되었습니다",boardCreateResponse), HttpStatus.CREATED);
+        return new ResponseEntity<>(new CommonResDto(HttpStatus.CREATED, "게시글이 등록되었습니다", boardCreateResDto), HttpStatus.CREATED);
     }
 
     // 게시글 목록 조회 - Todo :공지사항인 것만 또는 전체
     @GetMapping("/lecture/{lectureGroupId}/board/list")
     public ResponseEntity<CommonResDto> boardList(@PathVariable("lectureGroupId") Long lectureGroupId, @PageableDefault(size = 5)Pageable pageable){
-        Page<BoardListResponse> boardList = boardService.boardList(lectureGroupId,pageable);
+        Page<BoardListResDto> boardList = boardService.boardList(lectureGroupId,pageable);
 
         return new ResponseEntity<>(new CommonResDto(HttpStatus.OK,"게시글 목록 조회입니다.",boardList),HttpStatus.OK);
     }
@@ -44,24 +42,24 @@ public class BoardController {
     // 게시글 상세
     @GetMapping("/lecture/board/{boardId}")
     public ResponseEntity<CommonResDto> boardDetail(@PathVariable("boardId") Long boardId){
-        BoardDetailResponse board = boardService.boardDetail(boardId);
+        BoardDetailResDto board = boardService.boardDetail(boardId);
 
         return new ResponseEntity<>(new CommonResDto(HttpStatus.OK,"게시글 상세 조회입니다.",board),HttpStatus.OK);
     }
 
     // 게시글 update
     @PutMapping("/lecture/board/{boardId}")
-    public ResponseEntity<CommonResDto> updateBoard(@PathVariable("boardId") Long boardId, @RequestBody BoardUpdateRequest boardUpdateRequest) {
-        BoardUpdateResponse boardUpdateResponse = boardService.updateBoard(boardId,boardUpdateRequest);
+    public ResponseEntity<CommonResDto> updateBoard(@PathVariable("boardId") Long boardId, @RequestBody BoardUpdateReqDto boardUpdateReqDto) {
+        BoardUpdateResDto boardUpdateResDto = boardService.updateBoard(boardId, boardUpdateReqDto);
 
-        return new ResponseEntity<>(new CommonResDto(HttpStatus.CREATED,"게시글이 수정되었습니다",boardUpdateResponse), HttpStatus.CREATED);
+        return new ResponseEntity<>(new CommonResDto(HttpStatus.CREATED,"게시글이 수정되었습니다", boardUpdateResDto), HttpStatus.CREATED);
     }
     // 게시글 삭제
     @PatchMapping("/lecture/board/{boardId}/delete")
     public ResponseEntity<CommonResDto> deleteBoard(@PathVariable("boardId") Long boardId){
-        BoardDeleteResponse boardDeleteResponse = boardService.boardDelete(boardId);
+        BoardDeleteResDto boardDeleteResDto = boardService.boardDelete(boardId);
 
-        return new ResponseEntity<>(new CommonResDto(HttpStatus.OK,"게시글이 삭제되었습니다",boardDeleteResponse), HttpStatus.OK);
+        return new ResponseEntity<>(new CommonResDto(HttpStatus.OK,"게시글이 삭제되었습니다", boardDeleteResDto), HttpStatus.OK);
     }
 
 }

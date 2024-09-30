@@ -6,19 +6,15 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
-
 @Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AssignmentDeleteRequest {
+public class AssignmentDeleteReqDto {
     private Long assignmentId;
 
-    public static AssignmentDeleteRequest fromEntity(LectureAssignment assignment){
-        return AssignmentDeleteRequest.builder()
+    public static AssignmentDeleteReqDto fromEntity(LectureAssignment assignment){
+        return AssignmentDeleteReqDto.builder()
                 .assignmentId(assignment.getId())
                 .build();
     }

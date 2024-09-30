@@ -14,7 +14,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AssignmentCreateRequest {
+public class AssignmentCreateReqDto {
     private Long tutorId;
     private List<Long> tuteeList;
     private Long assignmentId;
@@ -25,8 +25,8 @@ public class AssignmentCreateRequest {
     private LocalDate schedulerDate;
     private LocalTime schedulerTime;
 
-    public static AssignmentCreateRequest fromEntity(Long lectureGroupId,Long tutorId, List<Long> tuteeList,LectureAssignment assignment){
-        return AssignmentCreateRequest.builder()
+    public static AssignmentCreateReqDto fromEntity(Long lectureGroupId, Long tutorId, List<Long> tuteeList, LectureAssignment assignment){
+        return AssignmentCreateReqDto.builder()
                 .tutorId(tutorId)
                 .tuteeList(tuteeList)
                 .assignmentId(assignment.getId())

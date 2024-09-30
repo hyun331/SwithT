@@ -1,4 +1,4 @@
-package com.tweety.SwithT.comment.dto.delete;
+package com.tweety.SwithT.comment.dto.read;
 
 import com.tweety.SwithT.comment.domain.Comment;
 import lombok.AllArgsConstructor;
@@ -10,13 +10,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 @Getter
-public class CommentDeleteResponse {
+public class CommentDetailResDto {
     private Long id;
     private String memberName;
     private String contents;
 
-    public static CommentDeleteResponse fromEntity(Comment comment){
-        return CommentDeleteResponse.builder()
+    public static CommentDetailResDto fromEntity(Comment comment){
+        return CommentDetailResDto.builder()
                 .id(comment.getId())
                 .memberName(comment.getMemberName())
                 .contents(comment.getContents())

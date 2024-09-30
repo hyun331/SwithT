@@ -1,4 +1,4 @@
-package com.tweety.SwithT.lecture_assignment.dto.update;
+package com.tweety.SwithT.lecture_assignment.dto.read;
 
 import com.tweety.SwithT.lecture_assignment.domain.LectureAssignment;
 import lombok.AllArgsConstructor;
@@ -13,7 +13,7 @@ import java.time.LocalTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LectureAssignmentUpdateResponse {
+public class LectureAssignmentDetailResDto {
     private Long id;
     private Long lectureGroupId;
     private String title;
@@ -21,8 +21,8 @@ public class LectureAssignmentUpdateResponse {
     private LocalDate endDate;
     private LocalTime endTime;
 
-    public static LectureAssignmentUpdateResponse fromEntity(LectureAssignment lectureAssignment){
-        return LectureAssignmentUpdateResponse.builder()
+    public static LectureAssignmentDetailResDto fromEntity(LectureAssignment lectureAssignment){
+        return LectureAssignmentDetailResDto.builder()
                 .id(lectureAssignment.getId())
                 .lectureGroupId(lectureAssignment.getLectureGroup().getId())
                 .contents(lectureAssignment.getContents())

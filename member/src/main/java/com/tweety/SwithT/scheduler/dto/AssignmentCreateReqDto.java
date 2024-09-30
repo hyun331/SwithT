@@ -1,18 +1,14 @@
 package com.tweety.SwithT.scheduler.dto;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class AssignmentCreateRequest {
+public class AssignmentCreateReqDto {
     private Long tutorId;
     private List<Long> tuteeList;
     private Long assignmentId;

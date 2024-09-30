@@ -1,7 +1,7 @@
 package com.tweety.SwithT.comment.domain;
 
 import com.tweety.SwithT.board.domain.Board;
-import com.tweety.SwithT.comment.dto.update.CommentUpdateRequest;
+import com.tweety.SwithT.comment.dto.update.CommentUpdateReqDto;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -32,7 +32,7 @@ public class Comment extends BaseTimeEntity {
     @Column(nullable = false)
     private String contents;
 
-    public void updateComment(CommentUpdateRequest dto) {
+    public void updateComment(CommentUpdateReqDto dto) {
         this.contents = dto.getContents();
     }
 }

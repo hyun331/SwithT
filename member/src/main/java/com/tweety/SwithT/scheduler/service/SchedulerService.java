@@ -19,7 +19,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @Transactional
@@ -131,7 +130,7 @@ public class SchedulerService {
             }
 //            message = message.replaceAll("[\\\\\"]", "");
             System.out.println(message);
-            AssignmentCreateRequest dto = objectMapper.readValue(message, AssignmentCreateRequest.class);
+            AssignmentCreateReqDto dto = objectMapper.readValue(message, AssignmentCreateReqDto.class);
             System.out.println(dto);
             // 튜터 일정 생성
             createSchedulerForMember(dto.getTutorId(), dto);
@@ -146,7 +145,7 @@ public class SchedulerService {
     }
 
     // 과제 스케줄 생성 메서드
-    private void createSchedulerForMember(Long memberId, AssignmentCreateRequest dto) {
+    private void createSchedulerForMember(Long memberId, AssignmentCreateReqDto dto) {
         // member 찾기
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 회원은 존재하지 않습니다."));
@@ -176,7 +175,7 @@ public class SchedulerService {
                 message = message.substring(1, message.length() - 1).replace("\\\"", "\"");
             }
             // update용 dto..?
-            AssignmentUpdateRequest dto = objectMapper.readValue(message, AssignmentUpdateRequest.class);
+            AssignmentUpdateReqDto dto = objectMapper.readValue(message, AssignmentUpdateReqDto.class);
             System.out.println(dto);
 
             // 튜터 일정 생성
@@ -206,7 +205,7 @@ public class SchedulerService {
                 message = message.substring(1, message.length() - 1).replace("\\\"", "\"");
             }
             // update용 dto..?
-            AssignmentDeleteRequest dto = objectMapper.readValue(message, AssignmentDeleteRequest.class);
+            AssignmentDeleteReqDto dto = objectMapper.readValue(message, AssignmentDeleteReqDto.class);
             System.out.println(dto);
 
             // 스케줄러 엔티티 찾기

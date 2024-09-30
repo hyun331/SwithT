@@ -1,7 +1,5 @@
 package com.tweety.SwithT.lecture_assignment.dto.create;
 
-import com.tweety.SwithT.board.domain.Board;
-import com.tweety.SwithT.board.dto.create.BoardCreateResponse;
 import com.tweety.SwithT.lecture_assignment.domain.LectureAssignment;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,7 +12,7 @@ import java.time.LocalTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LectureAssignmentCreateResponse {
+public class LectureAssignmentCreateResDto {
     private Long id;
     private Long lectureGroupId;
     private String title;
@@ -22,8 +20,8 @@ public class LectureAssignmentCreateResponse {
     private LocalDate endDate;
     private LocalTime endTime;
 
-    public static LectureAssignmentCreateResponse fromEntity(LectureAssignment lectureAssignment){
-        return LectureAssignmentCreateResponse.builder()
+    public static LectureAssignmentCreateResDto fromEntity(LectureAssignment lectureAssignment){
+        return LectureAssignmentCreateResDto.builder()
                 .id(lectureAssignment.getId())
                 .lectureGroupId(lectureAssignment.getLectureGroup().getId())
                 .contents(lectureAssignment.getContents())

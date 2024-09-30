@@ -13,19 +13,15 @@ import java.time.LocalTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LectureAssignmentDetailResponse {
+public class LectureAssignmentListResDto {
     private Long id;
-    private Long lectureGroupId;
     private String title;
-    private String contents;
     private LocalDate endDate;
     private LocalTime endTime;
 
-    public static LectureAssignmentDetailResponse fromEntity(LectureAssignment lectureAssignment){
-        return LectureAssignmentDetailResponse.builder()
+    public static LectureAssignmentListResDto fromEntity(LectureAssignment lectureAssignment){
+        return LectureAssignmentListResDto.builder()
                 .id(lectureAssignment.getId())
-                .lectureGroupId(lectureAssignment.getLectureGroup().getId())
-                .contents(lectureAssignment.getContents())
                 .title(lectureAssignment.getTitle())
                 .endDate(lectureAssignment.getEndDate())
                 .endTime(lectureAssignment.getEndTime())

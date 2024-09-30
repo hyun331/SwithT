@@ -11,12 +11,12 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CommentCreateRequest {
+public class CommentCreateReqDto {
 //    private Long memberId;
 //    private String memberName;
     private String contents;
 
-    public static Comment toEntity(Long memberId, String memberName,Board board,CommentCreateRequest dto){
+    public static Comment toEntity(Long memberId, String memberName, Board board, CommentCreateReqDto dto){
         return Comment.builder()
                 .board(board)
                 .memberId(memberId)

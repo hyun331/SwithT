@@ -1,11 +1,7 @@
-package com.tweety.SwithT.lecture_assignment.dto.create;
+package com.tweety.SwithT.lecture_assignment.dto.update;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.tweety.SwithT.board.domain.Board;
-import com.tweety.SwithT.board.dto.create.BoardCreateRequest;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
 import com.tweety.SwithT.lecture_assignment.domain.LectureAssignment;
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,12 +14,12 @@ import java.time.LocalTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LectureAssignmentCreateRequest {
+public class LectureAssignmentUpdateReqDto {
     private String title;
     private String contents;
     private LocalDate endDate;
     private LocalTime endTime;
-    public static LectureAssignment toEntity(LectureGroup lectureGroup, LectureAssignmentCreateRequest dto){
+    public static LectureAssignment toEntity(LectureGroup lectureGroup, LectureAssignmentUpdateReqDto dto){
         return LectureAssignment.builder()
                 .lectureGroup(lectureGroup)
                 .contents(dto.getContents())

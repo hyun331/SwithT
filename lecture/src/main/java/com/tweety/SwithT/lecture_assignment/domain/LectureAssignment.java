@@ -1,17 +1,14 @@
 package com.tweety.SwithT.lecture_assignment.domain;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.tweety.SwithT.board.dto.update.BoardUpdateRequest;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
-import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
-import com.tweety.SwithT.lecture_assignment.dto.update.LectureAssignmentUpdateRequest;
+import com.tweety.SwithT.lecture_assignment.dto.update.LectureAssignmentUpdateReqDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -44,7 +41,7 @@ public class LectureAssignment extends BaseTimeEntity {
     @Column(nullable = false)
     private LocalTime endTime;
 
-    public void updateAssignment(LectureAssignmentUpdateRequest dto) {
+    public void updateAssignment(LectureAssignmentUpdateReqDto dto) {
         this.title = dto.getTitle();
         this.contents = dto.getContents();
         this.endDate = dto.getEndDate();
