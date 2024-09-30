@@ -1,7 +1,7 @@
 package com.tweety.SwithT.lecture_apply.controller;
 
-import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
+import com.tweety.SwithT.lecture_apply.dto.LectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.service.LectureApplyService;
 import lombok.RequiredArgsConstructor;
@@ -58,6 +58,17 @@ public class LectureApplyController {
     public ResponseEntity<?> myLectureList(@RequestParam(value = "status")String status, @PageableDefault(size = 5)Pageable pageable){
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "내 강의 리스트", lectureApplyService.myLectureList(status, pageable));
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+
+
+    // 강의 신청
+    // 미테스트
+    @PreAuthorize("hasRole('TUTEE')")
+    @PostMapping("/lecture-apply")
+    public ResponseEntity<?> tuteeSingleLectureApply(@RequestBody LectureApplySavedDto dto){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.CREATED, "튜티의 강의 신청 완료", lectureApplyService.tuteeLectureApply(dto));
+        return new ResponseEntity<>(commonResDto, HttpStatus.CREATED);
     }
 
 }

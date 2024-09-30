@@ -3,22 +3,27 @@ package com.tweety.SwithT.lecture_apply.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
+import com.tweety.SwithT.common.dto.MemberNameResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.common.service.RedisStreamProducer;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
-import com.tweety.SwithT.common.dto.MemberNameResDto;
 import com.tweety.SwithT.lecture.dto.TuteeMyLectureListResDto;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
+import com.tweety.SwithT.lecture_apply.dto.LectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyAfterResDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyListDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.criteria.*;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -27,13 +32,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Value;
-
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +44,7 @@ public class LectureApplyService {
     private final LectureRepository lectureRepository;
     private final MemberFeign memberFeign;
     private final RedisStreamProducer redisStreamProducer;
-
+    private final WaitingService waitingService;
 
 
     @Value("${jwt.secretKey}")
@@ -193,7 +194,30 @@ public class LectureApplyService {
         int end = Math.min((start + pageRequest.getPageSize()), tuteeMyLectureListResDtos.size());
         return new PageImpl<>(tuteeMyLectureListResDtos.subList(start, end), pageRequest, tuteeMyLectureListResDtos.size());
 
+    }
+
+    // 강의 신청
+    @Transactional
+    public LectureApply tuteeLectureApply(LectureApplySavedDto dto) {
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+
+        CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
+        ObjectMapper objectMapper = new ObjectMapper();
+        MemberNameResDto memberNameResDto = objectMapper.convertValue(commonResDto.getResult(), MemberNameResDto.class);
+        String memberName = memberNameResDto.getName();
 
 
+        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(dto.getLectureGroupId(), "N").orElseThrow(() -> {
+            throw new EntityNotFoundException("해당 강의는 존재하지 않습니다.");
+        });
+        if (lectureGroup.getIsAvailable().equals("N")) {
+            throw new RuntimeException("해당 강의는 신청할 수 없습니다.");
+        }
+
+        Thread.currentThread().setName(String.valueOf(memberId)); // 스레드 이름 설정
+        waitingService.addQueue(dto.getLectureGroupId());
+        waitingService.processPayment(dto.getLectureGroupId());
+
+        return lectureApplyRepository.save(dto.toEntity(lectureGroup, memberId, memberName));
     }
 }
