@@ -1,7 +1,7 @@
 package com.tweety.SwithT.common.configs;
 
-
 import com.tweety.SwithT.common.auth.JwtAuthFilter;
+import com.tweety.SwithT.member.service.CustomOAuth2UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +18,13 @@ public class SecurityConfigs {
     @Autowired
     private JwtAuthFilter jwtAuthFilter;
 
+    private final CustomOAuth2UserService customOAuth2UserService;
+
+    @Autowired
+    public SecurityConfigs(CustomOAuth2UserService customOAuth2UserService) {
+        this.customOAuth2UserService = customOAuth2UserService;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
@@ -25,9 +32,18 @@ public class SecurityConfigs {
                 .cors(cors -> cors.configure(httpSecurity)) // CORS 활성화
                 .httpBasic(httpBasic -> httpBasic.disable()) // 기본 인증 비활성화
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/**")
-                        .permitAll()
+                        .requestMatchers("**").permitAll()
                         .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint
+                                .userService(customOAuth2UserService))
+                        .successHandler((request, response, authentication) -> {
+                            // 로그인 성공 시, 사용자 정보를 로그에 출력 (화면 없이 테스트)
+                            System.out.println("Login Success: " + authentication.getName());
+                            response.getWriter().write("Login Success! User: " + authentication.getName());
+                            response.getWriter().flush();
+                        })
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

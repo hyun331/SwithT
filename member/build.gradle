@@ -53,6 +53,8 @@ dependencies {
 //  rabbitMQ 의존성
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2' // Jackson 버전에 맞게 추가
+//	Oauth2 의존성 추가
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 }
 
 dependencyManagement {

@@ -6,10 +6,7 @@ import com.tweety.SwithT.member.domain.Role;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -18,7 +15,13 @@ import java.time.LocalDate;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Setter
 public class MemberSaveReqDto {
+
+    // 소셜 로그인 공급자
+    private String provider;
+    // 공급자 ID
+    private String providerId;
 
     @NotEmpty(message = "이름은 필수 작성 항목 입니다.")
     private String name;
@@ -83,6 +86,17 @@ public class MemberSaveReqDto {
                 .gender(this.gender)
                 .role(this.role)
                 .avgScore(this.avgScore)
+                .build();
+
+    }
+
+    public Member SocialtoEntity() {
+        return Member.builder()
+                .name(this.name)
+                .email(this.email)
+                .role(this.role)
+                .privderId(this.providerId)
+                .provider(this.provider)
                 .build();
 
     }

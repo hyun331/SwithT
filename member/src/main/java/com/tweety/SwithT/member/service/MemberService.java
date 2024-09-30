@@ -54,6 +54,15 @@ public class MemberService {
         return member;
     }
 
+    public Member SocialMemberCreate(MemberSaveReqDto memberSaveReqDto) {
+
+        memberRepository.findByEmail(memberSaveReqDto.getEmail()).ifPresent(existingMember -> {
+            throw new EntityExistsException("이미 존재하는 이메일입니다.");
+        });
+
+        return memberRepository.save(memberSaveReqDto.SocialtoEntity());
+    }
+
     public Member memberCreate(MemberSaveReqDto memberSaveReqDto,MultipartFile imgFile) {
 
         // 레디스에 인증이 된 상태인지 확인
