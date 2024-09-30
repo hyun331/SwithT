@@ -3,6 +3,7 @@ package com.tweety.SwithT.scheduler.domain;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import com.tweety.SwithT.member.domain.Member;
+import com.tweety.SwithT.scheduler.dto.AssignmentUpdateRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -51,5 +52,12 @@ public class Scheduler extends BaseTimeEntity {
 
     public void deleteSchedule(){
         updateDelYn();
+    }
+
+    public void updateSchedule(AssignmentUpdateRequest dto){
+        this.title = dto.getTitle();
+        this.content = dto.getContents();
+        this.schedulerDate = LocalDate.parse(dto.getSchedulerDate());
+        this.schedulerTime = LocalTime.parse(dto.getSchedulerTime());
     }
 }

@@ -11,7 +11,6 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 @Getter
-@Setter
 public class Board extends BaseTimeEntity {
 
     @Id
