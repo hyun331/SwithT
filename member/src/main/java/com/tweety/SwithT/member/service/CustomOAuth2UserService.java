@@ -1,11 +1,7 @@
 package com.tweety.SwithT.member.service;
 
-import com.tweety.SwithT.member.domain.Member;
 import com.tweety.SwithT.member.domain.Role;
-import com.tweety.SwithT.member.dto.CustomOAuth2User;
-import com.tweety.SwithT.member.dto.GoogleResponse;
-import com.tweety.SwithT.member.dto.MemberSaveReqDto;
-import com.tweety.SwithT.member.dto.OAuth2Response;
+import com.tweety.SwithT.member.dto.*;
 import com.tweety.SwithT.member.repository.MemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -43,27 +39,18 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             oAuth2Response = new GoogleResponse(oAuth2User.getAttributes());
         } else if (registractionId.equals("kakao")){
             //추후 카카오로 수정하기
-            oAuth2Response = new GoogleResponse(oAuth2User.getAttributes());
+            oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
         } else {
             return null;
         }
 
+        System.out.println("카카오 로그인 테스트");
         String provider = oAuth2Response.getProvider(); // 소셜 플랫폼
         String providerId = oAuth2Response.getProviderId(); //소셜 플랫폼 id
         String socialName = oAuth2Response.getName(); // 소셜플랫폼 사용자 이름
         String socialEmail = oAuth2Response.getEmail(); // 소셜 플랫폼 이메일
 
-        Member member = null;
 
-//        member = Member.builder()
-//                .provider(provider)
-//                .privderId(providerId)
-//                .name(socialName)
-//                .email(socialEmail)
-//                .role(Role.TUTEE)
-//                .build();
-//
-//        memberRepository.save(member);
         MemberSaveReqDto memberSaveReqDto = MemberSaveReqDto.builder()
                     .provider(provider)
                     .providerId(providerId)
@@ -75,6 +62,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         memberService.SocialMemberCreate(memberSaveReqDto);
 
         return new CustomOAuth2User(memberSaveReqDto);
-
     }
+
 }
