@@ -10,6 +10,7 @@ import jakarta.ws.rs.Path;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -63,14 +64,13 @@ public class LectureChatRoomController {
 
     @MessageMapping("/room/{roomId}/entered")
     public void entered(@DestinationVariable(value = "roomId") String roomId){
-        String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
-        final String msg = memberId + "님이 입장하셨습니다.";
-        template.convertAndSend("/sub/room/1", msg);
+        lectureChatRoomService.chatRoomEntered(roomId);
+
     }
 
     @MessageMapping("/room/{roomId}")
     public void sendMessage(@DestinationVariable(value = "roomId") String roomId, @Payload SendMessageDto chatMessage) {
-        template.convertAndSend("/sub/room/1", chatMessage.getMessage());
+        lectureChatRoomService.chatSend(roomId, chatMessage.getMessage());
     }
 
 //    @MessageMapping("/chatroom-connect")

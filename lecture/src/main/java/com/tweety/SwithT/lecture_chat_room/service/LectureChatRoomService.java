@@ -1,5 +1,7 @@
 package com.tweety.SwithT.lecture_chat_room.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatParticipants;
@@ -18,7 +20,10 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +38,9 @@ public class LectureChatRoomService {
     private final LectureGroupRepository lectureGroupRepository;
     private final LectureChatParticipantsRepository chatParticipantsRepository;
     private final SimpMessageSendingOperations sendingOperations;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final SimpMessagingTemplate template;
+
     @Value("${jwt.secretKey}")
     private String secretKey;
 
@@ -144,7 +152,30 @@ public class LectureChatRoomService {
         return ChatRoomResDto.builder()
                 .roomId(chatRoom.getId())
                 .build();
+    }
+
+    public void chatRoomEntered(String roomId) {
+        final String msg = "누군가님이 입장하셨습니다.";
+        chatSend(roomId, msg);
+    }
+
+    public void chatSend(String roomId, String message) {
+        kafkaTemplate.send("chat-"+roomId, message);
+
+    }
 
 
+    @KafkaListener(topics = "chat-1", groupId = "lecture-group", containerFactory = "kafkaListenerContainerFactory")
+    public void consumerChat(String message){
+//        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+//            System.out.println("consumerChat : "+message+"\n\n\n\n");
+            template.convertAndSend("/topic/chat-1",message);
+
+        } catch (Exception e) {
+            //원래 에러나면 여기서 작업해줘야함
+            System.out.println("consumer 오류나뮤ㅠㅜㅠㅜㅠㅜㅠn\n\n\n\n");
+            throw new RuntimeException(e);
+        }
     }
 }
