@@ -10,7 +10,6 @@ import com.tweety.SwithT.common.service.S3Service;
 import com.tweety.SwithT.lecture.domain.GroupTime;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
-import com.tweety.SwithT.lecture.domain.LectureType;
 import com.tweety.SwithT.lecture.dto.*;
 import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
@@ -82,10 +81,10 @@ public class LectureService {
             for (GroupTimeReqDto timeDto : groupDto.getGroupTimeReqDtos()){
                 groupTimeRepository.save(timeDto.toEntity(createdGroup));
             }
-            if (createdLecture.getLectureType()== LectureType.LECTURE){
-                // LectureGroup 생성시 강의 타입이 Lecture일 경우 대기열 생성
-                waitingService.createQueue(createdGroup.getId(), createdGroup.getLimitPeople());
-            }
+//            if (createdLecture.getLectureType()== LectureType.LECTURE){
+//                // LectureGroup 생성시 강의 타입이 Lecture일 경우 대기열 생성
+//                waitingService.createQueue(createdGroup.getId(), createdGroup.getLimitPeople());
+//            }
         }
 
         return createdLecture;

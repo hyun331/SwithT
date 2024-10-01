@@ -19,11 +19,20 @@ import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 
 @Configuration
 public class RedisConfig {
+
     @Value("${spring.redis.host}")
     public String host;
 
     @Value("${spring.redis.port}")
     public int port;
+
+//    // ** 임시 추가
+//    @Bean
+//    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+//        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+//        redisTemplate.setConnectionFactory(redisConnectionFactory);
+//        return redisTemplate;
+//    }
 
     //결제 요청
     @Bean
@@ -38,8 +47,8 @@ public class RedisConfig {
 
     @Bean
     @Qualifier("4")
-    public RedisTemplate<String, String> redisStreamTemplate(@Qualifier("4") RedisConnectionFactory streamConnectionFactory) {
-        RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
+    public RedisTemplate<String, Object> redisStreamTemplate(@Qualifier("4") RedisConnectionFactory streamConnectionFactory) {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(streamConnectionFactory);
 
         // Set key serializer to StringRedisSerializer for human-readable keys
@@ -89,7 +98,24 @@ public class RedisConfig {
     public RedisTemplate<String, Object> redisTemplate(@Qualifier("5") RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
+
+        // Set key serializer to StringRedisSerializer for human-readable keys
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+
+        // Create and configure ObjectMapper
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule()); // Support for Java 8 date/time types
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Use ISO-8601 format for dates
+
+        // Use ObjectMapper in Jackson2JsonRedisSerializer directly
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+
+        // Set value and hash value serializers to JSON
+        redisTemplate.setValueSerializer(serializer);
+        redisTemplate.setHashValueSerializer(serializer);
+
         return redisTemplate;
     }
+
 }
 
