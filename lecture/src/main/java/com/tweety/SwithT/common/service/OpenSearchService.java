@@ -160,6 +160,7 @@ public class OpenSearchService {
         }
     }
 
+    // OpenSearch에서 강의 삭제
     public void deleteLecture(Long lectureId) throws IOException, InterruptedException {
         String endpoint = openSearchUrl + "/lecture-service/_doc/" + lectureId;
 
@@ -175,6 +176,7 @@ public class OpenSearchService {
         }
     }
 
+    // OpenSearch에서 강의를 검색하는 메서드
     public List<LectureDetailResDto> searchLectures(String keyword, Pageable pageable, LectureSearchDto searchDto) throws IOException, InterruptedException {
         String endpoint = openSearchUrl + "/lecture-service/_search";
 
@@ -244,6 +246,7 @@ public class OpenSearchService {
         }
     }
 
+    // OpenSearch 응답을 LectureDetailResDto 리스트로 변환하는 메서드
     private List<LectureDetailResDto> parseSearchResults(String responseBody) throws IOException {
         List<LectureDetailResDto> lectureList = new ArrayList<>();
         JsonNode jsonNode = objectMapper.readTree(responseBody);

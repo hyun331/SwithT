@@ -49,6 +49,11 @@ dependencies {
 	implementation 'org.apache.httpcomponents:httpclient:4.5.13'  // HTTP 클라이언트
 	implementation 'org.springframework.boot:spring-boot-starter-hateoas'
 
+	implementation 'software.amazon.awssdk:opensearch:2.20.40'  // 최신 OpenSearch SDK
+	implementation 'software.amazon.awssdk:auth:2.20.40'  // AWS 인증 관련
+	implementation 'org.apache.httpcomponents:httpclient:4.5.13'  // HTTP 클라이언트
+
+
 }
 
 ext{

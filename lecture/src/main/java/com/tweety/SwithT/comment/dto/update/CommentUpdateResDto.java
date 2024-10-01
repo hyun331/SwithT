@@ -1,4 +1,4 @@
-package com.tweety.SwithT.comment.dto.read;
+package com.tweety.SwithT.comment.dto.update;
 
 import com.tweety.SwithT.comment.domain.Comment;
 import lombok.AllArgsConstructor;
@@ -10,14 +10,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 @Getter
-public class CommentListResponse {
+public class CommentUpdateResDto {
+
     private Long id;
+    private Long memberId;
     private String memberName;
     private String contents;
 
-    public static CommentListResponse fromEntity(Comment comment){
-        return CommentListResponse.builder()
+    public static CommentUpdateResDto fromEntity(Comment comment){
+        return CommentUpdateResDto.builder()
                 .id(comment.getId())
+                .memberId(comment.getMemberId())
                 .memberName(comment.getMemberName())
                 .contents(comment.getContents())
                 .build();

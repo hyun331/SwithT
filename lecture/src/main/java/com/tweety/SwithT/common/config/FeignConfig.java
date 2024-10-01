@@ -13,7 +13,6 @@ public class FeignConfig {
     public RequestInterceptor requestInterceptor(){
         return request -> {
             String token = (String) SecurityContextHolder.getContext().getAuthentication().getCredentials();
-            System.out.println("your token: " + token);
             request.header(HttpHeaders.AUTHORIZATION, token);
         };
     }
