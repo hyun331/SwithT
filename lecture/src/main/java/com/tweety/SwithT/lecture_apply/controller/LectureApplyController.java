@@ -31,7 +31,7 @@ public class LectureApplyController {
     //    과외 신청자 리스트. id는 강의 그룹
     @PreAuthorize("hasRole('TUTOR')")
     @GetMapping("/single-lecture-apply-list/{id}")
-    public ResponseEntity<?> showSingleLectureApplyList(@PathVariable Long id, @PageableDefault(size = 5)Pageable pageable){
+    public ResponseEntity<?> showSingleLectureApplyList(@PathVariable("id") Long id, @PageableDefault(size = 5)Pageable pageable){
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "튜티의 과외 신청자 리스트", lectureApplyService.singleLectureApplyList(id, pageable));
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
