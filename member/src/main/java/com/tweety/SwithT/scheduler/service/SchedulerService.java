@@ -14,6 +14,7 @@ import com.tweety.SwithT.scheduler.dto.ScheduleUpdateDto;
 import com.tweety.SwithT.scheduler.repository.SchedulerAlertRepository;
 import com.tweety.SwithT.scheduler.repository.SchedulerRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
