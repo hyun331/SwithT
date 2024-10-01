@@ -140,4 +140,11 @@ public class Member extends BaseTimeEntity {
             this.avgScore = avgScore.setScale(1, BigDecimal.ROUND_HALF_UP); // 소수점 자리 맞추기
         }
     }
+
+    // setName 메서드 추가 @Setter 안쓰기 위함.
+    public void setName(String name) {
+        this.name = name;
+    }
+
+
 }

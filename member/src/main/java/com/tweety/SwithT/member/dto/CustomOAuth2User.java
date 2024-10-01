@@ -1,5 +1,6 @@
 package com.tweety.SwithT.member.dto;
 
+import com.tweety.SwithT.member.domain.Member;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -10,11 +11,11 @@ import java.util.Map;
 
 public class CustomOAuth2User implements OAuth2User {
 
-    private final MemberSaveReqDto memberSaveReqDto;
+    private final Member member;
 
     @Autowired
-    public CustomOAuth2User(MemberSaveReqDto memberSaveReqDto) {
-        this.memberSaveReqDto = memberSaveReqDto;
+    public CustomOAuth2User(Member member) {
+        this.member = member;
     }
 
     @Override
@@ -33,7 +34,7 @@ public class CustomOAuth2User implements OAuth2User {
         collection.add(new GrantedAuthority() {
             @Override
             public String getAuthority() {
-                return memberSaveReqDto.getRole().toString(); // 추후 문제될시 살펴보기
+                return member.getRole().toString(); // 추후 문제될시 살펴보기
             }
         });
 
@@ -42,19 +43,19 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public String getName() {
-        return memberSaveReqDto.getName();
+        return member.getName();
     }
 
     public String getEmail(){
-        return memberSaveReqDto.getEmail();
+        return member.getEmail();
     }
 
     public String getProvider(){
-        return memberSaveReqDto.getProvider();
+        return member.getProvider();
     }
 
     public String getProviderId(){
-        return memberSaveReqDto.getProviderId();
+        return member.getProviderId();
     }
 
 }

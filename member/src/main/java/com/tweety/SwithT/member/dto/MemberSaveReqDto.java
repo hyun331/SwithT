@@ -90,6 +90,7 @@ public class MemberSaveReqDto {
 
     }
 
+    // 안쓸거면 지우기
     public Member SocialtoEntity() {
         return Member.builder()
                 .name(this.name)

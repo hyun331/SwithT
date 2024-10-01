@@ -1,7 +1,11 @@
 package com.tweety.SwithT.member.service;
 
+import com.tweety.SwithT.member.domain.Member;
 import com.tweety.SwithT.member.domain.Role;
-import com.tweety.SwithT.member.dto.*;
+import com.tweety.SwithT.member.dto.CustomOAuth2User;
+import com.tweety.SwithT.member.dto.GoogleResponse;
+import com.tweety.SwithT.member.dto.KakaoResponse;
+import com.tweety.SwithT.member.dto.OAuth2Response;
 import com.tweety.SwithT.member.repository.MemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -13,52 +17,55 @@ import org.springframework.stereotype.Service;
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-    // DefaultOAuth2UserService 상속한 이 클래스에서 소셜 유저 정보를 획득하기 위한 메서드가 명시되어 있다.
     private final MemberRepository memberRepository;
-    private final MemberService memberService;
 
     @Autowired
-    public CustomOAuth2UserService(MemberRepository memberRepository, MemberService memberService) {
+    public CustomOAuth2UserService(MemberRepository memberRepository) {
         this.memberRepository = memberRepository;
-        this.memberService = memberService;
     }
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        System.out.println("여기까지옴??????????");
+
         OAuth2User oAuth2User = super.loadUser(userRequest);
-        System.out.println("넘어오는 유저 정보 찍어보기 (커스텀유저서비스단) -> "+oAuth2User);
-        //어느 플랫폼에서 넘어오는 값인지 확인하기 위한 변수, 아래 메서드체이닝을 통해서 구글인지 카카오인지 값을 얻을 수 잇음.
-        String registractionId = userRequest.getClientRegistration().getRegistrationId();
-        System.out.println("서비스단입니다!!!!!!!!!!!!!");
+        String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
         OAuth2Response oAuth2Response = null;
 
-        if (registractionId.equals("google")){
+        if (registrationId.equals("google")) {
             oAuth2Response = new GoogleResponse(oAuth2User.getAttributes());
-        } else if (registractionId.equals("kakao")){
+        } else if (registrationId.equals("kakao")) {
             oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
         } else {
-            throw new IllegalArgumentException("Unsupported provider: " + registractionId);
+            throw new IllegalArgumentException("Unsupported provider: " + registrationId);
         }
 
-        System.out.println("카카오 로그인 테스트");
-        String provider = oAuth2Response.getProvider(); // 소셜 플랫폼
-        String providerId = oAuth2Response.getProviderId(); //소셜 플랫폼 id
-        String socialName = oAuth2Response.getName(); // 소셜플랫폼 사용자 이름
-        String socialEmail = oAuth2Response.getEmail(); // 소셜 플랫폼 이메일
+        String provider = oAuth2Response.getProvider();
+        String providerId = oAuth2Response.getProviderId();
+        String socialName = oAuth2Response.getName();
+        String socialEmail = oAuth2Response.getEmail();
 
+        Member member = memberRepository.findByEmail(socialEmail)
+                .map(existingMember -> updateExistingMember(existingMember, socialName))
+                .orElse(createNewMember(provider, providerId, socialName, socialEmail));
 
-        MemberSaveReqDto memberSaveReqDto = MemberSaveReqDto.builder()
-                    .provider(provider)
-                    .providerId(providerId)
-                    .name(socialName)
-                    .email(socialEmail)
-                    .role(Role.TUTEE)
-                    .build();
+        memberRepository.save(member);
 
-        memberService.SocialMemberCreate(memberSaveReqDto);
-        return new CustomOAuth2User(memberSaveReqDto);
+        return new CustomOAuth2User(member);
     }
 
+    private Member updateExistingMember(Member existingMember, String socialName) {
+        existingMember.setName(socialName);
+        return existingMember;
+    }
+
+    private Member createNewMember(String provider, String providerId, String name, String email) {
+        return Member.builder()
+                .provider(provider)
+                .providerId(providerId)
+                .name(name)
+                .email(email)
+                .role(Role.TUTEE)
+                .build();
+    }
 }
