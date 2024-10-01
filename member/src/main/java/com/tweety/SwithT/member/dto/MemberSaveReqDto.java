@@ -95,7 +95,7 @@ public class MemberSaveReqDto {
                 .name(this.name)
                 .email(this.email)
                 .role(this.role)
-                .privderId(this.providerId)
+                .providerId(this.providerId)
                 .provider(this.provider)
                 .build();
 

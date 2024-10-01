@@ -17,7 +17,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-@Setter
 @Getter
 @Builder
 @NoArgsConstructor
@@ -34,7 +33,7 @@ public class Member extends BaseTimeEntity {
     // 공급자
     private String provider;
     // 공급자 ID
-    private String privderId;
+    private String providerId;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
     @Builder.Default
@@ -88,7 +87,7 @@ public class Member extends BaseTimeEntity {
 
     @Builder.Default
     @Column(nullable = true)
-    private Long availableMoney = 1000000L;
+    private Long availableMoney = 1000000L; //나중에 0원 셋팅해야함.
 
     @Enumerated(EnumType.STRING)
     @Builder.Default

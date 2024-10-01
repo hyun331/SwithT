@@ -23,7 +23,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         this.memberService = memberService;
     }
 
-
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         System.out.println("여기까지옴??????????");
@@ -38,10 +37,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         if (registractionId.equals("google")){
             oAuth2Response = new GoogleResponse(oAuth2User.getAttributes());
         } else if (registractionId.equals("kakao")){
-            //추후 카카오로 수정하기
             oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
         } else {
-            return null;
+            throw new IllegalArgumentException("Unsupported provider: " + registractionId);
         }
 
         System.out.println("카카오 로그인 테스트");
@@ -60,7 +58,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .build();
 
         memberService.SocialMemberCreate(memberSaveReqDto);
-
         return new CustomOAuth2User(memberSaveReqDto);
     }
 

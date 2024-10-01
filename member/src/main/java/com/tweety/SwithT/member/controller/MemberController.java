@@ -140,7 +140,7 @@ public class MemberController {
             return new ResponseEntity<>(
                     new CommonErrorDto(HttpStatus.BAD_REQUEST.value(), "invalid refresh Token"), HttpStatus.BAD_REQUEST);
         }
-        String newAt = jwtTokenProvider.createToken(id,email, role,name);
+        String newAt = jwtTokenProvider.createToken(id,email,role,name);
         Map<String, Object> info = new HashMap<>();
         info.put("token", newAt);
 
