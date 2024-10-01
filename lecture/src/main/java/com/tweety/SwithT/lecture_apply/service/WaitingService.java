@@ -43,18 +43,13 @@ public class WaitingService {
     }
 
     public String addQueue(Long lectureGroupId, Long memberId){
-        System.out.println("applyForLecture!!!!!!!!!"); // 확인
         // 대기열 안에 회원이 없는 경우, 대기열에 추가
-        System.out.println("lectureGroupId!!!!!!!!" + lectureGroupId.toString());  // 확인. 값) 3
-        Double enterTime = redisTemplate.opsForZSet().score(lectureGroupId.toString(), memberId); // 어디서 갖고오는겨...
-
-        System.out.println("enterTime!!!!!!!! : " + enterTime); // 확인.  값) 1.72774606021E12
+        Double enterTime = redisTemplate.opsForZSet().score(lectureGroupId.toString(), memberId);
         if (enterTime == null) {
             final long now = System.currentTimeMillis();
             redisTemplate.opsForZSet().add(lectureGroupId.toString(), memberId, (int) now);
-//            sendQueuePosition(memberId.toString(), lectureGroupId.toString());
-            System.out.println("Successfully created & applied for the lecture.");
             log.info("대기열에 추가 - {} ({}초)", memberId, now);
+            System.out.println("Successfully created & applied for the lecture.");
             return "Successfully created & applied for the lecture.";
         } else {
             // 대기열 안에 회원이 있는 경우
@@ -66,15 +61,13 @@ public class WaitingService {
 
     public void getOrder(String memberId, String queueKey) throws InterruptedException {
 
-//        final long start = FIRST_ELEMENT;
-//        final long end = LAST_ELEMENT;
-
         Set<Object> queue = redisTemplate.opsForZSet().range(queueKey, 0, -1);
 
         for (Object people : queue) {
             Long rank = redisTemplate.opsForZSet().rank(queueKey, people);
             log.info("'{}'님의 현재 대기열은 {}명 남았습니다.", people, rank);
-            redisStreamProducer.publishWaitingMessage(memberId, "WAITING", "대기열 조회", rank.toString());
+//            redisStreamProducer.publishWaitingMessage(memberId, "WAITING", "대기열 조회", rank.toString());
+            redisStreamProducer.publishWaitingMessage(memberId, "WAITING", queueKey+"번 강의 대기열 조회", rank.toString());
         }
 
         Thread.sleep(1000);

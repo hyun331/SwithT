@@ -23,14 +23,12 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,8 +46,8 @@ public class LectureApplyService {
     private final RedisStreamProducer redisStreamProducer;
     private final WaitingService waitingService;
 //    private ZSetOperations<String, Object> zSetOperations;
-    @Qualifier("5")
-    private final RedisTemplate<String, Object> redisTemplate;
+//    @Qualifier("5")
+//    private final RedisTemplate<String, Object> redisTemplate;
 
 
     @Value("${jwt.secretKey}")
@@ -218,6 +216,15 @@ public class LectureApplyService {
         if (lectureGroup.getIsAvailable().equals("N")) {
             throw new RuntimeException("해당 강의는 신청할 수 없습니다.");
         }
+        List<LectureApply> lectureApplyList = lectureApplyRepository.findByMemberIdAndLectureGroup(memberId, lectureGroup);
+        if(!lectureApplyList.isEmpty()) {
+            int rejectedCount = 0;
+            for (LectureApply lectureApply : lectureApplyList) {
+                if (lectureApply.getStatus() == Status.STANDBY) {
+                    throw new RuntimeException("이미 신청한 과외입니다.");
+                }
+            }
+        }
 
 //        Thread.currentThread().setName(String.valueOf(memberId));   // 스레드 이름 설정
 
@@ -231,7 +238,6 @@ public class LectureApplyService {
 
         // 결제로 넘기기
         waitingService.processPayment(dto.getLectureGroupId());
-
 
 //        // 대기열에서 제거
 //        redisTemplate.opsForZSet().remove(dto.getLectureGroupId().toString(), memberId);

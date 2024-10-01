@@ -27,7 +27,7 @@ public class RedisStreamListenerConfig {
     private RedisTemplate<String, Object> redisTemplate;
 
     private static final String STREAM_NAME = "sse-notifications";
-    private static final String WAITINGSTREAM_NAME = "waiting-notifications";
+    private static final String WAITING_STREAM_NAME = "waiting-notifications";
 
     @EventListener(ContextRefreshedEvent.class)
     public void start() {
@@ -37,10 +37,11 @@ public class RedisStreamListenerConfig {
         StreamMessageListenerContainer<String, MapRecord<String, String, String>> container =
                 StreamMessageListenerContainer.create(redisTemplate.getConnectionFactory(), options);
 
+
         //리스너 컨테이너를 redis stream에 연결
         container.receive(StreamOffset.create(STREAM_NAME, ReadOffset.lastConsumed()), redisStreamSseConsumer);
-        container.receive(StreamOffset.create(WAITINGSTREAM_NAME, ReadOffset.lastConsumed()), redisStreamSseConsumer);
 
+        container.receive(StreamOffset.create(WAITING_STREAM_NAME, ReadOffset.lastConsumed()), redisStreamSseConsumer);
 
         container.start();
     }
