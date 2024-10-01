@@ -191,19 +191,30 @@ public class OpenSearchService {
     public List<LectureDetailResDto> searchLectures(String keyword, Pageable pageable) throws IOException, InterruptedException {
         String endpoint = openSearchUrl + "/lecture-service/_search"; // 검색 엔드포인트
         String requestBody = String.format("""
-        {
-            "query": {
-                "multi_match": {
-                    "query": "%s", // 검색어 설정
-                    "fields": ["title", "contents", "memberName"], // 검색할 필드들
-                    "type": "best_fields", // 가장 적합한 필드를 기반으로 검색
-                    "fuzziness": "AUTO" // 유사도 검색 허용
-                }
-            },
-            "from": %d, // 페이지 시작점
-            "size": %d  // 페이지 크기
-        }
-        """, keyword, pageable.getOffset(), pageable.getPageSize());
+    {
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "multi_match": {
+                            "query": "%s", // 검색어 설정
+                            "fields": ["title", "contents", "memberName"], // 검색할 필드들
+                            "type": "best_fields", // 가장 적합한 필드를 기반으로 검색
+                            "fuzziness": "AUTO" // 유사도 검색 허용
+                        }
+                    },
+                    {
+                        "term": {
+                            "delYn": "N" // delYn 값이 N인 경우만 검색
+                        }
+                    }
+                ]
+            }
+        },
+        "from": %d, // 페이지 시작점
+        "size": %d  // 페이지 크기
+    }
+    """, keyword, pageable.getOffset(), pageable.getPageSize());
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(endpoint))
