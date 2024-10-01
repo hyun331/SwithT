@@ -42,23 +42,18 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public String getName() {
-        System.out.println("여기오나? CustomOAuth2User");
         return memberSaveReqDto.getName();
     }
 
     public String getEmail(){
-        System.out.println("여기오나? CustomOAuth2User");
-
         return memberSaveReqDto.getEmail();
     }
 
     public String getProvider(){
-        System.out.println("여기오나? CustomOAuth2User");
         return memberSaveReqDto.getProvider();
     }
 
     public String getProviderId(){
-        System.out.println("여기오나? CustomOAuth2User");
         return memberSaveReqDto.getProviderId();
     }
 
