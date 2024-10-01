@@ -17,13 +17,13 @@ import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
-import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -36,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class LectureService {
@@ -97,12 +98,40 @@ public class LectureService {
     }
 
     // 강의 검색
-    public List<LectureDetailResDto> searchLectures(String keyword, Pageable pageable) {
+//    public List<LectureDetailResDto> searchLectures(String keyword, Pageable pageable) {
+//        try {
+//            return openSearchService.searchLectures(keyword, pageable);
+//        } catch (IOException | InterruptedException e) {
+//            e.printStackTrace();
+//            return new ArrayList<>();  // 검색 실패 시 빈 리스트 반환
+//        }
+//    }
+
+    public Page<LectureListResDto> showLectureList(LectureSearchDto searchDto, Pageable pageable) {
+        String keyword = searchDto.getSearchTitle(); // 검색 제목
+
         try {
-            return openSearchService.searchLectures(keyword, pageable);
+            // OpenSearch에서 검색 수행
+            List<LectureDetailResDto> searchResults = openSearchService.searchLectures(keyword, pageable, searchDto);
+//            System.out.println(searchResults.get(0));
+            // 검색 결과를 LectureListResDto로 변환하여 페이지 객체로 반환
+            List<LectureListResDto> lectureList = searchResults.stream()
+//                    여기서 필요한 데이터 조립
+                    .map(detail -> LectureListResDto.builder()
+                            .id(detail.getId())
+                            .title(detail.getTitle())
+                            .memberName(detail.getMemberName())
+                            .memberId(detail.getMemberId())
+                            .image(detail.getImage())
+                            .build())
+                    .collect(Collectors.toList());
+
+            // PageImpl로 페이지네이션 적용하여 반환
+            return new PageImpl<>(lectureList, pageable, searchResults.size());
+
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-            return new ArrayList<>();  // 검색 실패 시 빈 리스트 반환
+            // 예외 발생 시 로그 출력 및 빈 페이지 반환
+            throw new IllegalArgumentException(e);
         }
     }
 
@@ -114,38 +143,44 @@ public class LectureService {
 
     // Delete: role=TUTOR & limitPeople=0
 
-    public Page<LectureListResDto> showLectureList(LectureSearchDto searchDto, Pageable pageable) {
-        Specification<Lecture> specification = new Specification<Lecture>() {
-            @Override
-            public Predicate toPredicate(Root<Lecture> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+//    public Page<LectureListResDto> showLectureList(LectureSearchDto searchDto, Pageable pageable) {
+//        Specification<Lecture> specification = new Specification<Lecture>() {
+//            @Override
+//            public Predicate toPredicate(Root<Lecture> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+//
+//                List<Predicate> predicates = new ArrayList<>();
+//                predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
+//
+//                if(searchDto.getSearchTitle() != null){
+//                    predicates.add(criteriaBuilder.like(root.get("title"), "%"+searchDto.getSearchTitle()+"%"));
+//                }
+//                if(searchDto.getCategory() != null){
+//                    predicates.add(criteriaBuilder.like(root.get("category"), "%"+searchDto.getCategory()+"%"));
+//                }
+//                if(searchDto.getLectureType() != null){
+//                    predicates.add(criteriaBuilder.like(root.get("lectureType"), "%"+searchDto.getLectureType()+"%"));
+//                }
+//                if(searchDto.getStatus() != null){
+//                    predicates.add(criteriaBuilder.like(root.get("status"), "%"+searchDto.getStatus()+"%"));
+//                }
+//
+//                Predicate[] predicateArr = new Predicate[predicates.size()];
+//                for(int i=0; i<predicateArr.length; i++){
+//                    predicateArr[i] = predicates.get(i);
+//                }
+//                return criteriaBuilder.and(predicateArr);
+//            }
+//        };
+//        Page<Lecture> lectures = lectureRepository.findAll(specification, pageable);
+//
+//        return lectures.map(Lecture::fromEntityToLectureListResDto);
+//    }
 
-                List<Predicate> predicates = new ArrayList<>();
-                predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
 
-                if(searchDto.getSearchTitle() != null){
-                    predicates.add(criteriaBuilder.like(root.get("title"), "%"+searchDto.getSearchTitle()+"%"));
-                }
-                if(searchDto.getCategory() != null){
-                    predicates.add(criteriaBuilder.like(root.get("category"), "%"+searchDto.getCategory()+"%"));
-                }
-                if(searchDto.getLectureType() != null){
-                    predicates.add(criteriaBuilder.like(root.get("lectureType"), "%"+searchDto.getLectureType()+"%"));
-                }
-                if(searchDto.getStatus() != null){
-                    predicates.add(criteriaBuilder.like(root.get("status"), "%"+searchDto.getStatus()+"%"));
-                }
 
-                Predicate[] predicateArr = new Predicate[predicates.size()];
-                for(int i=0; i<predicateArr.length; i++){
-                    predicateArr[i] = predicates.get(i);
-                }
-                return criteriaBuilder.and(predicateArr);
-            }
-        };
-        Page<Lecture> lectures = lectureRepository.findAll(specification, pageable);
-
-        return lectures.map(Lecture::fromEntityToLectureListResDto);
-    }
+//    public Page<LectureDetailResDto> showLectureStatusList(){
+//
+//    }
 
     //튜터 - 자신의 강의 리스트
     public Page<LectureListResDto> showMyLectureList(LectureSearchDto searchDto, Pageable pageable) {
@@ -443,19 +478,5 @@ public class LectureService {
         }
 
         return groupTimesDto;
-    }
-
-    // 애플리케이션 시작 시 데이터베이스에서 OpenSearch로 동기화
-    @PostConstruct
-    public void syncLecturesToOpenSearch() {
-        List<Lecture> lectures = lectureRepository.findAll(); // 모든 강의 정보 가져오기
-        for (Lecture lecture : lectures) {
-            try {
-                // 강의를 OpenSearch에 등록
-                openSearchService.registerLecture(lecture.fromEntityToLectureDetailResDto());
-            } catch (IOException | InterruptedException e) {
-                e.printStackTrace(); // 예외 처리
-            }
-        }
     }
 }
