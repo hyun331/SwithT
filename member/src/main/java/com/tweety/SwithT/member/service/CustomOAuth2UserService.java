@@ -1,7 +1,6 @@
 package com.tweety.SwithT.member.service;
 
 import com.tweety.SwithT.member.domain.Member;
-import com.tweety.SwithT.member.domain.Role;
 import com.tweety.SwithT.member.dto.CustomOAuth2User;
 import com.tweety.SwithT.member.dto.GoogleResponse;
 import com.tweety.SwithT.member.dto.KakaoResponse;
@@ -29,7 +28,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         OAuth2User oAuth2User = super.loadUser(userRequest);
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
-
+        System.out.println("!!!!!!!!!!!!!LOADUSER!!!!!!!!!!!!!!!!!!!!!!!");
+        System.out.println(oAuth2User.getAttributes());
         OAuth2Response oAuth2Response = null;
 
         if (registrationId.equals("google")) {
@@ -47,8 +47,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         Member member = memberRepository.findByEmail(socialEmail)
                 .map(existingMember -> updateExistingMember(existingMember, socialName))
-                .orElse(createNewMember(provider, providerId, socialName, socialEmail));
-
+                .orElse(createSocialMember(provider, providerId, socialName, socialEmail));
         memberRepository.save(member);
 
         return new CustomOAuth2User(member);
@@ -59,13 +58,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return existingMember;
     }
 
-    private Member createNewMember(String provider, String providerId, String name, String email) {
+    private Member createSocialMember(String provider, String providerId, String name, String email) {
         return Member.builder()
                 .provider(provider)
                 .providerId(providerId)
                 .name(name)
                 .email(email)
-                .role(Role.TUTEE)
                 .build();
     }
 }
