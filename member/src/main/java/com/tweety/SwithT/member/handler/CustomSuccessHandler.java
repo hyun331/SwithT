@@ -36,32 +36,38 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        // 소셜 로그인에 성공한 회원 정보 가져오기
+
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
 
-        // 회원 정보를 DB에서 조회.
+
         Optional<Member> member = memberRepository.findByEmail(email);
 
-        // 회원이 존재하는지 확인하고, 정보 추출
         if (member.isPresent()) {
-            String name = member.get().getName();
-            Long memberId = member.get().getId();
+            Member existingMember = member.get();
+            String name = existingMember.getName();
+            Long memberId = existingMember.getId();
 
-            // 회원 정보를 쿠키에 담아서 보내기
+
             Cookie memberCookie = new Cookie("memberId", String.valueOf(memberId));
-            memberCookie.setPath("/"); // 전체 도메인에서 접근 가능하도록 설정 -> 나중에 특정 도메인에서 접근 가능하도록 설정
-            memberCookie.setMaxAge(60 * 60 * 24); // 쿠키 유효 기간 (1일) -> 나중에 시간 1시간이나 짧은시간으로 변경하기
+            memberCookie.setPath("/"); // 전체 도메인에서 접근 가능하도록 설정 -> 추후 추가정보 입력화면만 하도록 수정 예정
+            memberCookie.setMaxAge(60 * 60 * 24); // 쿠키 유효 기간 (1일) -> 추후 1시간 혹은 10분으로 수정 예정
             response.addCookie(memberCookie);
 
-            // 리디렉션 URL 설정
-            String redirectUrl = REDIRECT_URL; // 추가정보 입력 페이지 URL로 나중에 설정하기.
-
-            // 리디렉션
-            response.sendRedirect(redirectUrl);
+            // phoneNumber 필드가 null인지 확인
+            if (existingMember.getPhoneNumber() == null) {
+                // 첫 번째 로그인 -> 추가 정보 입력 페이지로 리디렉션
+                String redirectUrl = REDIRECT_URL; // 추가정보 입력 페이지 URL
+                response.sendRedirect(redirectUrl);
+            } else {
+                // 두 번째 이후 로그인 -> 메인 페이지로 리디렉션
+                String redirectUrl = REDIRECT_URL_EXIST; // 메인 페이지 URL
+                response.sendRedirect(redirectUrl);
+            }
         } else {
             // 회원 정보가 없을때 예외
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "없는 회원 입니다.");
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "없는 회원 입니다. 관리자에게 문의하세요.");
         }
     }
+
 }

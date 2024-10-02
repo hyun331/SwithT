@@ -53,6 +53,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private Member updateExistingMember(Member existingMember, String socialEmail) {
+        System.out.println("이미 가입한 이력이 있는 회원 체크, 이메일 :"+existingMember.getEmail());
         existingMember.setEmail(socialEmail);
         return existingMember;
     }
