@@ -1,63 +1,72 @@
 package com.tweety.SwithT.lecture_apply.service;
 
+import com.tweety.SwithT.lecture.domain.LectureGroup;
+import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
+import com.tweety.SwithT.lecture_apply.dto.LectureApplySavedDto;
+import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.mockito.Mockito.when;
 
+@SpringBootTest
 public class LectureApplyServiceTest {
+
+    @InjectMocks
+    private WaitingService waitingService;
 
     @InjectMocks
     private LectureApplyService lectureApplyService;
 
     @Mock
-    private WaitingService waitingService;
+    private LectureGroupRepository lectureGroupRepository;
 
     @Mock
-    private RedisTemplate<String, Object> redisTemplate;
+    private LectureApplyRepository lectureApplyRepository;
 
-    @Mock
-    private ZSetOperations<String, Object> zSetOperations;
+    private final int lectureGroupLimit = 100;  // 강의 그룹 제한 인원 수
+    LectureGroup mockGroup = new LectureGroup();
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-
-        // RedisTemplate의 opsForZSet 메서드가 ZSetOperations를 반환하도록 설정
-        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+        // 제한 인원이 100인 강의 그룹을 설정
+        mockGroup.setId(3L);
+        mockGroup.setLimitPeople(lectureGroupLimit);
+        when(lectureGroupRepository.findByIdAndDelYn(3L, "N")).thenReturn(Optional.of(mockGroup));
     }
 
-//    @Test
-//    public void testApplyForLecture_When120TuteesApply_ShouldProcessCorrectly() {
-//        Long lectureGroupId = 1L; // 강의 그룹 ID
-//        Long[] memberIds = new Long[120];
-//
-//        // 120명의 회원 ID 초기화
-//        for (int i = 0; i < 120; i++) {
-//            memberIds[i] = (long) (i + 1); // 1부터 120까지
-//        }
-//
-//        // 강의 신청 DTO
-//        LectureApplySavedDto dto = new LectureApplySavedDto();
-//        dto.setLectureGroupId(lectureGroupId);
-//
-//        // 강의 그룹을 존재하는 것으로 설정
-//        when(zSetOperations.score(any(), any())).thenReturn(null); // 대기열이 비어있다고 가정
-//        when(waitingService.applyForLecture(any(), any())).thenCallRealMethod();
-//
-//        for (Long memberId : memberIds) {
-//            String memberName = "USER" + memberId;
-//            // 강의 신청 호출
-//            lectureApplyService.tuteeLectureApply(dto);
-//        }
-//
-//        // 대기열에 추가되었는지 확인
-//        for (Long memberId : memberIds) {
-//            verify(waitingService, times(1)).applyForLecture(lectureGroupId, memberId);
-//        }
-//    }
+    @Test
+    public void testWaitingQueueWith300Applicants() throws InterruptedException {
+        ExecutorService executor = Executors.newFixedThreadPool(300);
+
+        for (long i = 1; i <= 300; i++) {
+            long memberId = i;
+            String memberName = "USER" + i;
+            executor.submit(() -> {
+                try {
+                    LectureApplySavedDto dto = new LectureApplySavedDto();
+                    dto.setLectureGroupId(1L);
+                    // 강의 신청 시뮬레이션
+                    String result = lectureApplyService.testTuteeLectureApply(dto, mockGroup, memberId, memberName, mockGroup.getId(), lectureGroupLimit);
+                    System.out.println(result);
+                } catch (Exception e) {
+                    System.err.println("회원 ID: " + memberId + " 오류 - " + e.getMessage());
+                }
+            });
+        }
+        executor.shutdown();
+        while (!executor.isTerminated()) {
+            // 모든 스레드가 종료될 때까지 대기
+        }
+    }
 }
+

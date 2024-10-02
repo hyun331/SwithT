@@ -66,7 +66,6 @@ public class WaitingService {
         for (Object people : queue) {
             Long rank = redisTemplate.opsForZSet().rank(queueKey, people);
             log.info("'{}'님의 현재 대기열은 {}명 남았습니다.", people, rank);
-//            redisStreamProducer.publishWaitingMessage(memberId, "WAITING", "대기열 조회", rank.toString());
             redisStreamProducer.publishWaitingMessage(memberId, "WAITING", queueKey+"번 강의 대기열 조회", rank.toString());
         }
 
@@ -75,15 +74,11 @@ public class WaitingService {
 
 //        SseEmitter emitter = new SseEmitter();
 //        emitters.put(memberId, emitter);
-
 //        // 1초마다 대기열 순위 전송
 //        new Thread(() -> {
 //            try {
 //                while (true) {
-//                    System.out.println("대기열 조회 시작!!!!!!!!!"); // 확인
-//                    // *** 여기 안탐
 //                    Long position = redisTemplate.opsForZSet().rank(queueKey, memberId);    // 순번 조회
-//                    System.out.println("position: " +position);  // *** null
 //                    if (position != null) {
 //                        redisStreamProducer.publishMessage(memberId, "WAITING", "대기열 조회", position.toString());
 //                        System.out.println("Your position in the queue:" + (position + 1)); // *** 실패
