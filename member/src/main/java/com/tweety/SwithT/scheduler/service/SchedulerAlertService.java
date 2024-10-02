@@ -14,6 +14,7 @@ import com.tweety.SwithT.scheduler.repository.SchedulerRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,7 +34,7 @@ public class SchedulerAlertService {
     private static final String SCHEDULED_ALERTS_ZSET_KEY = "scheduled_alerts";
 
     @Autowired
-    public SchedulerAlertService(TwilioService twilioService, RedisTemplate<String, Object> redisTemplate,
+    public SchedulerAlertService(TwilioService twilioService, @Qualifier("16") RedisTemplate<String, Object> redisTemplate,
                                  SchedulerAlertRepository schedulerAlertRepository, MemberRepository memberRepository,
                                  SchedulerRepository schedulerRepository) {
         this.twilioService = twilioService;

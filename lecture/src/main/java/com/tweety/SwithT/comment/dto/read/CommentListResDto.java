@@ -1,6 +1,5 @@
-package com.tweety.SwithT.comment.dto.create;
+package com.tweety.SwithT.comment.dto.read;
 
-import com.tweety.SwithT.board.domain.Board;
 import com.tweety.SwithT.comment.domain.Comment;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,20 +10,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 @Getter
-public class CommentCreateResponse {
-
+public class CommentListResDto {
     private Long id;
-    private Board board;
-    private Long memberId;
     private String memberName;
     private String contents;
 
-    public static CommentCreateResponse fromEntity(Comment comment){
-        return CommentCreateResponse.builder()
+    public static CommentListResDto fromEntity(Comment comment){
+        return CommentListResDto.builder()
                 .id(comment.getId())
-                .memberId(comment.getMemberId())
                 .memberName(comment.getMemberName())
-                .board(comment.getBoard())
                 .contents(comment.getContents())
                 .build();
     }

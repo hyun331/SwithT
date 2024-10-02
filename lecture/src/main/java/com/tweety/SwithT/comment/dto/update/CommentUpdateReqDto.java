@@ -6,7 +6,7 @@ import lombok.*;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CommentUpdateRequest {
+public class CommentUpdateReqDto {
 
     private String contents;
 

@@ -6,6 +6,7 @@ import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.dto.MemberNameResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
+import com.tweety.SwithT.common.service.OpenSearchService;
 import com.tweety.SwithT.common.service.S3Service;
 import com.tweety.SwithT.lecture.domain.GroupTime;
 import com.tweety.SwithT.lecture.domain.Lecture;
@@ -23,6 +24,7 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -32,8 +34,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class LectureService {
@@ -46,9 +50,10 @@ public class LectureService {
     private final KafkaTemplate kafkaTemplate;
     private final MemberFeign memberFeign;
     private final S3Service s3Service;
-    private final WaitingService waitingService;
 
-    public LectureService(LectureRepository lectureRepository, LectureGroupRepository lectureGroupRepository, GroupTimeRepository groupTimeRepository, LectureApplyRepository lectureApplyRepository, ObjectMapper objectMapper, KafkaTemplate kafkaTemplate, MemberFeign memberFeign, S3Service s3Service, WaitingService waitingService){
+    private final OpenSearchService openSearchService;
+
+    public LectureService(LectureRepository lectureRepository, LectureGroupRepository lectureGroupRepository, GroupTimeRepository groupTimeRepository, LectureApplyRepository lectureApplyRepository, ObjectMapper objectMapper, KafkaTemplate kafkaTemplate, MemberFeign memberFeign, S3Service s3Service, OpenSearchService openSearchService){
 
         this.lectureRepository = lectureRepository;
         this.lectureGroupRepository = lectureGroupRepository;
@@ -58,8 +63,9 @@ public class LectureService {
         this.kafkaTemplate = kafkaTemplate;
         this.memberFeign = memberFeign;
         this.s3Service = s3Service;
-        this.waitingService = waitingService;
+        this.openSearchService = openSearchService;
     }
+
     // Create
     @Transactional
     public Lecture lectureCreate(LectureCreateReqDto lectureCreateReqDto, List<LectureGroupReqDto> lectureGroupReqDtos, MultipartFile imgFile){
@@ -87,43 +93,101 @@ public class LectureService {
 //            }
         }
 
+        // OpenSearch에 데이터 동기화
+        try {
+            openSearchService.registerLecture(createdLecture.fromEntityToLectureDetailResDto());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return createdLecture;
     }
 
 
+    // 강의 검색
+//    public List<LectureDetailResDto> searchLectures(String keyword, Pageable pageable) {
+//        try {
+//            return openSearchService.searchLectures(keyword, pageable);
+//        } catch (IOException | InterruptedException e) {
+//            e.printStackTrace();
+//            return new ArrayList<>();  // 검색 실패 시 빈 리스트 반환
+//        }
+//    }
+
     public Page<LectureListResDto> showLectureList(LectureSearchDto searchDto, Pageable pageable) {
-        Specification<Lecture> specification = new Specification<Lecture>() {
-            @Override
-            public Predicate toPredicate(Root<Lecture> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+        String keyword = searchDto.getSearchTitle(); // 검색 제목
 
-                List<Predicate> predicates = new ArrayList<>();
-                predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
+        try {
+            // OpenSearch에서 검색 수행
+            List<LectureDetailResDto> searchResults = openSearchService.searchLectures(keyword, pageable, searchDto);
+//            System.out.println(searchResults.get(0));
+            // 검색 결과를 LectureListResDto로 변환하여 페이지 객체로 반환
+            List<LectureListResDto> lectureList = searchResults.stream()
+//                    여기서 필요한 데이터 조립
+                    .map(detail -> LectureListResDto.builder()
+                            .id(detail.getId())
+                            .title(detail.getTitle())
+                            .memberName(detail.getMemberName())
+                            .memberId(detail.getMemberId())
+                            .image(detail.getImage())
+                            .build())
+                    .collect(Collectors.toList());
 
-                if(searchDto.getSearchTitle() != null){
-                    predicates.add(criteriaBuilder.like(root.get("title"), "%"+searchDto.getSearchTitle()+"%"));
-                }
-                if(searchDto.getCategory() != null){
-                    predicates.add(criteriaBuilder.like(root.get("category"), "%"+searchDto.getCategory()+"%"));
-                }
-                if(searchDto.getLectureType() != null){
-                    predicates.add(criteriaBuilder.like(root.get("lectureType"), "%"+searchDto.getLectureType()+"%"));
-                }
-                if(searchDto.getStatus() != null){
-                    predicates.add(criteriaBuilder.like(root.get("status"), "%"+searchDto.getStatus()+"%"));
-                }
+            // PageImpl로 페이지네이션 적용하여 반환
+            return new PageImpl<>(lectureList, pageable, searchResults.size());
 
-                Predicate[] predicateArr = new Predicate[predicates.size()];
-                for(int i=0; i<predicateArr.length; i++){
-                    predicateArr[i] = predicates.get(i);
-                }
-                return criteriaBuilder.and(predicateArr);
-            }
-        };
-        Page<Lecture> lectures = lectureRepository.findAll(specification, pageable);
-
-        return lectures.map(Lecture::fromEntityToLectureListResDto);
+        } catch (IOException | InterruptedException e) {
+            // 예외 발생 시 로그 출력 및 빈 페이지 반환
+            throw new IllegalArgumentException(e);
+        }
     }
 
+    // Update: limitPeople=0
+//    public void lectureUpdate(LectureUpdateReqDto lectureUpdateReqDto, List<LectureGroupReqDto> lectureGroupReqDtos){
+//        Long memberId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
+//        if (memberId == )
+//    }
+
+    // Delete: role=TUTOR & limitPeople=0
+
+//    public Page<LectureListResDto> showLectureList(LectureSearchDto searchDto, Pageable pageable) {
+//        Specification<Lecture> specification = new Specification<Lecture>() {
+//            @Override
+//            public Predicate toPredicate(Root<Lecture> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+//
+//                List<Predicate> predicates = new ArrayList<>();
+//                predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
+//
+//                if(searchDto.getSearchTitle() != null){
+//                    predicates.add(criteriaBuilder.like(root.get("title"), "%"+searchDto.getSearchTitle()+"%"));
+//                }
+//                if(searchDto.getCategory() != null){
+//                    predicates.add(criteriaBuilder.like(root.get("category"), "%"+searchDto.getCategory()+"%"));
+//                }
+//                if(searchDto.getLectureType() != null){
+//                    predicates.add(criteriaBuilder.like(root.get("lectureType"), "%"+searchDto.getLectureType()+"%"));
+//                }
+//                if(searchDto.getStatus() != null){
+//                    predicates.add(criteriaBuilder.like(root.get("status"), "%"+searchDto.getStatus()+"%"));
+//                }
+//
+//                Predicate[] predicateArr = new Predicate[predicates.size()];
+//                for(int i=0; i<predicateArr.length; i++){
+//                    predicateArr[i] = predicates.get(i);
+//                }
+//                return criteriaBuilder.and(predicateArr);
+//            }
+//        };
+//        Page<Lecture> lectures = lectureRepository.findAll(specification, pageable);
+//
+//        return lectures.map(Lecture::fromEntityToLectureListResDto);
+//    }
+
+
+
+//    public Page<LectureDetailResDto> showLectureStatusList(){
+//
+//    }
 
     //튜터 - 자신의 강의 리스트
     public Page<LectureListResDto> showMyLectureList(LectureSearchDto searchDto, Pageable pageable) {
@@ -149,7 +213,6 @@ public class LectureService {
                     predicates.add(criteriaBuilder.like(root.get("status"), "%" + searchDto.getStatus() + "%"));
                 }
 
-
                 Predicate[] predicateArr = new Predicate[predicates.size()];
                 for(int i=0; i<predicateArr.length; i++){
                     predicateArr[i] = predicates.get(i);
@@ -170,27 +233,27 @@ public class LectureService {
         return lecture.fromEntityToLectureDetailResDto();
     }
 
-
+    //강의 그룹 및 그룹 시간 조회
     public Page<LectureGroupListResDto> showLectureGroupList(Long id, String isAvailable, Pageable pageable) {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
         Lecture lecture = lectureRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{
-           throw new EntityNotFoundException("해당 id에 맞는 강의/과외가 존재하지 않습니다.");
+            throw new EntityNotFoundException("해당 id에 맞는 강의/과외가 존재하지 않습니다.");
         });
         if(lecture.getMemberId() != memberId){
             throw new IllegalArgumentException("로그인한 유저는 해당 과외의 튜터가 아닙니다.");
         }
 
-    Specification<LectureGroup> specification = new Specification<LectureGroup>() {
-        @Override
-        public Predicate toPredicate(Root<LectureGroup> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
-            List<Predicate> predicates = new ArrayList<>();
-            predicates.add(criteriaBuilder.equal(root.get("lecture"), lecture));
-            predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
-
+        Specification<LectureGroup> specification = new Specification<LectureGroup>() {
+            @Override
+            public Predicate toPredicate(Root<LectureGroup> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> predicates = new ArrayList<>();
+                predicates.add(criteriaBuilder.equal(root.get("lecture"), lecture));
+                predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
 
                 if(isAvailable != null && !isAvailable.isEmpty()){
                     predicates.add(criteriaBuilder.equal(root.get("isAvailable"), isAvailable));
                 }
+
                 Predicate[] predicateArr = new Predicate[predicates.size()];
                 for(int i=0; i<predicateArr.length; i++){
                     predicateArr[i] = predicates.get(i);
@@ -237,7 +300,14 @@ public class LectureService {
         if (dto.getCategory() != null) {
             lecture.updateCategory(dto.getCategory());
         }
-        System.out.println(lecture.fromEntityToLectureDetailResDto());
+
+        // OpenSearch에 데이터 동기화
+        try {
+            openSearchService.registerLecture(lecture.fromEntityToLectureDetailResDto());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return lecture.fromEntityToLectureDetailResDto();
     }
 
@@ -266,6 +336,13 @@ public class LectureService {
             for (GroupTime groupTime : group.getGroupTimes()){
                 groupTime.updateDelYn();
             }
+        }
+
+        // OpenSearch에서 삭제
+        try {
+            openSearchService.deleteLecture(lectureId);
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -299,7 +376,6 @@ public class LectureService {
                 groupTimeRepository.save(timeDto.toEntity(lectureGroup));
             }
         }
-
     }
 
     // 강의 그룹 삭제
@@ -411,4 +487,3 @@ public class LectureService {
         return groupTimesDto;
     }
 }
-

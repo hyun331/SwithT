@@ -14,6 +14,10 @@ import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import com.tweety.SwithT.lecture_apply.dto.*;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
+import com.tweety.SwithT.lecture_chat_room.domain.LectureChatParticipants;
+import com.tweety.SwithT.lecture_chat_room.domain.LectureChatRoom;
+import com.tweety.SwithT.lecture_chat_room.repository.LectureChatParticipantsRepository;
+import com.tweety.SwithT.lecture_chat_room.repository.LectureChatRoomRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -30,14 +34,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
 
 @Service
 @RequiredArgsConstructor
 public class LectureApplyService {
     private final LectureGroupRepository lectureGroupRepository;
     private final LectureApplyRepository lectureApplyRepository;
+    private final LectureChatRoomRepository lectureChatRoomRepository;
+    private final LectureChatParticipantsRepository lectureChatParticipantsRepository;
     private final LectureRepository lectureRepository;
     private final MemberFeign memberFeign;
     private final RedisStreamProducer redisStreamProducer;
@@ -109,11 +115,21 @@ public class LectureApplyService {
         int start = (int) pageRequest.getOffset();
         int end = Math.min((start + pageRequest.getPageSize()), lectureApplyList.size());
         Page<LectureApply> lectureApplyPage = new PageImpl<>(lectureApplyList.subList(start, end), pageRequest, lectureApplyList.size());
-
-
-
-        return lectureApplyPage.map(a->a.fromEntityToSingleLectureApplyListDto());
-
+        Page<SingleLectureApplyListDto> result = lectureApplyPage.map(a->a.fromEntityToSingleLectureApplyListDto());
+        for(SingleLectureApplyListDto dto : result){
+            // chatroomlist
+            List<LectureChatRoom> lectureChatRoomList = lectureChatRoomRepository.findByLectureGroupAndDelYn(lectureGroup,"N");
+            for(LectureChatRoom chatRoom : lectureChatRoomList){
+                Long roomId = chatRoom.getId();
+                if(lectureChatParticipantsRepository.findByLectureChatRoomIdAndMemberIdAndDelYn(roomId,dto.getMemberId(),"N" ).isEmpty()){
+                    dto.setChatRoomId(null);
+                }
+                else{
+                    dto.setChatRoomId(roomId);
+                }
+            }
+        }
+        return result;
     }
 
     //튜터 - 튜티의 신청 승인
