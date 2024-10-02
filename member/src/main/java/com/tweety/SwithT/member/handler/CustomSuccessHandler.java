@@ -2,10 +2,10 @@ package com.tweety.SwithT.member.handler;
 
 
 import com.tweety.SwithT.common.auth.JwtTokenProvider;
-import com.tweety.SwithT.common.service.RedisService;
 import com.tweety.SwithT.member.domain.Member;
 import com.tweety.SwithT.member.repository.MemberRepository;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
@@ -15,29 +15,32 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.Optional;
-
+/*
+프론트엔드 작업하면서 추가정보 입력 테스트를 진행해야합니다!!!!!!!!!!!!!!!!!!!!
+프론트엔드 작업하면서 추가정보 입력 테스트를 진행해야합니다!!!!!!!!!!!!!!!!!!!!
+프론트엔드 작업하면서 추가정보 입력 테스트를 진행해야합니다!!!!!!!!!!!!!!!!!!!!
+프론트 붙이면서 완성하겠습니다!!!!!!!!!!!!!!!!!!!!
+ */
 @Component
 public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final MemberRepository memberRepository;
-    private final String REDIRECT_URL = "http://localhost:8082//mypage";
-    private final RedisService redisService;
+    private final String REDIRECT_URL = "http://localhost:8082/mypage"; //테스트를 위해서 임시로 뒀음.
+    private final String REDIRECT_URL_EXIST = "http://localhost:8082/"; //테스트를 위해서 임시로 뒀음.
 
-    public CustomSuccessHandler(JwtTokenProvider jwtTokenProvider, MemberRepository memberRepository, RedisService redisService) {
+    public CustomSuccessHandler(JwtTokenProvider jwtTokenProvider, MemberRepository memberRepository) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.memberRepository = memberRepository;
-        this.redisService = redisService;
     }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-
-        // 인증된 사용자 정보를 가져옵니다.
+        // 소셜 로그인에 성공한 회원 정보 가져오기
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
 
-        // 회원 정보를 데이터베이스에서 조회합니다.
+        // 회원 정보를 DB에서 조회.
         Optional<Member> member = memberRepository.findByEmail(email);
 
         // 회원이 존재하는지 확인하고, 정보 추출
@@ -45,39 +48,20 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             String name = member.get().getName();
             Long memberId = member.get().getId();
 
-            // JWT 토큰 생성
-            String jwtToken = jwtTokenProvider.createToken(String.valueOf(memberId), email, String.valueOf(member.get().getRole()), name);
+            // 회원 정보를 쿠키에 담아서 보내기
+            Cookie memberCookie = new Cookie("memberId", String.valueOf(memberId));
+            memberCookie.setPath("/"); // 전체 도메인에서 접근 가능하도록 설정 -> 나중에 특정 도메인에서 접근 가능하도록 설정
+            memberCookie.setMaxAge(60 * 60 * 24); // 쿠키 유효 기간 (1일) -> 나중에 시간 1시간이나 짧은시간으로 변경하기
+            response.addCookie(memberCookie);
 
-            System.out.println(jwtToken);
-            System.out.println(memberId);
-            // 리디렉션 URL에 토큰과 회원 정보를 쿼리 파라미터로 추가
-            String redirectUrl = REDIRECT_URL + "?token=" + jwtToken + "&memberId=" + memberId;
+            // 리디렉션 URL 설정
+            String redirectUrl = REDIRECT_URL; // 추가정보 입력 페이지 URL로 나중에 설정하기.
 
             // 리디렉션
             response.sendRedirect(redirectUrl);
         } else {
-            // 회원 정보가 없을 경우의 처리 (예: 에러 응답)
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "User not found");
+            // 회원 정보가 없을때 예외
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "없는 회원 입니다.");
         }
     }
-
-
-//    @Override
-//    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException{
-//        // OAuth2User로 캐스팅하여 인증된 사용자 정보를 가져온다.
-//        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-//        //디버깅.
-//        System.out.println("Attributes: " + oAuth2User.getAttributes());
-//        String email = oAuth2User.getAttribute("email").toString();
-//        String provider = oAuth2User.getAttribute("provider");
-//        String name = oAuth2User.getAttribute("name");
-//
-////        System.out.println("핸들러!!!!!!!");
-////        System.out.println(email);
-////        System.out.println(provider);
-////        System.out.println(name);
-//
-//        response.sendRedirect(REDIRECT_URL);
-//
-//    }
 }

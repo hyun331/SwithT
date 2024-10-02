@@ -28,7 +28,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         OAuth2User oAuth2User = super.loadUser(userRequest);
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        System.out.println("!!!!!!!!!!!!!LOADUSER!!!!!!!!!!!!!!!!!!!!!!!");
         System.out.println(oAuth2User.getAttributes());
         OAuth2Response oAuth2Response = null;
 
@@ -46,15 +45,15 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String socialEmail = oAuth2Response.getEmail();
 
         Member member = memberRepository.findByEmail(socialEmail)
-                .map(existingMember -> updateExistingMember(existingMember, socialName))
+                .map(existingMember -> updateExistingMember(existingMember, socialEmail))
                 .orElse(createSocialMember(provider, providerId, socialName, socialEmail));
         memberRepository.save(member);
 
         return new CustomOAuth2User(member);
     }
 
-    private Member updateExistingMember(Member existingMember, String socialName) {
-        existingMember.setName(socialName);
+    private Member updateExistingMember(Member existingMember, String socialEmail) {
+        existingMember.setEmail(socialEmail);
         return existingMember;
     }
 
