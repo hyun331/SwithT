@@ -15,7 +15,6 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Getter
-@Setter         // test 용
 public class LectureGroup extends BaseTimeEntity {
 
     @Id
@@ -35,6 +34,8 @@ public class LectureGroup extends BaseTimeEntity {
     @Column(columnDefinition = "integer default 1")
     private Integer limitPeople;
 
+    private Integer remaining = limitPeople;  // 남은 자리수
+
     private String latitude;
 
     private String longitude;
@@ -53,12 +54,8 @@ public class LectureGroup extends BaseTimeEntity {
     @Builder.Default
     private List<LectureApply> lectureApplies = new ArrayList<>();
 
-    public LectureGroup(Long lectureGroupId, int limitPeople, String y) {
-        super();
-    }
 
-
-    // update
+    // update - dto로 수정하기
     public void updatePrice(Integer price){
         this.price = price;
     }
@@ -72,5 +69,15 @@ public class LectureGroup extends BaseTimeEntity {
     public void updateDate(LocalDate startDate, LocalDate endDate){
         this.startDate = startDate;
         this.endDate = endDate;
+    }
+
+    // 남은 자리수 감소
+    public void decreaseRemaining(){
+        this.remaining--;
+    }
+
+    // 남은 자리수가 0인 경우 신청 종료
+    public boolean end(){
+        return this.remaining == 0;
     }
 }
