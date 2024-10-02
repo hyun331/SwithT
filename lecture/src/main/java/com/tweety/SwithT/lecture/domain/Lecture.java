@@ -66,6 +66,7 @@ public class Lecture extends BaseTimeEntity {
                 .category(this.category)
                 .memberId(this.memberId)
                 .memberName(this.memberName)
+                .lectureType(this.lectureType)
                 .build();
     }
 

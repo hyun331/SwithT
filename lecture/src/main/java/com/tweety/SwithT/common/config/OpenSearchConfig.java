@@ -1,24 +1,21 @@
 package com.tweety.SwithT.common.config;
 
-import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.opensearch.OpenSearchClient;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
 import java.net.URI;
 
 @Configuration
 public class OpenSearchConfig {
 
-    @Value("${opensearch.url}")
-    @Getter
+    @Value("${spring.opensearch.url}")
     private String openSearchUrl;
 
-    @Value("${opensearch.region}")
+    @Value("${spring.opensearch.region}")
     private String region;
 
     @Value("${cloud.aws.credentials.access-key}")
@@ -27,10 +24,10 @@ public class OpenSearchConfig {
     @Value("${cloud.aws.credentials.secret-key}")
     private String secretKey;
 
-    @Value("${opensearch.index-settings.shards}")
+    @Value("${spring.opensearch.index-settings.shards}")
     public int numberOfShards;
 
-    @Value("${opensearch.index-settings.replicas}")
+    @Value("${spring.opensearch.index-settings.replicas}")
     public int numberOfReplicas;
 
     @Bean

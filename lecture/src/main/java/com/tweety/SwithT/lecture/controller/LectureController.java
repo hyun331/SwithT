@@ -7,12 +7,19 @@ import com.tweety.SwithT.lecture.dto.*;
 import com.tweety.SwithT.lecture.service.LectureService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,12 +38,12 @@ public class LectureController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
-    //과외 또는 강의 리스트
-    @GetMapping("/list-of-lecture")
-    public ResponseEntity<?> showLectureList(@ModelAttribute LectureSearchDto searchDto, Pageable pageable) {
-        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 리스트", lectureService.showLectureList(searchDto, pageable));
-        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
-    }
+//    //과외 또는 강의 리스트
+//    @GetMapping("/list-of-lecture")
+//    public ResponseEntity<?> showLectureList(@ModelAttribute LectureSearchDto searchDto, Pageable pageable) {
+//        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 리스트", lectureService.showLectureList(searchDto, pageable));
+//        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+//    }
 
     //튜터 자신의 과외/강의 리스트
     @PreAuthorize("hasRole('TUTOR')")
@@ -62,12 +69,35 @@ public class LectureController {
     }
 
     //강의 검색 API (OpenSearch 사용)
-    @GetMapping("/search-lectures")
-    public ResponseEntity<?> searchLectures(@RequestParam String keyword, Pageable pageable) {
+    @PostMapping("/lecture/search")
+    public ResponseEntity<?> searchLectures(
+            @RequestBody LectureSearchDto searchDto,  // JSON으로 검색 조건 받기
+            Pageable pageable,
+            PagedResourcesAssembler<LectureListResDto> assembler) {
         try {
-            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 검색 결과", lectureService.searchLectures(keyword, pageable));
+            // 검색 수행 후 Page 객체로 반환
+            Page<LectureListResDto> searchResults = lectureService.showLectureList(searchDto, pageable);
+
+            // PagedModel로 변환 (LectureListResDto를 EntityModel로 감싸기)
+            PagedModel<EntityModel<LectureListResDto>> pagedModel = assembler.toModel(searchResults,
+                    lecture -> EntityModel.of(lecture) // LectureListResDto를 EntityModel로 변환
+            );
+
+            // 필요한 데이터만 추출하여 응답 구조를 생성
+            Map<String, Object> result = new HashMap<>();
+            result.put("content", pagedModel.getContent()); // 실제 데이터
+            result.put("page", Map.of(
+                    "size", searchResults.getSize(),
+                    "totalElements", searchResults.getTotalElements(),
+                    "totalPages", searchResults.getTotalPages(),
+                    "number", searchResults.getNumber()
+            )); // 페이지네이션 정보
+
+            // 검색 결과 응답
+            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 검색 결과", result);
             return new ResponseEntity<>(commonResDto, HttpStatus.OK);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            // 검색 중 오류 발생 시 처리
             CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.INTERNAL_SERVER_ERROR.value(), "검색 중 오류 발생: " + e.getMessage());
             return new ResponseEntity<>(commonErrorDto, HttpStatus.INTERNAL_SERVER_ERROR);
         }
