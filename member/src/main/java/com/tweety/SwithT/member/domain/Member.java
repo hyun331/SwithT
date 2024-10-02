@@ -10,10 +10,7 @@ import com.tweety.SwithT.review.domain.Review;
 import com.tweety.SwithT.scheduler.domain.Scheduler;
 import com.tweety.SwithT.withdrawal.domain.WithdrawalRequest;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -28,9 +25,15 @@ import java.util.List;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // Hibernate 프록시 무시
 public class Member extends BaseTimeEntity {
 
+    // nullable을 고려해서 소셜 로그인 정보를 저장해야하기 때문에 DTO단에서 정보 입력을 제한해야할 것 같음. 논의필요
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    // 공급자
+    private String provider;
+    // 공급자 ID
+    private String providerId;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
     @Builder.Default
@@ -59,11 +62,11 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = true) // 동명이인 고려
     private String name;
 
-    @Column(nullable = false)
     @JsonFormat(pattern = "yyyy-MM-dd")
+    @Column(nullable = true)
     private LocalDate birthday;
 
-    @Column(nullable = false)
+    @Column(nullable = true)  //소셜 로그인때문에 잠시 true
     private String phoneNumber;
 
     @Column(nullable = true)
@@ -84,7 +87,7 @@ public class Member extends BaseTimeEntity {
 
     @Builder.Default
     @Column(nullable = true)
-    private Long availableMoney = 1000000L;
+    private Long availableMoney = 1000000L; //나중에 0원 셋팅해야함.
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -137,4 +140,10 @@ public class Member extends BaseTimeEntity {
             this.avgScore = avgScore.setScale(1, BigDecimal.ROUND_HALF_UP); // 소수점 자리 맞추기
         }
     }
+
+    // setName 메서드 추가 @Setter 안쓰기 위함.
+    public void setName(String name) {
+        this.name = name;
+    }
+
 }
