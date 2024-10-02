@@ -2,16 +2,11 @@ package com.tweety.SwithT.lecture.domain;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
-import com.tweety.SwithT.lecture.dto.LectureGroupListResDto;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Getter
+@Setter         // test 용
 public class LectureGroup extends BaseTimeEntity {
 
     @Id
@@ -56,6 +52,10 @@ public class LectureGroup extends BaseTimeEntity {
     @OneToMany(mappedBy = "lectureGroup", cascade = CascadeType.PERSIST)
     @Builder.Default
     private List<LectureApply> lectureApplies = new ArrayList<>();
+
+    public LectureGroup(Long lectureGroupId, int limitPeople, String y) {
+        super();
+    }
 
 
     // update

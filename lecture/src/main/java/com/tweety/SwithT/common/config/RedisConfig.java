@@ -13,20 +13,26 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 
 @Configuration
 public class RedisConfig {
+
     @Value("${spring.redis.host}")
     public String host;
 
     @Value("${spring.redis.port}")
     public int port;
+
+//    // ** 임시 추가
+//    @Bean
+//    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+//        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+//        redisTemplate.setConnectionFactory(redisConnectionFactory);
+//        return redisTemplate;
+//    }
 
     //결제 요청
     @Bean
@@ -72,6 +78,40 @@ public class RedisConfig {
         return StreamMessageListenerContainer.create(streamConnectionFactory, options);
     }
 
+
+    @Bean
+    @Qualifier("5")
+    public RedisConnectionFactory redisConnectionFactory() {
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
+        config.setHostName(host);
+        config.setPort(port);
+        config.setDatabase(4);
+        return new LettuceConnectionFactory(config);
+    }
+
+    @Bean
+    @Qualifier("5")
+    public RedisTemplate<String, Object> redisTemplate(@Qualifier("5") RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+
+        // Set key serializer to StringRedisSerializer for human-readable keys
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+
+        // Create and configure ObjectMapper
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule()); // Support for Java 8 date/time types
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Use ISO-8601 format for dates
+
+        // Use ObjectMapper in Jackson2JsonRedisSerializer directly
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+
+        // Set value and hash value serializers to JSON
+        redisTemplate.setValueSerializer(serializer);
+        redisTemplate.setHashValueSerializer(serializer);
+
+        return redisTemplate;
+    }
 
 }
 

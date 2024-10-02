@@ -14,6 +14,8 @@ import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer.StreamMessageListenerContainerOptions;
 import org.springframework.stereotype.Component;
 
+
+//redis stream 지속 수신
 @Component
 public class RedisStreamListenerConfig {
 
@@ -25,6 +27,7 @@ public class RedisStreamListenerConfig {
     private RedisTemplate<String, Object> redisTemplate;
 
     private static final String STREAM_NAME = "sse-notifications";
+    private static final String WAITING_STREAM_NAME = "waiting-notifications";
 
     @EventListener(ContextRefreshedEvent.class)
     public void start() {
@@ -36,7 +39,10 @@ public class RedisStreamListenerConfig {
         StreamMessageListenerContainer<String, MapRecord<String, String, String>> container =
                 StreamMessageListenerContainer.create(redisTemplate.getConnectionFactory(), options);
 
+        //리스너 컨테이너를 redis stream에 연결
         container.receive(StreamOffset.create(STREAM_NAME, ReadOffset.lastConsumed()), redisStreamSseConsumer);
+
+        container.receive(StreamOffset.create(WAITING_STREAM_NAME, ReadOffset.lastConsumed()), redisStreamSseConsumer);
 
         container.start();
     }

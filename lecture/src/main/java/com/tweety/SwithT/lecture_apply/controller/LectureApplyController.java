@@ -1,9 +1,10 @@
 package com.tweety.SwithT.lecture_apply.controller;
 
-import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
+import com.tweety.SwithT.lecture_apply.dto.LectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.service.LectureApplyService;
+import com.tweety.SwithT.lecture_apply.service.WaitingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class LectureApplyController {
 
     private final LectureApplyService lectureApplyService;
-
+    private final WaitingService waitingService;
 
     //과외 신청
     @PreAuthorize("hasRole('TUTEE')")
@@ -60,4 +61,14 @@ public class LectureApplyController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
+
+
+    // 강의 신청
+    // 미테스트
+    @PreAuthorize("hasRole('TUTEE')")
+    @PostMapping("/lecture-apply")
+    public ResponseEntity<?> tuteeSingleLectureApply(@RequestBody LectureApplySavedDto dto) throws InterruptedException {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.CREATED, "튜티의 강의 신청 완료", lectureApplyService.tuteeLectureApply(dto));
+        return new ResponseEntity<>(commonResDto, HttpStatus.CREATED);
+    }
 }

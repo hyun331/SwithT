@@ -39,6 +39,7 @@ public class RedisStreamSseConsumer implements StreamListener<String, MapRecord<
                         .name("notification")
                         .data(jsonMessage));
 
+
             } catch (IOException e) {
                 emitter.completeWithError(e);
                 clients.remove(memberId);
