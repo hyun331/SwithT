@@ -20,7 +20,6 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public Map<String, Object> getAttributes() {
-        System.out.println("여기오나? CustomOAuth2User");
         // 구글과 네이버의 데이터 반환이 동일하지 않기 떄문에 사용하지 않겟다. 여기에 OAuth2 를 통한 데이터가 담기는 것
         return null;
     }

@@ -16,7 +16,7 @@ public class CorsConfig implements WebMvcConfigurer {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedOrigins("http://localhost:8080")
-                        .allowedOrigins("/member-service/login/oauth2/code/google")
+//                        .allowedOrigins("/member-service/login/oauth2/code/google") 테스트 후 삭제
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*");
             }

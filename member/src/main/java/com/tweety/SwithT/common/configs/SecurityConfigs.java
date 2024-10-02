@@ -29,7 +29,6 @@ public class SecurityConfigs {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        System.out.println("여기는 요청 옴? 여긴 시큐리티 컨피그");
         return httpSecurity
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화
                 .cors(cors -> cors.configure(httpSecurity))
