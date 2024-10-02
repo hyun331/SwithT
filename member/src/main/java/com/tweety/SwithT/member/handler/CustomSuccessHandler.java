@@ -2,6 +2,9 @@ package com.tweety.SwithT.member.handler;
 
 
 import com.tweety.SwithT.common.auth.JwtTokenProvider;
+import com.tweety.SwithT.common.service.RedisService;
+import com.tweety.SwithT.member.domain.Member;
+import com.tweety.SwithT.member.repository.MemberRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,51 +14,75 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Component
 public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private static final String REDIRECT_URL = "http://localhost:8082//mypage";
+    private final MemberRepository memberRepository;
+    private final String REDIRECT_URL = "http://localhost:8082//mypage";
+    private final RedisService redisService;
 
-    public CustomSuccessHandler(JwtTokenProvider jwtTokenProvider) {
+    public CustomSuccessHandler(JwtTokenProvider jwtTokenProvider, MemberRepository memberRepository, RedisService redisService) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.memberRepository = memberRepository;
+        this.redisService = redisService;
     }
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException{
-        //OAuth2User
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
 
-        // OAuth2User로 캐스팅하여 인증된 사용자 정보를 가져온다.
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-        // 사용자 이메일을 가져온다.
-        String email = oAuth2User.getAttribute("email").toString();
-        // 서비스 제공 플랫폼(GOOGLE, KAKAO, NAVER)이 어디인지 가져온다.
-        String provider = oAuth2User.getAttribute("provider");
-        String name = oAuth2User.getAttribute("name");
+        String email = oAuth2User.getAttribute("email");
 
-        System.out.println("핸들러!!!!!!!");
-        System.out.println(email);
-        System.out.println(provider);
-        System.out.println(name);
-
-//        CustomOAuth2User customUserDetails = (CustomOAuth2User) authentication.getPrincipal();
+        Optional<Member> member = memberRepository.findByEmail(email); // 회원 ID 조회
 //
-//        String username = customUserDetails.getName();
-//
-//        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-//        Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
-//        GrantedAuthority auth = iterator.next();
-//        String role = auth.getAuthority();
-//        customUserDetails.getEmail();
-//        customUserDetails.getAttributes();
-//
-//        System.out.println("핸들러!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-//        System.out.println(customUserDetails.getAttributes() );
-//        System.out.println(customUserDetails.getName());
-//        System.out.println(customUserDetails.getAuthorities());
+        System.out.println("핸들러!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        System.out.println(member.get().getId());
+        System.out.println(member.get().getName());
+        System.out.println(member.get().getEmail());
+        System.out.println(member.get().getRole());
 
-        response.sendRedirect(REDIRECT_URL);
 
+//        // 토큰 생성
+//        String jwtToken = jwtTokenProvider.createToken(String.valueOf(member.get().getId()), email, "ROLE_USER", name);
+//        String refreshToken = jwtTokenProvider.createRefreshToken(String.valueOf(memberId), email, "ROLE_USER", name);
+
+//        // Redis에 Refresh Token 저장
+//        redisTemplate.opsForValue().set(email, refreshToken, 240, TimeUnit.HOURS);
+
+//        // 응답 정보 설정
+//        Map<String, Object> loginInfo = new HashMap<>();
+//        loginInfo.put("id", memberId);
+//        loginInfo.put("token", jwtToken);
+//        loginInfo.put("refreshToken", refreshToken);
+//        loginInfo.put("redirectUri", "http://localhost:8082/additionalInfo"); // 추가정보 입력 URI
+//
+//        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "Login is successful", loginInfo);
+//
+//        // JSON 형태로 응답 반환
+//        response.setContentType("application/json");
+//        response.setCharacterEncoding("UTF-8");
+//        response.getWriter().write(new ObjectMapper().writeValueAsString(commonResDto));
     }
+
+//    @Override
+//    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException{
+//        // OAuth2User로 캐스팅하여 인증된 사용자 정보를 가져온다.
+//        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+//        //디버깅.
+//        System.out.println("Attributes: " + oAuth2User.getAttributes());
+//        String email = oAuth2User.getAttribute("email").toString();
+//        String provider = oAuth2User.getAttribute("provider");
+//        String name = oAuth2User.getAttribute("name");
+//
+////        System.out.println("핸들러!!!!!!!");
+////        System.out.println(email);
+////        System.out.println(provider);
+////        System.out.println(name);
+//
+//        response.sendRedirect(REDIRECT_URL);
+//
+//    }
 }

@@ -53,15 +53,6 @@ public class MemberService {
         }
         return member;
     }
-//      추후 삭제하기. 안 쓰임.
-//    public Member SocialMemberCreate(MemberSaveReqDto memberSaveReqDto) {
-//
-//        memberRepository.findByEmail(memberSaveReqDto.getEmail()).ifPresent(existingMember -> {
-//            throw new EntityExistsException("이미 존재하는 이메일입니다.");
-//        });
-//
-//        return memberRepository.save(memberSaveReqDto.SocialtoEntity());
-//    }
 
     public Member memberCreate(MemberSaveReqDto memberSaveReqDto,MultipartFile imgFile) {
 
