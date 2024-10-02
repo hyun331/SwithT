@@ -1,17 +1,16 @@
 package com.tweety.SwithT.lecture_apply.service;
 
 import com.tweety.SwithT.common.service.RedisStreamProducer;
+import com.tweety.SwithT.lecture.domain.LectureGroup;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
-import com.tweety.SwithT.lecture_apply.domain.GroupLimit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -23,24 +22,10 @@ public class WaitingService {
 
     private final LectureGroupRepository lectureGroupRepository;
 
-    private static final long FIRST_ELEMENT = 0;
-    private static final long LAST_ELEMENT = -1;
-    private static final long PUBLISH_SIZE = 10;
-    private static final long LAST_INDEX = 1;
-
-    private GroupLimit groupLimit;
-
-//    @Getter
-//    private GroupLimit groupLimit;
-
     private final RedisStreamProducer redisStreamProducer;
 
-    private final ConcurrentHashMap<String, SseEmitter> emitters = new ConcurrentHashMap<>();
 
-    // 그룹 제한 인원 수 지정
-    public void setGroupLimit(Long lectureGroupId, int limitPeople){
-        this.groupLimit = new GroupLimit(lectureGroupId, limitPeople);
-    }
+
 
     public String addQueue(Long lectureGroupId, Long memberId){
         // 대기열 안에 회원이 없는 경우, 대기열에 추가
@@ -48,7 +33,7 @@ public class WaitingService {
         if (enterTime == null) {
             final long now = System.currentTimeMillis();
             redisTemplate.opsForZSet().add(lectureGroupId.toString(), memberId, (int) now);
-            log.info("대기열에 추가 - {} ({}초)", memberId, now);
+            log.info("대기열에 추가 - {}번 유저 ({}초)", memberId, now);
             System.out.println("Successfully created & applied for the lecture.");
             return "Successfully created & applied for the lecture.";
         } else {
@@ -65,73 +50,62 @@ public class WaitingService {
 
         for (Object people : queue) {
             Long rank = redisTemplate.opsForZSet().rank(queueKey, people);
-            log.info("'{}'님의 현재 대기열은 {}명 남았습니다.", people, rank);
+            log.info("'{}'번 유저의 현재 대기열은 {}명 남았습니다.", people, rank);
             redisStreamProducer.publishWaitingMessage(memberId, "WAITING", queueKey+"번 강의 대기열 조회", rank.toString());
         }
 
         Thread.sleep(1000);
-
-
-//        SseEmitter emitter = new SseEmitter();
-//        emitters.put(memberId, emitter);
-//        // 1초마다 대기열 순위 전송
-//        new Thread(() -> {
-//            try {
-//                while (true) {
-//                    Long position = redisTemplate.opsForZSet().rank(queueKey, memberId);    // 순번 조회
-//                    if (position != null) {
-//                        redisStreamProducer.publishMessage(memberId, "WAITING", "대기열 조회", position.toString());
-//                        System.out.println("Your position in the queue:" + (position + 1)); // *** 실패
-//                    } else {
-//                        break;
-//                    }
-//                    Thread.sleep(1000);
-//                }
-//            } catch (InterruptedException e) {
-//                emitter.completeWithError(e);
-//            } finally {
-//                emitters.remove(memberId);
-//            }
-//        }).start();
     }
+
+
     // 결제 처리
-    public void processPayment(Long lectureGroupId) {
-        if (validEnd()) {
+    @Transactional
+    public void processPayment(LectureGroup lectureGroup) {
+
+        String queueKey = lectureGroup.getId().toString();
+
+        if (lectureGroup.end()) {
             log.info("대기열이 종료되었습니다. 결제 처리 불가능.");
             return;
         }
 
-        final long start = FIRST_ELEMENT;
+        final long start = 0;
         final long end = 10; // 제한 인원만큼 결제 처리
-        log.info("결제 전 현재 남은 자리수: {}", groupLimit.getLimit());
 
-        Set<Object> queue = redisTemplate.opsForZSet().range(lectureGroupId.toString(), start, end);
+        log.info("결제 전 현재 남은 자리수: {}", lectureGroup.getRemaining());
+
+        Set<Object> queue = redisTemplate.opsForZSet().range(queueKey, start, end);
         for (Object people : queue) {
+
             // 결제 페이지로 넘기기
             log.info("'{}'님에 대한 결제가 완료되었습니다.", people);
-            System.out.println(people + "님의 강의 그룹 결제가 완료되었습니다.");
-            redisTemplate.opsForZSet().remove(lectureGroupId.toString(), people);
-            this.groupLimit.decrease();
+            System.out.println(people + "번 유저의 강의 그룹 결제가 완료되었습니다.");
+
+            // 큐에서 제거
+            redisTemplate.opsForZSet().remove(queueKey, people);
+
+            // 남은 자리수 감소
+            lectureGroup.decreaseRemaining();
         }
 
         // 결제 후 대기열 상태 로깅
-        log.info("결제 후 현재 남은 자리수: {}", groupLimit.getLimit());
+        log.info("결제 후 현재 남은 자리수: {}", lectureGroup.getRemaining());
 
         // 그룹 리밋이 0이 되었는지 체크
-        if (groupLimit.getLimit() <= 0) {
+        if (lectureGroup.getRemaining() <= 0) {
             log.info("대기열이 종료되었습니다.");
         }
     }
-    //
-    public boolean validEnd(){
-        return this.groupLimit != null
-                ? this.groupLimit.end()
-                : false;
-    }
+//
+//    public boolean validEnd(){
+//        return this.groupLimit != null
+//                ? this.groupLimit.end()
+//                : false;
+//    }
 
-    public long getSize(Long lectureGroupId) {
-        return redisTemplate.opsForZSet().size(lectureGroupId.toString());
-    }
+//    public long getSize(Long lectureGroupId) {
+//        return redisTemplate.opsForZSet().size(lectureGroupId.toString());
+//    }
 
 
 

@@ -67,7 +67,7 @@ public class LectureApplyController {
     // 미테스트
     @PreAuthorize("hasRole('TUTEE')")
     @PostMapping("/lecture-apply")
-    public ResponseEntity<?> tuteeSingleLectureApply(@RequestBody LectureApplySavedDto dto) throws InterruptedException {
+    public ResponseEntity<?> tuteeLectureApply(@RequestBody LectureApplySavedDto dto) throws InterruptedException {
         CommonResDto commonResDto = new CommonResDto(HttpStatus.CREATED, "튜티의 강의 신청 완료", lectureApplyService.tuteeLectureApply(dto));
         return new ResponseEntity<>(commonResDto, HttpStatus.CREATED);
     }

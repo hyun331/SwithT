@@ -12,10 +12,7 @@ import com.tweety.SwithT.lecture.dto.TuteeMyLectureListResDto;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
-import com.tweety.SwithT.lecture_apply.dto.LectureApplySavedDto;
-import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyAfterResDto;
-import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyListDto;
-import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
+import com.tweety.SwithT.lecture_apply.dto.*;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -45,9 +42,6 @@ public class LectureApplyService {
     private final MemberFeign memberFeign;
     private final RedisStreamProducer redisStreamProducer;
     private final WaitingService waitingService;
-//    private ZSetOperations<String, Object> zSetOperations;
-//    @Qualifier("5")
-//    private final RedisTemplate<String, Object> redisTemplate;
 
 
     @Value("${jwt.secretKey}")
@@ -201,7 +195,7 @@ public class LectureApplyService {
 
     // 강의 신청
     @Transactional
-    public String tuteeLectureApply(LectureApplySavedDto dto) throws InterruptedException {
+    public LectureApplyAfterResDto tuteeLectureApply(LectureApplySavedDto dto) throws InterruptedException {
 
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
         CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
@@ -216,6 +210,7 @@ public class LectureApplyService {
         if (lectureGroup.getIsAvailable().equals("N")) {
             throw new RuntimeException("해당 강의는 신청할 수 없습니다.");
         }
+
         List<LectureApply> lectureApplyList = lectureApplyRepository.findByMemberIdAndLectureGroup(memberId, lectureGroup);
         if(!lectureApplyList.isEmpty()) {
             int rejectedCount = 0;
@@ -226,31 +221,18 @@ public class LectureApplyService {
             }
         }
 
-//        Thread.currentThread().setName(String.valueOf(memberId));   // 스레드 이름 설정
-
-        waitingService.setGroupLimit(lectureGroup.getId(), lectureGroup.getLimitPeople());
-
         // 강의 신청
         waitingService.addQueue(dto.getLectureGroupId(), memberId);
-
-        // 순번 표출
+        // 대기열 순번 표출
         waitingService.getOrder(memberId.toString(), dto.getLectureGroupId().toString());
-
         // 결제로 넘기기
-        waitingService.processPayment(dto.getLectureGroupId());
+        waitingService.processPayment(lectureGroup);
 
-//        // 대기열에서 제거
-//        redisTemplate.opsForZSet().remove(dto.getLectureGroupId().toString(), memberId);
+        lectureApplyRepository.save(dto.toEntity(lectureGroup, memberId, memberName));
 
-//        // 큐에 넣기
-//        waitingService.addQueue(dto.getLectureGroupId(), memberId);
-//        // 나오면 결제 시키기
-//        waitingService.processPayment(dto.getLectureGroupId());
-
-        LectureApply lectureApply = lectureApplyRepository.save(dto.toEntity(lectureGroup, memberId, memberName));
-
-        return lectureGroup.getId()+"번 강의에 수강 신청되었습니다.";
+        return LectureApplyAfterResDto.builder().lectureGroupId(lectureGroup.getId()).build();
     }
+
 
     @Transactional
     public String testTuteeLectureApply(LectureApplySavedDto dto, LectureGroup lectureGroup, Long memberId, String memberName, Long lectureGroupId, int limitPeople) throws InterruptedException {
@@ -278,8 +260,6 @@ public class LectureApplyService {
 //            }
 //        }
 
-        waitingService.setGroupLimit(lectureGroupId, limitPeople);
-
         // 강의 신청
         waitingService.addQueue(dto.getLectureGroupId(), memberId);
 
@@ -287,7 +267,7 @@ public class LectureApplyService {
         waitingService.getOrder(memberId.toString(), dto.getLectureGroupId().toString());
 
         // 결제로 넘기기
-        waitingService.processPayment(dto.getLectureGroupId());
+        waitingService.processPayment(lectureGroup);
 
         LectureApply lectureApply = lectureApplyRepository.save(dto.toEntity(lectureGroup, memberId, memberName));
 
