@@ -8,6 +8,7 @@ import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.data.redis.stream.StreamReceiver;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -42,7 +43,7 @@ public class RedisStreamProducer {
         redisTemplate.setValueSerializer(new StringRedisSerializer());
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(new StringRedisSerializer());
-
+      
         return redisTemplate.opsForStream().add(record);
     }
 

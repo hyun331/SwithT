@@ -51,18 +51,14 @@ public class RedisConfig {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(streamConnectionFactory);
 
-        // Set key serializer to StringRedisSerializer for human-readable keys
         redisTemplate.setKeySerializer(new StringRedisSerializer());
 
-        // Create and configure ObjectMapper
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule()); // Support for Java 8 date/time types
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Use ISO-8601 format for dates
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-        // Use ObjectMapper in Jackson2JsonRedisSerializer directly
         GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
 
-        // Set value and hash value serializers to JSON
         redisTemplate.setValueSerializer(serializer);
         redisTemplate.setHashValueSerializer(serializer);
 
@@ -76,7 +72,7 @@ public class RedisConfig {
     public StreamMessageListenerContainer<String, MapRecord<String, String, String>> streamMessageListenerContainer(@Qualifier("4") RedisConnectionFactory streamConnectionFactory) {
         StreamMessageListenerContainer.StreamMessageListenerContainerOptions<String, MapRecord<String, String, String>> options =
                 StreamMessageListenerContainer.StreamMessageListenerContainerOptions.builder()
-                        .batchSize(10) // You can configure the batch size as per your requirement
+                        .batchSize(10)
                         .build();
 
         return StreamMessageListenerContainer.create(streamConnectionFactory, options);

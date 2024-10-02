@@ -9,10 +9,10 @@ import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.ReadOffset;
 import org.springframework.data.redis.connection.stream.StreamOffset;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer.StreamMessageListenerContainerOptions;
 import org.springframework.stereotype.Component;
-
 
 
 //redis stream 지속 수신
@@ -32,11 +32,12 @@ public class RedisStreamListenerConfig {
     @EventListener(ContextRefreshedEvent.class)
     public void start() {
         StreamMessageListenerContainerOptions<String, MapRecord<String, String, String>> options =
-                StreamMessageListenerContainerOptions.builder().build();
+                StreamMessageListenerContainerOptions.builder()
+                        .batchSize(10)  // Configure batch size
+                        .build();
 
         StreamMessageListenerContainer<String, MapRecord<String, String, String>> container =
                 StreamMessageListenerContainer.create(redisTemplate.getConnectionFactory(), options);
-
 
         //리스너 컨테이너를 redis stream에 연결
         container.receive(StreamOffset.create(STREAM_NAME, ReadOffset.lastConsumed()), redisStreamSseConsumer);

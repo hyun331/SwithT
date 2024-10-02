@@ -24,7 +24,7 @@ public class RedisStreamSseConsumer implements StreamListener<String, MapRecord<
         String contents = record.getValue().get("contents");
 
         SseEmitter emitter = clients.get(memberId);
-        System.out.println("memberId: " + memberId);
+
         if(emitter != null){
             try {
                 Map<String, String> structuredMessage = new HashMap<>();
@@ -36,13 +36,13 @@ public class RedisStreamSseConsumer implements StreamListener<String, MapRecord<
                 String jsonMessage = objectMapper.writeValueAsString(structuredMessage);
 
                 emitter.send(SseEmitter.event()
-                        .name("notification") // Send event type if needed
+                        .name("notification")
                         .data(jsonMessage));
 
 
             } catch (IOException e) {
                 emitter.completeWithError(e);
-                clients.remove(memberId); // Safely remove the emitter in case of failure
+                clients.remove(memberId);
             }
         }
 

@@ -2,7 +2,6 @@ package com.tweety.SwithT.board.dto.update;
 
 import com.tweety.SwithT.board.domain.Board;
 import com.tweety.SwithT.board.domain.Type;
-import com.tweety.SwithT.lecture.domain.LectureGroup;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,12 +11,12 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BoardUpdateRequest {
+public class BoardUpdateReqDto {
     private String title;
     private String contents;
     private Type type;
 
-    public static Board toEntity(BoardUpdateRequest dto){
+    public static Board toEntity(BoardUpdateReqDto dto){
         return Board.builder()
                 .contents(dto.getContents())
                 .title(dto.getTitle())

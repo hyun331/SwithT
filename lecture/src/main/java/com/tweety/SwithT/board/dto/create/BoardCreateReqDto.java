@@ -12,12 +12,12 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BoardCreateRequest {
+public class BoardCreateReqDto {
     private String title;
     private String contents;
     private Type type;
 
-    public static Board toEntity(Long memberId, String memberName,LectureGroup lectureGroup,BoardCreateRequest dto ){
+    public static Board toEntity(Long memberId, String memberName, LectureGroup lectureGroup, BoardCreateReqDto dto ){
         return Board.builder()
                 .lectureGroup(lectureGroup)
                 .contents(dto.getContents())
