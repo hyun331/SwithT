@@ -29,6 +29,12 @@ public class StompHandler implements ChannelInterceptor {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
         System.out.println("StompHandler에서 처리");
 
+        if(accessor.getCommand() == StompCommand.CONNECT) {
+            System.out.println("연결 요청");
+        }
+        if(accessor.getCommand() == StompCommand.SUBSCRIBE) {
+            System.out.println("구독 요청");
+        }
         if(accessor.getCommand() == StompCommand.SEND){
             System.out.println("전송 요청");
             String bearerToken = accessor.getFirstNativeHeader("Authorization");
@@ -47,7 +53,7 @@ public class StompHandler implements ChannelInterceptor {
 
         }
 
-        else if(accessor.getCommand() == StompCommand.DISCONNECT){
+        if(accessor.getCommand() == StompCommand.DISCONNECT){
             System.out.println("disconnect 요청");
             String bearerToken = accessor.getFirstNativeHeader("Authorization");
 

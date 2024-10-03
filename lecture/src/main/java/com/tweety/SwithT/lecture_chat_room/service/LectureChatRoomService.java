@@ -22,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -165,16 +167,16 @@ public class LectureChatRoomService {
     }
 
 
-    @KafkaListener(topics = "chat-1", groupId = "lecture-group", containerFactory = "kafkaListenerContainerFactory")
-    public void consumerChat(String message){
-//        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-//            System.out.println("consumerChat : "+message+"\n\n\n\n");
-            template.convertAndSend("/topic/chat-1",message);
 
+    @KafkaListener(topicPattern = "chat-.*", groupId = "lecture-group", containerFactory = "kafkaListenerContainerFactory")
+    public void consumerChat(String message, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            String chatRoomId = topic.split("-")[1];
+            System.out.println("Received message for room " + chatRoomId + ": " + message);
+
+            template.convertAndSend("/topic/chat-" + chatRoomId, message);
         } catch (Exception e) {
-            //원래 에러나면 여기서 작업해줘야함
-            System.out.println("consumer 오류나뮤ㅠㅜㅠㅜㅠㅜㅠn\n\n\n\n");
+            System.out.println("Error while processing Kafka message");
             throw new RuntimeException(e);
         }
     }
