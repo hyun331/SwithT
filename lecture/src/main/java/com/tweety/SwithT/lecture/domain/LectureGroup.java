@@ -15,6 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Getter
+@Setter
 public class LectureGroup extends BaseTimeEntity {
 
     @Id

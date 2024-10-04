@@ -25,23 +25,22 @@ public class WaitingService {
     private final RedisStreamProducer redisStreamProducer;
 
 
-
-
     public String addQueue(Long lectureGroupId, Long memberId){
-        // 대기열 안에 회원이 없는 경우, 대기열에 추가
-        Double enterTime = redisTemplate.opsForZSet().score(lectureGroupId.toString(), memberId);
-        if (enterTime == null) {
-            final long now = System.currentTimeMillis();
-            redisTemplate.opsForZSet().add(lectureGroupId.toString(), memberId, (int) now);
-            log.info("대기열에 추가 - {}번 유저 ({}초)", memberId, now);
-            System.out.println("Successfully created & applied for the lecture.");
-            return "Successfully created & applied for the lecture.";
-        } else {
-            // 대기열 안에 회원이 있는 경우
-            System.out.println("이미 대기열에 진입한 유저입니다.");
-            return "User is already in the queue.";
+
+            // 대기열 안에 회원이 없는 경우, 대기열에 추가
+            Double enterTime = redisTemplate.opsForZSet().score(lectureGroupId.toString(), memberId);
+            if (enterTime == null) {
+                final long now = System.currentTimeMillis();
+                redisTemplate.opsForZSet().add(lectureGroupId.toString(), memberId, (int) now);
+                log.info("대기열에 추가 - {}번 유저 ({}초)", memberId, now);
+                System.out.println("Successfully created & applied for the lecture.");
+                return "Successfully created & applied for the lecture.";
+            } else {
+                // 대기열 안에 회원이 있는 경우
+                System.out.println("이미 대기열에 진입한 유저입니다.");
+                return "User is already in the queue.";
+            }
         }
-    }
 
 
     public void getOrder(String memberId, String queueKey) throws InterruptedException {
@@ -70,7 +69,7 @@ public class WaitingService {
         }
 
         final long start = 0;
-        final long end = 10; // 제한 인원만큼 결제 처리
+        final long end = 1; // 제한 인원만큼 결제 처리
 
         log.info("결제 전 현재 남은 자리수: {}", lectureGroup.getRemaining());
 
@@ -95,6 +94,11 @@ public class WaitingService {
         if (lectureGroup.getRemaining() <= 0) {
             log.info("대기열이 종료되었습니다.");
         }
+
+
+    }
+    public long getQueueSize(Long lectureGroupId) {
+        return redisTemplate.opsForZSet().size(lectureGroupId.toString());
     }
 //
 //    public boolean validEnd(){

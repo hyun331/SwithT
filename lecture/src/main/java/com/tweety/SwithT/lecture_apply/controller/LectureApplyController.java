@@ -64,11 +64,10 @@ public class LectureApplyController {
 
 
     // 강의 신청
-    // 미테스트
-    @PreAuthorize("hasRole('TUTEE')")
+//    @PreAuthorize("hasRole('TUTEE')")
     @PostMapping("/lecture-apply")
-    public ResponseEntity<?> tuteeLectureApply(@RequestBody LectureApplySavedDto dto) throws InterruptedException {
-        CommonResDto commonResDto = new CommonResDto(HttpStatus.CREATED, "튜티의 강의 신청 완료", lectureApplyService.tuteeLectureApply(dto));
+    public ResponseEntity<?> tuteeLectureApply( @RequestParam Long lectureGroupId, @RequestParam Long memberId, @RequestParam String memberName) throws InterruptedException {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.CREATED, "튜티의 강의 신청 완료", lectureApplyService.tuteeLectureApply(lectureGroupId, memberId, memberName));
         return new ResponseEntity<>(commonResDto, HttpStatus.CREATED);
     }
 }
