@@ -3,6 +3,7 @@ package com.tweety.SwithT.lecture.domain;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.lecture.dto.LectureDetailResDto;
+import com.tweety.SwithT.lecture.dto.LectureInfoListResDto;
 import com.tweety.SwithT.lecture.dto.LectureListResDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -67,6 +68,15 @@ public class Lecture extends BaseTimeEntity {
                 .memberId(this.memberId)
                 .memberName(this.memberName)
                 .lectureType(this.lectureType)
+                .build();
+    }
+
+    public LectureInfoListResDto fromEntityToLectureInfoListResDto(){
+        return LectureInfoListResDto.builder()
+                .id(this.id)
+                .title(this.title)
+                .lectureType(this.lectureType)
+                .image(this.image)
                 .build();
     }
 

@@ -17,7 +17,6 @@ import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
-import com.tweety.SwithT.lecture_apply.service.WaitingService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -25,6 +24,7 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -485,5 +485,27 @@ public class LectureService {
         }
 
         return groupTimesDto;
+    }
+
+    // 강의 최신순 10개 조회
+    public List<LectureInfoListResDto> getLatestLectures() {
+        Pageable pageable = PageRequest.of(0, 10); // 첫 페이지, 10개 가져오기
+        List<Lecture> lectures = lectureRepository.findByDelYnOrderByCreatedTime(pageable);
+        List<LectureInfoListResDto> lectureInfos = new ArrayList<>();
+        for (Lecture lecture : lectures){
+            lectureInfos.add(lecture.fromEntityToLectureInfoListResDto());
+        }
+        return lectureInfos;
+    }
+
+    // 무료 강의 10개 최신순 조회
+    public List<LectureInfoListResDto> getFreeLectures(){
+        Pageable pageable = PageRequest.of(0, 10); // 첫 페이지, 10개 가져오기
+        List<Lecture> lectures = lectureRepository.findLecturesWithAvailableGroups(pageable);
+        List<LectureInfoListResDto> lectureInfos = new ArrayList<>();
+        for (Lecture lecture : lectures){
+            lectureInfos.add(lecture.fromEntityToLectureInfoListResDto());
+        }
+        return lectureInfos;
     }
 }

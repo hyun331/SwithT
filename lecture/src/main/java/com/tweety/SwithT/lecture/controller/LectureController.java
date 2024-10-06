@@ -146,4 +146,19 @@ public class LectureController {
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 그룹 삭제", id);
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
+
+    // 최신순 강의 4개 조회
+    @GetMapping("/lectures/latest")
+    public ResponseEntity<?> getLatestLectures() {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 조회", lectureService.getLatestLectures());
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+    @GetMapping("/lectures/free")
+    public ResponseEntity<?> getFreeLectures() {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 조회", lectureService.getFreeLectures());
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+
 }
