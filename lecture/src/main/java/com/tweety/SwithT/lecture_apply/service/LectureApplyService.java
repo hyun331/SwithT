@@ -147,7 +147,7 @@ public class LectureApplyService {
         lectureApply.updateStatus(Status.WAITING);
 
         //결제 요청 보내기
-        redisStreamProducer.publishMessage(lectureApply.getMemberId().toString(), "결제요청", "수학천재가 되는 길에서 결제 요청을 했습니다.", lectureApply.getId().toString());
+        redisStreamProducer.publishMessage(lectureApply.getMemberId().toString(), "결제요청", lectureGroup.getLecture().getTitle()+"에서 결제 요청을 했습니다.", lectureApply.getId().toString());
 
 
         return "튜터가 해당 수강신청을 승인했습니다.";

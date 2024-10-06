@@ -2,14 +2,19 @@ package com.tweety.SwithT.lecture_chat_room.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tweety.SwithT.common.dto.CommonResDto;
+import com.tweety.SwithT.common.dto.MemberNameResDto;
+import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
+import com.tweety.SwithT.lecture_chat_room.domain.LectureChatLogs;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatParticipants;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatRoom;
 import com.tweety.SwithT.lecture_chat_room.dto.ChatRoomCheckDto;
 import com.tweety.SwithT.lecture_chat_room.dto.ChatRoomConnectDto;
 import com.tweety.SwithT.lecture_chat_room.dto.ChatRoomResDto;
 import com.tweety.SwithT.lecture_chat_room.dto.SendMessageDto;
+import com.tweety.SwithT.lecture_chat_room.repository.LectureChatLogsRepository;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatParticipantsRepository;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatRoomRepository;
 import io.jsonwebtoken.Claims;
@@ -42,9 +47,13 @@ public class LectureChatRoomService {
     private final SimpMessageSendingOperations sendingOperations;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final SimpMessagingTemplate template;
+    private final MemberFeign memberFeign;
+    private final LectureChatLogsRepository lectureChatLogsRepository;
 
-    @Value("${jwt.secretKey}")
-    private String secretKey;
+
+
+//    @Value("${jwt.secretKey}")
+//    private String secretKey;
 
     //튜티가 채팅하기 눌렀을 때 채팅방 가져오거나 없으면 생성하기
     @Transactional
@@ -93,6 +102,7 @@ public class LectureChatRoomService {
 
     }
 
+    @Transactional
     public ChatRoomResDto tutorLessonChatCheckOrCreate(ChatRoomCheckDto dto) {
         LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(dto.getLectureGroupId(), "N").orElseThrow(()->{
             throw new EntityNotFoundException("강의그룹을 찾을 수 없습니다.");
@@ -158,11 +168,32 @@ public class LectureChatRoomService {
 
     public void chatRoomEntered(String roomId) {
         final String msg = "누군가님이 입장하셨습니다.";
-        chatSend(roomId, msg);
+        kafkaTemplate.send("chat-"+roomId, msg);
     }
 
-    public void chatSend(String roomId, String message) {
+    @Transactional
+    public void chatSend(String roomId, String message, Long memberId) {
+        System.out.println(memberId+"님이 채팅을 보냈습니다. : "+message);
         kafkaTemplate.send("chat-"+roomId, message);
+
+
+        CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
+        ObjectMapper objectMapper = new ObjectMapper();
+        MemberNameResDto memberNameResDto = objectMapper.convertValue(commonResDto.getResult(), MemberNameResDto.class);
+        String memberName = memberNameResDto.getName();
+
+        LectureChatRoom lectureChatRoom = chatRoomRepository.findById(Long.parseLong(roomId)).orElseThrow(()->{
+            throw new EntityNotFoundException("채팅방이 존재하지 않습니다.");
+        });
+        LectureChatLogs chatLogs = LectureChatLogs.builder()
+                .lectureChatRoom(lectureChatRoom)
+                .memberId(memberId)
+                .memberName(memberName)
+                .contents(message)
+                .build();
+        lectureChatLogsRepository.save(chatLogs);
+
+
 
     }
 

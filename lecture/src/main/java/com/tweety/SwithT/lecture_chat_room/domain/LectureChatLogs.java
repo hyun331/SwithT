@@ -32,4 +32,8 @@ public class LectureChatLogs extends BaseTimeEntity {
     @Column(nullable = false)
     private Long memberId;
 
+    @Column(nullable = false)
+    private String memberName;
+
+
 }

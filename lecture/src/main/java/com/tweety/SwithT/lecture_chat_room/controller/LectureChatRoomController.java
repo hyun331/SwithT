@@ -70,7 +70,7 @@ public class LectureChatRoomController {
 
     @MessageMapping("/room/{roomId}")
     public void sendMessage(@DestinationVariable(value = "roomId") String roomId, @Payload SendMessageDto chatMessage) {
-        lectureChatRoomService.chatSend(roomId, chatMessage.getMessage());
+        lectureChatRoomService.chatSend(roomId, chatMessage.getMessage(), chatMessage.getMemberId());
     }
 
 //    @MessageMapping("/chatroom-connect")
