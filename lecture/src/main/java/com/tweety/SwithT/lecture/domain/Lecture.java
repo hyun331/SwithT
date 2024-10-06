@@ -75,6 +75,8 @@ public class Lecture extends BaseTimeEntity {
         return LectureInfoListResDto.builder()
                 .id(this.id)
                 .title(this.title)
+                .memberName(this.memberName)
+                .category(this.category)
                 .lectureType(this.lectureType)
                 .image(this.image)
                 .build();
