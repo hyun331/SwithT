@@ -17,6 +17,8 @@ import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
+import com.tweety.SwithT.lecture_chat_room.domain.LectureChatRoom;
+import com.tweety.SwithT.lecture_chat_room.repository.LectureChatRoomRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -41,6 +43,7 @@ public class LectureService {
 
     private final LectureRepository lectureRepository;
     private final LectureGroupRepository lectureGroupRepository;
+    private final LectureChatRoomRepository lectureChatRoomRepository;
     private final GroupTimeRepository groupTimeRepository;
     private final LectureApplyRepository lectureApplyRepository;
     private final ObjectMapper objectMapper;
@@ -49,10 +52,11 @@ public class LectureService {
     private final S3Service s3Service;
     private final OpenSearchService openSearchService;
 
-    public LectureService(LectureRepository lectureRepository, LectureGroupRepository lectureGroupRepository, GroupTimeRepository groupTimeRepository, LectureApplyRepository lectureApplyRepository, ObjectMapper objectMapper, KafkaTemplate kafkaTemplate, MemberFeign memberFeign, S3Service s3Service, OpenSearchService openSearchService){
+    public LectureService(LectureRepository lectureRepository, LectureGroupRepository lectureGroupRepository, LectureChatRoomRepository lectureChatRoomRepository, GroupTimeRepository groupTimeRepository, LectureApplyRepository lectureApplyRepository, ObjectMapper objectMapper, KafkaTemplate kafkaTemplate, MemberFeign memberFeign, S3Service s3Service, OpenSearchService openSearchService){
 
         this.lectureRepository = lectureRepository;
         this.lectureGroupRepository = lectureGroupRepository;
+        this.lectureChatRoomRepository = lectureChatRoomRepository;
         this.groupTimeRepository = groupTimeRepository;
         this.lectureApplyRepository = lectureApplyRepository;
         this.objectMapper = objectMapper;
@@ -443,5 +447,53 @@ public class LectureService {
 
         return groupTimesDto;
     }
+
+    public LectureHomeResDto LectureHomeInfoGet(Long lectureGroupId){
+        // 강의 그룹 정보
+        LectureGroup lectureGroup = lectureGroupRepository.findById(lectureGroupId).orElseThrow(()->new EntityNotFoundException("해당 그룹이 없습니다."));
+        LectureHomeResDto dto = LectureHomeResDto.builder()
+                .groupId(lectureGroup.getId())
+                .limitPeople(lectureGroup.getLimitPeople())
+                .latitude(lectureGroup.getLatitude())
+                .longitude(lectureGroup.getLongitude())
+                .startDate(lectureGroup.getStartDate())
+                .build();
+        // 강의 그룹의 강의 id -> 강의 정보 불러오기
+        Lecture lecture = lectureRepository.findById(lectureGroup.getLecture().getId()).orElseThrow(()->new EntityNotFoundException("해당 강의 및 과외가 없습니다."));
+        dto.setLectureId(lecture.getId());
+        dto.setTitle(lecture.getTitle());
+        dto.setContents(lecture.getContents());
+        dto.setImage(lecture.getImage());
+        dto.setMemberId(lecture.getMemberId());
+        dto.setMemberName(lecture.getMemberName());
+        dto.setCategory(lecture.getCategory());
+
+        // 단체 채팅방
+        List<LectureChatRoom> lectureChatRoomList = lectureChatRoomRepository.findByLectureGroupAndDelYn(lectureGroup,"N");
+        // Todo 채팅방 id는 좀 더 생각 필요
+        dto.setChatRoomId(lectureChatRoomList.get(0).getId());
+        // 강의 그룹 시간 list
+        List<GroupTimeResDto> groupTimeResDtos = new ArrayList<>();
+        for(GroupTime groupTime: lectureGroup.getGroupTimes()){
+            GroupTimeResDto groupTimeResDto = GroupTimeResDto.builder()
+                    .memberId(lecture.getMemberId())
+                    .groupTimeId(groupTime.getId())
+                    .lectureGroupId(lectureGroup.getId())
+                    .lectureType(lecture.getLectureType().toString())
+                    .lectureDay(groupTime.getLectureDay().name()) // MON, TUE, 등
+                    .startTime(groupTime.getStartTime().toString()) // HH:mm
+                    .endTime(groupTime.getEndTime().toString()) // HH:mm
+                    .startDate(lectureGroup.getStartDate().toString()) // 강의 시작 날짜
+                    .endDate(lectureGroup.getEndDate().toString()) // 강의 종료 날짜
+                    .schedulerTitle(lectureGroup.getLecture().getTitle()) // 강의 제목을 일정 제목으로 설정
+                    .alertYn('N') // 기본값 'N'
+                    .build();
+            groupTimeResDtos.add(groupTimeResDto);
+        }
+        dto.setLectureGroupTimes(groupTimeResDtos);
+        return dto;
+    }
+
+
 
 }

@@ -6,6 +6,7 @@ import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
 import com.tweety.SwithT.lecture.domain.LectureType;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyListDto;
+import com.tweety.SwithT.lecture_apply.dto.SingleLectureTuteeListDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -56,6 +57,13 @@ public class LectureApply extends BaseTimeEntity {
                 .memberId(this.memberId)
                 .applyId(this.id)
                 .status(this.status)
+                .build();
+    }
+
+    public SingleLectureTuteeListDto fromEntityToSingleLectureTuteeListDto(){
+        return SingleLectureTuteeListDto.builder()
+                .tuteeName(this.memberName)
+                .memberId(this.memberId)
                 .build();
     }
 
