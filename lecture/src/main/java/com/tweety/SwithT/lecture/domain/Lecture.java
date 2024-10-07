@@ -54,6 +54,8 @@ public class Lecture extends BaseTimeEntity {
                 .memberName(this.memberName)
                 .memberId(this.memberId)
                 .image(this.image)
+                .createdTime(this.getCreatedTime())
+                .status(this.status)
                 .build();
     }
 

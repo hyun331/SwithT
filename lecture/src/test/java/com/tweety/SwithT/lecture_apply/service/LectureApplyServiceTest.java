@@ -12,6 +12,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,13 +52,31 @@ class LectureApplyServiceTest {
         final int limitCount = 100; // 최대 신청 가능 수
 
         CountDownLatch countDownLatch = new CountDownLatch(totalApplicants);
+        ExecutorService executorService = Executors.newFixedThreadPool(limitCount);
 
-        // 강의 그룹 생성 및 저장
-        LectureGroup lectureGroup = new LectureGroup();
-        lectureGroup.setLimitPeople(limitCount);
-        lectureGroup.setRemaining(limitCount);
-        lectureGroup.setIsAvailable("Y");
-        lectureGroupRepository.save(lectureGroup);
+
+//        // 강의 그룹 생성 및 저장
+//        LectureGroup lectureGroup = new LectureGroup();
+//        lectureGroup.setLimitPeople(limitCount);
+//        lectureGroup.setRemaining(limitCount);
+//        lectureGroup.setIsAvailable("Y");
+//        lectureGroupRepository.save(lectureGroup);
+
+//        for (int i = 0; i < limitCount; i++) {
+//            final long memberId = i + 1; // 고유한 유저 ID 생성
+//            executorService.submit(() -> {
+//                try {
+//                    lectureApplyService.tuteeLectureApply(lectureGroupId, memberId, "User" + memberId);
+//                } catch (Exception e) {
+//                    System.out.println("Error applying for lecture:" + e.getMessage());
+//                } finally {
+//                    countDownLatch.countDown();
+//                }
+//            });
+//        }
+//
+//        countDownLatch.await();
+//        executorService.shutdown();
 
         List<Thread> workers = Stream.generate(() -> new Thread(new LectureApplyWorker(lectureApplyService, countDownLatch, lectureGroupId)))
                 .limit(totalApplicants)
@@ -65,7 +85,7 @@ class LectureApplyServiceTest {
         workers.forEach(Thread::start);
         countDownLatch.await();
 
-        // 강의 신청 결과 확인
+//        // 강의 신청 결과 확인
         final long successfulApplications = lectureApplyRepository.countByLectureGroupId(lectureGroupId);
         assertEquals(limitCount, successfulApplications); // 최대 신청 수와 같아야 함
     }

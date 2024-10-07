@@ -1,7 +1,6 @@
 package com.tweety.SwithT.lecture_apply.controller;
 
 import com.tweety.SwithT.common.dto.CommonResDto;
-import com.tweety.SwithT.lecture_apply.dto.LectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.service.LectureApplyService;
 import com.tweety.SwithT.lecture_apply.service.WaitingService;
