@@ -15,6 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Getter
+@Setter
 public class LectureGroup extends BaseTimeEntity {
 
     @Id
@@ -34,7 +35,7 @@ public class LectureGroup extends BaseTimeEntity {
     @Column(columnDefinition = "integer default 1")
     private Integer limitPeople;
 
-    private Integer remaining = limitPeople;  // 남은 자리수
+    private Integer remaining;  // 남은 자리수
 
     private String latitude;
 

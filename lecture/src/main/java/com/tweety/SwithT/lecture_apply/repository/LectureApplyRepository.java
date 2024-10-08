@@ -2,7 +2,6 @@ package com.tweety.SwithT.lecture_apply.repository;
 
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
-import com.tweety.SwithT.lecture.dto.TuteeMyLectureListResDto;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,5 +33,8 @@ public interface LectureApplyRepository extends JpaRepository<LectureApply, Long
     Optional<LectureApply> findByLectureGroupId(Long lectureGroupId);
     @Query("SELECT la FROM LectureApply la WHERE la.lectureGroup.id = :lectureGroupId AND la.status = 'ADMIT'")
     List<LectureApply> findMemberIdsByLectureGroupIdAndStatusAdmit(@Param("lectureGroupId") Long lectureGroupId);
+
+    @Query("SELECT COUNT(l) FROM LectureApply l WHERE l.lectureGroup.id = :lectureGroupId")
+    long countByLectureGroupId(@Param("lectureGroupId") Long lectureGroupId);
 
 }

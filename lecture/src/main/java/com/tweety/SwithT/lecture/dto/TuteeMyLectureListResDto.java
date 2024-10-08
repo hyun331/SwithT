@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -21,5 +22,6 @@ public class TuteeMyLectureListResDto {
     private Long lectureGroupId;
     private Status status;
     private int price;
+    private LocalDateTime createdTime;
 
 }

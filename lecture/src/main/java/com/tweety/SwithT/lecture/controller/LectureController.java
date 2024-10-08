@@ -38,12 +38,12 @@ public class LectureController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
-//    //과외 또는 강의 리스트
-//    @GetMapping("/list-of-lecture")
-//    public ResponseEntity<?> showLectureList(@ModelAttribute LectureSearchDto searchDto, Pageable pageable) {
-//        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 리스트", lectureService.showLectureList(searchDto, pageable));
-//        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
-//    }
+    //과외 또는 강의 리스트
+    @GetMapping("/list-of-lecture")
+    public ResponseEntity<?> showLectureList(@ModelAttribute LectureSearchDto searchDto, Pageable pageable) {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 리스트", lectureService.showLectureList(searchDto, pageable));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
 
     //튜터 자신의 과외/강의 리스트
     @PreAuthorize("hasRole('TUTOR')")
@@ -76,7 +76,7 @@ public class LectureController {
             PagedResourcesAssembler<LectureListResDto> assembler) {
         try {
             // 검색 수행 후 Page 객체로 반환
-            Page<LectureListResDto> searchResults = lectureService.showLectureList(searchDto, pageable);
+            Page<LectureListResDto> searchResults = lectureService.showLectureListInOpenSearch(searchDto, pageable);
 
             // PagedModel로 변환 (LectureListResDto를 EntityModel로 감싸기)
             PagedModel<EntityModel<LectureListResDto>> pagedModel = assembler.toModel(searchResults,
@@ -146,6 +146,20 @@ public class LectureController {
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 그룹 삭제", id);
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
+
+    // 최신순 강의 4개 조회
+    @GetMapping("/lectures/latest")
+    public ResponseEntity<?> getLatestLectures() {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 조회", lectureService.getLatestLectures());
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+    @GetMapping("/lectures/free")
+    public ResponseEntity<?> getFreeLectures() {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 조회", lectureService.getFreeLectures());
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
 
     // 강의 홈 정보 - id : lecture group id
     @GetMapping("/lecture-group-home/{id}")
