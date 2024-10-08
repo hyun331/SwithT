@@ -114,7 +114,7 @@ public class LectureService {
 //        }
 //    }
 
-    public Page<LectureListResDto> showLectureList(LectureSearchDto searchDto, Pageable pageable) {
+    public Page<LectureListResDto> showLectureListInOpenSearch(LectureSearchDto searchDto, Pageable pageable) {
         String keyword = searchDto.getSearchTitle(); // 검색 제목
 
         try {
@@ -150,38 +150,38 @@ public class LectureService {
 
     // Delete: role=TUTOR & limitPeople=0
 
-//    public Page<LectureListResDto> showLectureList(LectureSearchDto searchDto, Pageable pageable) {
-//        Specification<Lecture> specification = new Specification<Lecture>() {
-//            @Override
-//            public Predicate toPredicate(Root<Lecture> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
-//
-//                List<Predicate> predicates = new ArrayList<>();
-//                predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
-//
-//                if(searchDto.getSearchTitle() != null){
-//                    predicates.add(criteriaBuilder.like(root.get("title"), "%"+searchDto.getSearchTitle()+"%"));
-//                }
-//                if(searchDto.getCategory() != null){
-//                    predicates.add(criteriaBuilder.like(root.get("category"), "%"+searchDto.getCategory()+"%"));
-//                }
-//                if(searchDto.getLectureType() != null){
-//                    predicates.add(criteriaBuilder.like(root.get("lectureType"), "%"+searchDto.getLectureType()+"%"));
-//                }
-//                if(searchDto.getStatus() != null){
-//                    predicates.add(criteriaBuilder.like(root.get("status"), "%"+searchDto.getStatus()+"%"));
-//                }
-//
-//                Predicate[] predicateArr = new Predicate[predicates.size()];
-//                for(int i=0; i<predicateArr.length; i++){
-//                    predicateArr[i] = predicates.get(i);
-//                }
-//                return criteriaBuilder.and(predicateArr);
-//            }
-//        };
-//        Page<Lecture> lectures = lectureRepository.findAll(specification, pageable);
-//
-//        return lectures.map(Lecture::fromEntityToLectureListResDto);
-//    }
+    public Page<LectureListResDto> showLectureList(LectureSearchDto searchDto, Pageable pageable) {
+        Specification<Lecture> specification = new Specification<Lecture>() {
+            @Override
+            public Predicate toPredicate(Root<Lecture> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+
+                List<Predicate> predicates = new ArrayList<>();
+                predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
+
+                if(searchDto.getSearchTitle() != null){
+                    predicates.add(criteriaBuilder.like(root.get("title"), "%"+searchDto.getSearchTitle()+"%"));
+                }
+                if(searchDto.getCategory() != null){
+                    predicates.add(criteriaBuilder.like(root.get("category"), "%"+searchDto.getCategory()+"%"));
+                }
+                if(searchDto.getLectureType() != null){
+                    predicates.add(criteriaBuilder.like(root.get("lectureType"), "%"+searchDto.getLectureType()+"%"));
+                }
+                if(searchDto.getStatus() != null){
+                    predicates.add(criteriaBuilder.like(root.get("status"), "%"+searchDto.getStatus()+"%"));
+                }
+
+                Predicate[] predicateArr = new Predicate[predicates.size()];
+                for(int i=0; i<predicateArr.length; i++){
+                    predicateArr[i] = predicates.get(i);
+                }
+                return criteriaBuilder.and(predicateArr);
+            }
+        };
+        Page<Lecture> lectures = lectureRepository.findAll(specification, pageable);
+
+        return lectures.map(Lecture::fromEntityToLectureListResDto);
+    }
 
 
 

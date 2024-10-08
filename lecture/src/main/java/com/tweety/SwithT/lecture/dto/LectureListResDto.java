@@ -15,12 +15,10 @@ import java.time.LocalDateTime;
 public class LectureListResDto {
     private Long id;
     private String title;
+    private String contents;
     private String memberName;
     private Long memberId;
     private String image;
     private LocalDateTime createdTime;
     private Status status;
-
-
-
 }

@@ -61,7 +61,6 @@ public class LectureApplyController {
     }
 
 
-
     // 강의 신청
 //    @PreAuthorize("hasRole('TUTEE')")
     @PostMapping("/lecture-apply")

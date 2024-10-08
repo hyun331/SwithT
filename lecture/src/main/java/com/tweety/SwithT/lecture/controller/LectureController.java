@@ -38,12 +38,12 @@ public class LectureController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
-//    //과외 또는 강의 리스트
-//    @GetMapping("/list-of-lecture")
-//    public ResponseEntity<?> showLectureList(@ModelAttribute LectureSearchDto searchDto, Pageable pageable) {
-//        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 리스트", lectureService.showLectureList(searchDto, pageable));
-//        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
-//    }
+    //과외 또는 강의 리스트
+    @GetMapping("/list-of-lecture")
+    public ResponseEntity<?> showLectureList(@ModelAttribute LectureSearchDto searchDto, Pageable pageable) {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 리스트", lectureService.showLectureList(searchDto, pageable));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
 
     //튜터 자신의 과외/강의 리스트
     @PreAuthorize("hasRole('TUTOR')")
@@ -76,7 +76,7 @@ public class LectureController {
             PagedResourcesAssembler<LectureListResDto> assembler) {
         try {
             // 검색 수행 후 Page 객체로 반환
-            Page<LectureListResDto> searchResults = lectureService.showLectureList(searchDto, pageable);
+            Page<LectureListResDto> searchResults = lectureService.showLectureListInOpenSearch(searchDto, pageable);
 
             // PagedModel로 변환 (LectureListResDto를 EntityModel로 감싸기)
             PagedModel<EntityModel<LectureListResDto>> pagedModel = assembler.toModel(searchResults,

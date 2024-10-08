@@ -77,7 +77,6 @@ class LectureApplyServiceTest {
 //
 //        countDownLatch.await();
 //        executorService.shutdown();
-
         List<Thread> workers = Stream.generate(() -> new Thread(new LectureApplyWorker(lectureApplyService, countDownLatch, lectureGroupId)))
                 .limit(totalApplicants)
                 .collect(Collectors.toList());
