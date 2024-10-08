@@ -12,6 +12,10 @@ import com.tweety.SwithT.lecture.dto.TuteeMyLectureListResDto;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
+import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyAfterResDto;
+import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyListDto;
+import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
+import com.tweety.SwithT.lecture_apply.dto.SingleLectureTuteeListDto;
 import com.tweety.SwithT.lecture_apply.dto.*;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatParticipants;
@@ -131,6 +135,26 @@ public class LectureApplyService {
         }
         return result;
     }
+
+    // 강의홈 튜티 리스트
+    public Page<SingleLectureTuteeListDto> singleLectureTuteeList(Long id, Pageable pageable) {
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+
+        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{
+            throw new EntityNotFoundException("해당 강의 그룹이 없습니다");
+        });
+        Lecture lecture = lectureGroup.getLecture();
+        if(lecture.getMemberId() != memberId){  //소유자가 아닌 경우
+            throw new IllegalArgumentException("접근할 수 없는 강의 그룹입니다");
+        }
+        List<LectureApply> lectureApplyList = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(lectureGroup, Status.ADMIT, "N");
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        int start = (int) pageRequest.getOffset();
+        int end = Math.min((start + pageRequest.getPageSize()), lectureApplyList.size());
+        Page<LectureApply> lectureApplyPage = new PageImpl<>(lectureApplyList.subList(start, end), pageRequest, lectureApplyList.size());
+        return lectureApplyPage.map(a->a.fromEntityToSingleLectureTuteeListDto());
+    }
+
 
     //튜터 - 튜티의 신청 승인
     @Transactional

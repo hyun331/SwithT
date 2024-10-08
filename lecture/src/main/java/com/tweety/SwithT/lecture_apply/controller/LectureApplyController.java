@@ -37,6 +37,13 @@ public class LectureApplyController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
+    // 강의 홈 - 튜티 리스트. id는 강의 그룹
+    @GetMapping("/single-lecture-tutee-list/{id}")
+    public ResponseEntity<?> showSingleLectureTuteeList(@PathVariable("id") Long id, @PageableDefault(size = 5)Pageable pageable){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의홈 튜티 리스트", lectureApplyService.singleLectureTuteeList(id, pageable));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
     //튜터 - 매칭할 튜티에게 결제 요청 보내기. id는 lecture_apply의 id
     @PreAuthorize("hasRole('TUTOR')")
     @PostMapping("/single-lecture-payment-request/{id}")
