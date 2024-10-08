@@ -13,20 +13,26 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 
 @Configuration
 public class RedisConfig {
+
     @Value("${spring.redis.host}")
     public String host;
 
     @Value("${spring.redis.port}")
     public int port;
+
+//    // ** 임시 추가
+//    @Bean
+//    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+//        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+//        redisTemplate.setConnectionFactory(redisConnectionFactory);
+//        return redisTemplate;
+//    }
 
     //결제 요청
     @Bean
@@ -45,6 +51,50 @@ public class RedisConfig {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(streamConnectionFactory);
 
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+
+        redisTemplate.setValueSerializer(serializer);
+        redisTemplate.setHashValueSerializer(serializer);
+
+        return redisTemplate;
+    }
+
+
+    // redis 사용해서 스트림 기반 메세지를 저장 처리
+    @Bean
+    @Qualifier("4")
+    public StreamMessageListenerContainer<String, MapRecord<String, String, String>> streamMessageListenerContainer(@Qualifier("4") RedisConnectionFactory streamConnectionFactory) {
+        StreamMessageListenerContainer.StreamMessageListenerContainerOptions<String, MapRecord<String, String, String>> options =
+                StreamMessageListenerContainer.StreamMessageListenerContainerOptions.builder()
+                        .batchSize(10)
+                        .build();
+
+        return StreamMessageListenerContainer.create(streamConnectionFactory, options);
+    }
+
+
+    @Bean
+    @Qualifier("5")
+    public RedisConnectionFactory redisConnectionFactory() {
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
+        config.setHostName(host);
+        config.setPort(port);
+        config.setDatabase(4);
+        return new LettuceConnectionFactory(config);
+    }
+
+    @Bean
+    @Qualifier("5")
+    public RedisTemplate<String, Object> redisTemplate(@Qualifier("5") RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+
         // Set key serializer to StringRedisSerializer for human-readable keys
         redisTemplate.setKeySerializer(new StringRedisSerializer());
 
@@ -62,20 +112,6 @@ public class RedisConfig {
 
         return redisTemplate;
     }
-
-
-    // redis 사용해서 스트림 기반 메세지를 저장 처리
-    @Bean
-    @Qualifier("4")
-    public StreamMessageListenerContainer<String, MapRecord<String, String, String>> streamMessageListenerContainer(@Qualifier("4") RedisConnectionFactory streamConnectionFactory) {
-        StreamMessageListenerContainer.StreamMessageListenerContainerOptions<String, MapRecord<String, String, String>> options =
-                StreamMessageListenerContainer.StreamMessageListenerContainerOptions.builder()
-                        .batchSize(10) // You can configure the batch size as per your requirement
-                        .build();
-
-        return StreamMessageListenerContainer.create(streamConnectionFactory, options);
-    }
-
 
 }
 

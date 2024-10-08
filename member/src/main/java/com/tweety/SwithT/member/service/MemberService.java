@@ -54,6 +54,17 @@ public class MemberService {
         return member;
     }
 
+    public Member addInfoUpdate(MemberAddInfoReqDto memberAddInfoReqDto){
+
+        Member member = memberRepository.findById(Long.valueOf(memberAddInfoReqDto.getId()))
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 회원 입니다."));
+
+        System.out.println(member.getId());
+        System.out.println(member.getEmail());
+
+        return member.addInfoUpdate(memberAddInfoReqDto);
+    }
+
     public Member memberCreate(MemberSaveReqDto memberSaveReqDto,MultipartFile imgFile) {
 
         // 레디스에 인증이 된 상태인지 확인
@@ -128,6 +139,7 @@ public class MemberService {
                 .name(member.getName())
                 .build();
     }
+
 //    public void lectureStatusUpdate(Long lectureId, Status newStatus){
 //        LectureStatusUpdateDto statusUpdateDto = LectureStatusUpdateDto.builder()
 //                .lectureId(lectureId)
@@ -169,8 +181,9 @@ public class MemberService {
         }
     }
 
-//    강의 정보를 가져옴
+//  강의 정보를 가져옴
     private CommonResDto getLectureInfo(Long lecturePayId) {
+
         return lectureFeign.getLectureById(lecturePayId);
     }
 }

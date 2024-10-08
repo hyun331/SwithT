@@ -2,66 +2,159 @@ package com.tweety.SwithT.common.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.dto.LectureDetailResDto;
+import com.tweety.SwithT.lecture.dto.LectureSearchDto;
+import com.tweety.SwithT.lecture.repository.LectureRepository;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.opensearch.OpenSearchClient;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 @Service
 public class OpenSearchService {
 
-    private final HttpClient client = HttpClient.newHttpClient(); // HTTP 클라이언트 초기화
-    private final ObjectMapper objectMapper = new ObjectMapper(); // JSON 변환을 위한 ObjectMapper 초기화
+    private final HttpClient client = HttpClient.newHttpClient();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${opensearch.url}")
-    private String openSearchUrl; // OpenSearch URL
+    @Value("${spring.opensearch.url}")
+    private String openSearchUrl;
 
     @Value("${cloud.aws.credentials.access-key}")
-    private String accessKey; // AWS 접근 키
+    private String accessKey;
 
     @Value("${cloud.aws.credentials.secret-key}")
-    private String secretKey; // AWS 비밀 키
+    private String secretKey;
 
-    @Value("${opensearch.region}")
-    private String region; // AWS 리전
+    @Value("${spring.opensearch.region}")
+    private String region;
 
-    // OpenSearch 클라이언트 생성 메서드
+    @Value("${spring.opensearch.username}")
+    private String username;
+
+    @Value("${spring.opensearch.password}")
+    private String password;
+
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucketName;
+
+    private final LectureRepository lectureRepository;
+
+    @Autowired
+    public OpenSearchService(LectureRepository lectureRepository) {
+        this.lectureRepository = lectureRepository;
+    }
+
     public OpenSearchClient createOpenSearchClient() {
         AwsBasicCredentials awsCreds = AwsBasicCredentials.create(accessKey, secretKey);
         return OpenSearchClient.builder()
-                .region(Region.of(region)) // 리전 설정
-                .credentialsProvider(StaticCredentialsProvider.create(awsCreds)) // 자격 증명 설정
-                .endpointOverride(URI.create(openSearchUrl)) // OpenSearch 엔드포인트 설정
+                .region(Region.of(region))
+                .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
+                .endpointOverride(URI.create(openSearchUrl))
                 .build();
     }
 
-    // OpenSearch에 강의 등록
-    public void registerLecture(LectureDetailResDto lecture) throws IOException, InterruptedException {
-        String endpoint = openSearchUrl + "/lectures/_doc/" + lecture.getId(); // 강의 ID를 포함한 요청 엔드포인트
-        String requestBody = objectMapper.writeValueAsString(lecture); // LectureDetailResDto를 JSON으로 변환
+    @PostConstruct
+    public void init() {
+        try {
+            ensureIndexExists("lecture-service");
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
-        // PUT 요청 생성
+    private void ensureIndexExists(String indexName) throws IOException, InterruptedException {
+        String endpoint = openSearchUrl + "/" + indexName;
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(endpoint))
-                .header("Content-Type", "application/json") // 요청 헤더 설정
-                .PUT(HttpRequest.BodyPublishers.ofString(requestBody)) // 요청 본문 설정
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes()))
+                .GET()
                 .build();
 
-        // 요청 전송 및 응답 받기
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        // 성공 응답이 아닐 경우 예외 발생
+
+        if (response.statusCode() == 404) {
+            createIndex(indexName);
+        }
+    }
+
+    // S3에서 인덱스 설정 파일을 다운로드하는 메서드
+    private String downloadIndexConfigFromS3(String bucketName, String key) throws IOException {
+        S3Client s3 = S3Client.builder()
+                .region(Region.of(region))
+                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))
+                .build();
+
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .build();
+
+        InputStream s3InputStream = s3.getObject(getObjectRequest);
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(s3InputStream, StandardCharsets.UTF_8));
+        StringBuilder content = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            content.append(line).append("\n");
+        }
+
+        return content.toString();
+    }
+
+    private void createIndex(String indexName) throws IOException, InterruptedException {
+        String endpoint = openSearchUrl + "/" + indexName;
+
+        // S3에서 인덱스 설정 파일 다운로드
+        String key = "path/to/lecture-index.json";
+        String indexMapping = downloadIndexConfigFromS3(bucketName, key);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(endpoint))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes()))
+                .PUT(HttpRequest.BodyPublishers.ofString(indexMapping))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new IOException("인덱스 생성 실패: " + response.body());
+        }
+    }
+
+    public void registerLecture(LectureDetailResDto lecture) throws IOException, InterruptedException {
+        String endpoint = openSearchUrl + "/lecture-service/_doc/" + lecture.getId();
+        String requestBody = objectMapper.writeValueAsString(lecture);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(endpoint))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes()))
+                .PUT(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != 200 && response.statusCode() != 201) {
             throw new IOException("OpenSearch에 강의 등록 실패: " + response.body());
         }
@@ -69,51 +162,85 @@ public class OpenSearchService {
 
     // OpenSearch에서 강의 삭제
     public void deleteLecture(Long lectureId) throws IOException, InterruptedException {
-        String endpoint = openSearchUrl + "/lectures/_doc/" + lectureId; // 삭제할 강의 ID를 포함한 요청 엔드포인트
+        String endpoint = openSearchUrl + "/lecture-service/_doc/" + lectureId;
 
-        // DELETE 요청 생성
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(endpoint))
-                .DELETE() // DELETE 방식 설정
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes()))
+                .DELETE()
                 .build();
 
-        // 요청 전송 및 응답 받기
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        // 성공 응답이 아닐 경우 예외 발생
         if (response.statusCode() != 200) {
             throw new IOException("OpenSearch에서 강의 삭제 실패: " + response.body());
         }
     }
 
     // OpenSearch에서 강의를 검색하는 메서드
-    public List<LectureDetailResDto> searchLectures(String keyword, Pageable pageable) throws IOException, InterruptedException {
-        String endpoint = openSearchUrl + "/lectures/_search"; // 검색 요청 엔드포인트
-        // 검색 쿼리 생성
-        String requestBody = String.format("""
-            {
-                "query": {
-                    "multi_match": {
-                        "query": "%s",
-                        "fields": ["title", "contents", "memberName"]
-                    }
-                },
-                "from": %d,
-                "size": %d
-            }
-            """, keyword, pageable.getOffset(), pageable.getPageSize()); // 페이지 정보 추가
+    public List<LectureDetailResDto> searchLectures(String keyword, Pageable pageable, LectureSearchDto searchDto) throws IOException, InterruptedException {
+        String endpoint = openSearchUrl + "/lecture-service/_search";
 
-        // POST 요청 생성
+        // 필터 조건을 구성하기 전에 빈 값인지 확인하여 필터링 처리
+        List<String> filters = new ArrayList<>();
+
+        System.out.println("category: " + searchDto.getCategory());
+        System.out.println("status: " + searchDto.getStatus());
+        System.out.println("lectureType: " + searchDto.getLectureType());
+        // category 필터가 비어있으면 모든 카테고리 검색, 그렇지 않으면 카테고리 필터 추가
+        if (searchDto.getCategory() != null && !searchDto.getCategory().isEmpty()) {
+            filters.add(String.format("{\"match\": {\"category\": \"%s\"}}", searchDto.getCategory()));
+        }
+
+        // status 필터
+        if (searchDto.getStatus() != null && !searchDto.getStatus().isEmpty()) {
+            filters.add(String.format("{\"match\": {\"status\": \"%s\"}}", searchDto.getStatus()));
+        }
+
+        // lectureType 필터
+        if (searchDto.getLectureType() != null && !searchDto.getLectureType().isEmpty()) {
+            filters.add(String.format("{\"match\": {\"lectureType\": \"%s\"}}", searchDto.getLectureType()));
+        }
+
+        // 필터가 없으면 빈 배열로 처리, 있으면 join으로 연결
+        String filterQuery = filters.isEmpty() ? "" : String.join(",", filters);
+
+        // 필터가 있을 경우만 'filter'를 추가
+        String requestBody;
+        requestBody = String.format("""
+    {
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "multi_match": {
+                            "query": "%s",
+                            "fields": ["title", "contents", "memberName"],
+                            "type": "best_fields",
+                            "fuzziness": "AUTO"
+                        }
+                    }
+                ]%s
+            }
+        },
+        "from": %d,
+        "size": %d
+    }
+    """, keyword, filters.isEmpty() ? "" : String.format(", \"filter\": [%s]", filterQuery), pageable.getOffset(), pageable.getPageSize());
+
+        // 쿼리 내용 로그 출력 (디버깅용)
+        System.out.println("OpenSearch Request Body: " + requestBody);
+
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(endpoint))
-                .header("Content-Type", "application/json") // 요청 헤더 설정
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody)) // 요청 본문 설정
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes()))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
 
-        // 요청 전송 및 응답 받기
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        // 성공 응답일 경우 검색 결과 반환
+        System.out.println("response: " + response.body());
         if (response.statusCode() == 200) {
-            return parseSearchResults(response.body()); // 응답 결과 파싱하여 반환
+            return parseSearchResults(response.body());
         } else {
             throw new IOException("OpenSearch 검색 요청 실패: " + response.body());
         }
@@ -121,17 +248,30 @@ public class OpenSearchService {
 
     // OpenSearch 응답을 LectureDetailResDto 리스트로 변환하는 메서드
     private List<LectureDetailResDto> parseSearchResults(String responseBody) throws IOException {
-        List<LectureDetailResDto> lectureList = new ArrayList<>(); // 결과 리스트 초기화
-        JsonNode jsonNode = objectMapper.readTree(responseBody); // JSON 응답 파싱
-        JsonNode hits = jsonNode.path("hits").path("hits"); // hits 노드 접근
+        List<LectureDetailResDto> lectureList = new ArrayList<>();
+        JsonNode jsonNode = objectMapper.readTree(responseBody);
+        JsonNode hits = jsonNode.path("hits").path("hits");
 
-        // 각 검색 결과를 LectureDetailResDto로 변환
         for (JsonNode hit : hits) {
-            JsonNode source = hit.path("_source"); // _source 노드 접근
-            LectureDetailResDto lecture = objectMapper.treeToValue(source, LectureDetailResDto.class); // DTO 변환
-            lectureList.add(lecture); // 리스트에 추가
+            JsonNode source = hit.path("_source");
+            System.out.println("source" + source);
+            LectureDetailResDto lecture = objectMapper.treeToValue(source, LectureDetailResDto.class);
+            lectureList.add(lecture);
         }
 
-        return lectureList; // 변환된 리스트 반환
+        return lectureList;
+    }
+
+    @PostConstruct
+    @Scheduled(cron = "0 */10 * * * *")
+    public void syncLecturesToOpenSearch() {
+        List<Lecture> lectures = lectureRepository.findAll();
+        for (Lecture lecture : lectures) {
+            try {
+                registerLecture(lecture.fromEntityToLectureDetailResDto());
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

@@ -3,11 +3,11 @@ package com.tweety.SwithT.lecture_apply.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
+import com.tweety.SwithT.common.dto.MemberNameResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.common.service.RedisStreamProducer;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
-import com.tweety.SwithT.common.dto.MemberNameResDto;
 import com.tweety.SwithT.lecture.dto.TuteeMyLectureListResDto;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
@@ -16,14 +16,19 @@ import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyAfterResDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyListDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureTuteeListDto;
+import com.tweety.SwithT.lecture_apply.dto.*;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatParticipants;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatRoom;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatParticipantsRepository;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatRoomRepository;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.criteria.*;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -32,10 +37,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Value;
-
 
 import java.util.*;
+
 
 @Service
 @RequiredArgsConstructor
@@ -47,7 +51,7 @@ public class LectureApplyService {
     private final LectureRepository lectureRepository;
     private final MemberFeign memberFeign;
     private final RedisStreamProducer redisStreamProducer;
-
+    private final WaitingService waitingService;
 
 
     @Value("${jwt.secretKey}")
@@ -167,7 +171,7 @@ public class LectureApplyService {
         lectureApply.updateStatus(Status.WAITING);
 
         //결제 요청 보내기
-        redisStreamProducer.publishMessage(lectureApply.getMemberId().toString(), "결제요청", "수학천재가 되는 길에서 결제 요청을 했습니다.", lectureApply.getId().toString());
+        redisStreamProducer.publishMessage(lectureApply.getMemberId().toString(), "결제요청", lectureGroup.getLecture().getTitle()+"에서 결제 요청을 했습니다.", lectureApply.getId().toString());
 
 
         return "튜터가 해당 수강신청을 승인했습니다.";
@@ -227,7 +231,86 @@ public class LectureApplyService {
         int end = Math.min((start + pageRequest.getPageSize()), tuteeMyLectureListResDtos.size());
         return new PageImpl<>(tuteeMyLectureListResDtos.subList(start, end), pageRequest, tuteeMyLectureListResDtos.size());
 
+    }
+
+    // 강의 신청
+    @Transactional
+    public LectureApplyAfterResDto tuteeLectureApply(LectureApplySavedDto dto) throws InterruptedException {
+
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+        CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
+        ObjectMapper objectMapper = new ObjectMapper();
+        MemberNameResDto memberNameResDto = objectMapper.convertValue(commonResDto.getResult(), MemberNameResDto.class);
+        String memberName = memberNameResDto.getName();
+
+        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(dto.getLectureGroupId(), "N").orElseThrow(() -> {
+            throw new EntityNotFoundException("해당 강의는 존재하지 않습니다.");
+        });
+
+        if (lectureGroup.getIsAvailable().equals("N")) {
+            throw new RuntimeException("해당 강의는 신청할 수 없습니다.");
+        }
+
+        List<LectureApply> lectureApplyList = lectureApplyRepository.findByMemberIdAndLectureGroup(memberId, lectureGroup);
+        if(!lectureApplyList.isEmpty()) {
+            int rejectedCount = 0;
+            for (LectureApply lectureApply : lectureApplyList) {
+                if (lectureApply.getStatus() == Status.STANDBY) {
+                    throw new RuntimeException("이미 신청한 과외입니다.");
+                }
+            }
+        }
+
+        // 강의 신청
+        waitingService.addQueue(dto.getLectureGroupId(), memberId);
+        // 대기열 순번 표출
+        waitingService.getOrder(memberId.toString(), dto.getLectureGroupId().toString());
+        // 결제로 넘기기
+        waitingService.processPayment(lectureGroup);
+
+        lectureApplyRepository.save(dto.toEntity(lectureGroup, memberId, memberName));
+
+        return LectureApplyAfterResDto.builder().lectureGroupId(lectureGroup.getId()).build();
+    }
 
 
+    @Transactional
+    public String testTuteeLectureApply(LectureApplySavedDto dto, LectureGroup lectureGroup, Long memberId, String memberName, Long lectureGroupId, int limitPeople) throws InterruptedException {
+
+//        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+//        CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        MemberNameResDto memberNameResDto = objectMapper.convertValue(commonResDto.getResult(), MemberNameResDto.class);
+//        String memberName = memberNameResDto.getName();
+
+//        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(dto.getLectureGroupId(), "N").orElseThrow(() -> {
+//            throw new EntityNotFoundException("해당 강의는 존재하지 않습니다.");
+//        });
+//
+//        if (lectureGroup.getIsAvailable().equals("N")) {
+//            throw new RuntimeException("해당 강의는 신청할 수 없습니다.");
+//        }
+//        List<LectureApply> lectureApplyList = lectureApplyRepository.findByMemberIdAndLectureGroup(memberId, lectureGroup);
+//        if(!lectureApplyList.isEmpty()) {
+//            int rejectedCount = 0;
+//            for (LectureApply lectureApply : lectureApplyList) {
+//                if (lectureApply.getStatus() == Status.STANDBY) {
+//                    throw new RuntimeException("이미 신청한 과외입니다.");
+//                }
+//            }
+//        }
+
+        // 강의 신청
+        waitingService.addQueue(dto.getLectureGroupId(), memberId);
+
+        // 순번 표출
+        waitingService.getOrder(memberId.toString(), dto.getLectureGroupId().toString());
+
+        // 결제로 넘기기
+        waitingService.processPayment(lectureGroup);
+
+        LectureApply lectureApply = lectureApplyRepository.save(dto.toEntity(lectureGroup, memberId, memberName));
+
+        return lectureGroup.getId()+"번 강의에 수강 신청되었습니다.";
     }
 }

@@ -4,16 +4,14 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
+import com.tweety.SwithT.member.dto.MemberAddInfoReqDto;
 import com.tweety.SwithT.member.dto.MemberInfoResDto;
 import com.tweety.SwithT.member.dto.MemberUpdateDto;
 import com.tweety.SwithT.review.domain.Review;
 import com.tweety.SwithT.scheduler.domain.Scheduler;
 import com.tweety.SwithT.withdrawal.domain.WithdrawalRequest;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -28,9 +26,15 @@ import java.util.List;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // Hibernate 프록시 무시
 public class Member extends BaseTimeEntity {
 
+    // nullable을 고려해서 소셜 로그인 정보를 저장해야하기 때문에 DTO단에서 정보 입력을 제한해야할 것 같음. 논의필요
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    // 공급자
+    private String provider;
+    // 공급자 ID
+    private String providerId;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
     @Builder.Default
@@ -59,11 +63,11 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = true) // 동명이인 고려
     private String name;
 
-    @Column(nullable = false)
     @JsonFormat(pattern = "yyyy-MM-dd")
+    @Column(nullable = true)
     private LocalDate birthday;
 
-    @Column(nullable = false)
+    @Column(nullable = true)  //소셜 로그인때문에 잠시 true
     private String phoneNumber;
 
     @Column(nullable = true)
@@ -84,7 +88,7 @@ public class Member extends BaseTimeEntity {
 
     @Builder.Default
     @Column(nullable = true)
-    private Long availableMoney = 1000000L;
+    private Long availableMoney = 1000000L; //나중에 0원 셋팅해야함.
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -122,6 +126,18 @@ public class Member extends BaseTimeEntity {
         return this;
     }
 
+    public Member addInfoUpdate(MemberAddInfoReqDto memberAddInfoReqDto) {
+        this.name = memberAddInfoReqDto.getName();
+        this.birthday = memberAddInfoReqDto.getBirthday();
+        this.gender = memberAddInfoReqDto.getGender();
+        this.address = memberAddInfoReqDto.getAddress();
+        this.phoneNumber = memberAddInfoReqDto.getPhoneNumber();
+        this.education = memberAddInfoReqDto.getEducation();
+        this.introduce = memberAddInfoReqDto.getIntroduce();
+        return this;
+    }
+
+
     public Member imageUpdate(String imgUrl){
         this.profileImage = imgUrl;
         return this;
@@ -137,4 +153,12 @@ public class Member extends BaseTimeEntity {
             this.avgScore = avgScore.setScale(1, BigDecimal.ROUND_HALF_UP); // 소수점 자리 맞추기
         }
     }
+
+    // setEmail 메서드 추가 @Setter 안쓰기 위함.
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+
+
 }

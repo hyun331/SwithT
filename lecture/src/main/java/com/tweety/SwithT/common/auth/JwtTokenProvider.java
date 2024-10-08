@@ -41,7 +41,6 @@ public class JwtTokenProvider {
 				.setExpiration(new Date(now.getTime() + (expiration * 60 * 1000L)))  // 만료시간 설정
 				.signWith(SignatureAlgorithm.HS256, secretKey)
 				.compact();
-
 		return token;
 	}
 

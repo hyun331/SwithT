@@ -2,16 +2,11 @@ package com.tweety.SwithT.lecture.domain;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
-import com.tweety.SwithT.lecture.dto.LectureGroupListResDto;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +34,8 @@ public class LectureGroup extends BaseTimeEntity {
     @Column(columnDefinition = "integer default 1")
     private Integer limitPeople;
 
+    private Integer remaining = limitPeople;  // 남은 자리수
+
     private String latitude;
 
     private String longitude;
@@ -58,7 +55,7 @@ public class LectureGroup extends BaseTimeEntity {
     private List<LectureApply> lectureApplies = new ArrayList<>();
 
 
-    // update
+    // update - dto로 수정하기
     public void updatePrice(Integer price){
         this.price = price;
     }
@@ -72,5 +69,15 @@ public class LectureGroup extends BaseTimeEntity {
     public void updateDate(LocalDate startDate, LocalDate endDate){
         this.startDate = startDate;
         this.endDate = endDate;
+    }
+
+    // 남은 자리수 감소
+    public void decreaseRemaining(){
+        this.remaining--;
+    }
+
+    // 남은 자리수가 0인 경우 신청 종료
+    public boolean end(){
+        return this.remaining == 0;
     }
 }
