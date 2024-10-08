@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
+import com.tweety.SwithT.member.dto.MemberAddInfoReqDto;
 import com.tweety.SwithT.member.dto.MemberInfoResDto;
 import com.tweety.SwithT.member.dto.MemberUpdateDto;
 import com.tweety.SwithT.review.domain.Review;
@@ -125,6 +126,18 @@ public class Member extends BaseTimeEntity {
         return this;
     }
 
+    public Member addInfoUpdate(MemberAddInfoReqDto memberAddInfoReqDto) {
+        this.name = memberAddInfoReqDto.getName();
+        this.birthday = memberAddInfoReqDto.getBirthday();
+        this.gender = memberAddInfoReqDto.getGender();
+        this.address = memberAddInfoReqDto.getAddress();
+        this.phoneNumber = memberAddInfoReqDto.getPhoneNumber();
+        this.education = memberAddInfoReqDto.getEducation();
+        this.introduce = memberAddInfoReqDto.getIntroduce();
+        return this;
+    }
+
+
     public Member imageUpdate(String imgUrl){
         this.profileImage = imgUrl;
         return this;
@@ -141,9 +154,11 @@ public class Member extends BaseTimeEntity {
         }
     }
 
-    // setName 메서드 추가 @Setter 안쓰기 위함.
-    public void setName(String name) {
-        this.name = name;
+    // setEmail 메서드 추가 @Setter 안쓰기 위함.
+    public void setEmail(String email) {
+        this.email = email;
     }
+
+
 
 }

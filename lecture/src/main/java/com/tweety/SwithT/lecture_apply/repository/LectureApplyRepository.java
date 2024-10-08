@@ -20,7 +20,7 @@ public interface LectureApplyRepository extends JpaRepository<LectureApply, Long
     List<LectureApply> findByMemberIdAndLectureGroup(Long memberId, LectureGroup lectureGroup);
 
     Page<LectureApply> findByLectureGroup(LectureGroup lectureGroup, Pageable pageable);
-
+    List<LectureApply> findByLectureGroup(LectureGroup lectureGroup);
     List<LectureApply> findByLectureGroupAndStatus(LectureGroup lectureGroup, Status status);
 
     Page<LectureApply> findAll(Specification<LectureApply> specification, Pageable pageable);
