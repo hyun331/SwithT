@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface LectureChatRoomRepository extends JpaRepository<LectureChatRoom, Long> {
-    List<LectureChatRoom> findByLectureGroupAndDelYn(LectureGroup lectureGroup,String delYn);
+    List<LectureChatRoom> findByLectureGroupAndDelYn(LectureGroup lectureGroup, String delYn);
 }
