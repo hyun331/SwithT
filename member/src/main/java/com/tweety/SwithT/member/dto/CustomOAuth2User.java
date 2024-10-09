@@ -20,8 +20,14 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public Map<String, Object> getAttributes() {
-        // 구글과 네이버의 데이터 반환이 동일하지 않기 떄문에 사용하지 않겟다. 여기에 OAuth2 를 통한 데이터가 담기는 것
-        return null;
+        // OAuth2User 정보를 담는 Map을 생성하여 반환
+        return Map.of(
+                "email", member.getEmail(),
+                "provider", member.getProvider(),
+                "providerId", member.getProviderId(),
+                "name", member.getName(),
+                "role", member.getRole()
+        );
     }
 
     @Override
@@ -36,7 +42,6 @@ public class CustomOAuth2User implements OAuth2User {
                 return member.getRole().toString(); // 추후 문제될시 살펴보기
             }
         });
-
         return collection;
     }
 

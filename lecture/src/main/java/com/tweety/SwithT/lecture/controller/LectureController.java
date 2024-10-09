@@ -161,4 +161,10 @@ public class LectureController {
     }
 
 
+    // 강의 홈 정보 - id : lecture group id
+    @GetMapping("/lecture-group-home/{id}")
+    public  ResponseEntity<?> lectureHomeInfoGet(@PathVariable("id") Long id){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 홈 정보", lectureService.LectureHomeInfoGet(id));
+        return new ResponseEntity<>(commonResDto,HttpStatus.OK);
+    }
 }

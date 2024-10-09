@@ -51,11 +51,37 @@ public class MemberController {
             @RequestPart(value = "data" ) MemberSaveReqDto dto,
             @RequestPart(value = "file", required = false) MultipartFile imgFile)
     {
-            System.out.println("test");
+
             Member member = memberService.memberCreate(dto, imgFile);
             CommonResDto commonResDto =
                     new CommonResDto(HttpStatus.CREATED, "회원가입 성공.", " 회원 번호 : " + member.getId() );
             return new ResponseEntity<>(commonResDto, HttpStatus.CREATED);
+    }
+
+    // 회원 추가 정보 입력
+    @PostMapping("/member/AddInfoUpdate")
+    public ResponseEntity<CommonResDto> addInfoUpdate(@RequestBody MemberAddInfoReqDto memberAddInfoReqDto) {
+
+        Member member = memberService.addInfoUpdate(memberAddInfoReqDto);
+        System.out.println(member.getEmail());
+        System.out.println(member.getId());
+
+        // AccesToken
+        String jwtToken =
+                jwtTokenProvider.createToken(String.valueOf(member.getId()),member.getEmail(), member.getRole().toString(),member.getName());
+        // RefreshToken
+        String refreshToken =
+                jwtTokenProvider.createRefreshToken(String.valueOf(member.getId()),member.getEmail(), member.getRole().toString(),member.getName());
+
+        redisTemplate.opsForValue().set(member.getEmail(), refreshToken, 240, TimeUnit.HOURS); // 240시간
+
+        Map<String, Object> loginInfo = new HashMap<>();
+        loginInfo.put("id", member.getId());
+        loginInfo.put("token", jwtToken);
+        loginInfo.put("refreshToken", refreshToken);
+
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "소셜 로그인 회원 추가정보 입력 성공", loginInfo);
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
     // 회원 정보 조회
@@ -97,7 +123,7 @@ public class MemberController {
         loginInfo.put("token", jwtToken);
         loginInfo.put("refreshToken", refreshToken);
 
-        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "Login is successful", loginInfo);
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "로그인 성공", loginInfo);
 
         // 로그 출력
         System.out.println("ID: " + member.getId());
