@@ -8,6 +8,7 @@ import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.common.service.RedisStreamProducer;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
+import com.tweety.SwithT.lecture.dto.LectureGroupPayResDto;
 import com.tweety.SwithT.lecture.dto.TuteeMyLectureListResDto;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
@@ -296,4 +297,35 @@ public class LectureApplyService {
         }
     }
 
+        // 결제로 넘기기
+        waitingService.processPayment(lectureGroup);
+
+        LectureApply lectureApply = lectureApplyRepository.save(dto.toEntity(lectureGroup, memberId, memberName));
+
+        return lectureGroup.getId()+"번 강의에 수강 신청되었습니다.";
+    }
+
+    public LectureGroupPayResDto getLectureGroupByApplyId(Long id){
+        LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException("수강 번호 불러오기 실패"));
+        LectureGroup lectureGroup = lectureApply.getLectureGroup();
+
+        return LectureGroupPayResDto.builder()
+                .groupId(lectureGroup.getId())
+                .lectureName(lectureGroup.getLecture().getTitle())
+                .price(lectureGroup.getPrice())
+                .build();
+    }
+
+    public void updateLectureApplyStatus(Long id, String message){
+        LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
+                ()-> new EntityNotFoundException("수강 정보 불러오기 실패"));
+
+        lectureApply.updatePaidStatus(message);
+        if(message.equals("paid")){
+            LectureGroup lectureGroup = lectureApply.getLectureGroup();
+            lectureGroup.decreaseRemaining();
+        }
+        lectureApplyRepository.save(lectureApply);
+    }
 }
