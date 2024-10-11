@@ -59,15 +59,14 @@ public class MemberService {
         Member member = memberRepository.findById(Long.valueOf(memberAddInfoReqDto.getId()))
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 회원 입니다."));
 
-        System.out.println(member.getId());
-        System.out.println(member.getEmail());
-
         return member.addInfoUpdate(memberAddInfoReqDto);
     }
 
     public Member memberCreate(MemberSaveReqDto memberSaveReqDto,MultipartFile imgFile) {
 
         // 레디스에 인증이 된 상태인지 확인
+        System.out.println(memberSaveReqDto.getAddress()+"서비스단 address");
+
         String chkVerified = redisService.getValues(AUTH_EMAIL_PREFIX + memberSaveReqDto.getEmail());
 
         if (chkVerified == null || !chkVerified.equals("true")) {
