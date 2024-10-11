@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
+
 @Transactional
 @Service
 public class MemberService {
@@ -179,7 +181,22 @@ public class MemberService {
     }
 
 //    강의 정보를 가져옴
-    private CommonResDto getLectureInfo(Long lecturePayId) {
-        return lectureFeign.getLectureById(lecturePayId);
+    private CommonResDto getLectureInfo(Long lectureId) {
+        return lectureFeign.getLectureById(lectureId);
+    }
+
+//    강사 정보 가져오는 메서드
+    public TutorInfoResDto getTutorInfo(Long memberId){
+        Member member = memberRepository.findById(memberId).orElseThrow(
+                ()-> new EntityNotFoundException("정보 불러오기 실패"));
+        int thisYear = LocalDateTime.now().getYear();
+        int age = thisYear - member.getBirthday().getYear();
+        return TutorInfoResDto.builder()
+                .age(age)
+                .avgScore(member.getAvgScore())
+                .gender(member.getGender())
+                .introduce(member.getIntroduce())
+                .name(member.getName())
+                .build();
     }
 }
