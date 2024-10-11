@@ -94,5 +94,6 @@ public class LectureApplyController {
             CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.BAD_REQUEST.value(), commonResDto.getStatus_message());
             return new ResponseEntity<>(commonErrorDto, HttpStatus.BAD_REQUEST);
         }
+
     }
 }

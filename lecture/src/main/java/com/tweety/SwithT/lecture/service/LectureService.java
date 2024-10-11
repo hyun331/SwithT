@@ -17,14 +17,17 @@ import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
-import com.tweety.SwithT.lecture_apply.service.WaitingService;
+import com.tweety.SwithT.lecture_chat_room.domain.LectureChatRoom;
+import com.tweety.SwithT.lecture_chat_room.repository.LectureChatRoomRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -39,6 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class LectureService {
 
@@ -50,21 +54,9 @@ public class LectureService {
     private final KafkaTemplate kafkaTemplate;
     private final MemberFeign memberFeign;
     private final S3Service s3Service;
-
     private final OpenSearchService openSearchService;
+    private final LectureChatRoomRepository lectureChatRoomRepository;
 
-    public LectureService(LectureRepository lectureRepository, LectureGroupRepository lectureGroupRepository, GroupTimeRepository groupTimeRepository, LectureApplyRepository lectureApplyRepository, ObjectMapper objectMapper, KafkaTemplate kafkaTemplate, MemberFeign memberFeign, S3Service s3Service, OpenSearchService openSearchService){
-
-        this.lectureRepository = lectureRepository;
-        this.lectureGroupRepository = lectureGroupRepository;
-        this.groupTimeRepository = groupTimeRepository;
-        this.lectureApplyRepository = lectureApplyRepository;
-        this.objectMapper = objectMapper;
-        this.kafkaTemplate = kafkaTemplate;
-        this.memberFeign = memberFeign;
-        this.s3Service = s3Service;
-        this.openSearchService = openSearchService;
-    }
 
     // Create
     @Transactional

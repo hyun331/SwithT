@@ -19,6 +19,11 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
 
+jwt:
+  expiration: 30
+  secretKey: my_token_secret
+  expirationRt: 14400
+  secretKeyRt: hackerton_secret
 
 imp:
   code: imp00575764

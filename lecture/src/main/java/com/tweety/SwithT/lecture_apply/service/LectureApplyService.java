@@ -9,15 +9,10 @@ import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.common.service.RedisStreamProducer;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
-import com.tweety.SwithT.lecture.dto.LectureGroupPayResDto;
 import com.tweety.SwithT.lecture.dto.TuteeMyLectureListResDto;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
-import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyAfterResDto;
-import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyListDto;
-import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
-import com.tweety.SwithT.lecture_apply.dto.SingleLectureTuteeListDto;
 import com.tweety.SwithT.lecture_apply.dto.*;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatRoom;
@@ -316,13 +311,13 @@ public class LectureApplyService {
         }
     }
 
-        // 결제로 넘기기
-        waitingService.processPayment(lectureGroup);
-
-        LectureApply lectureApply = lectureApplyRepository.save(dto.toEntity(lectureGroup, memberId, memberName));
-
-        return lectureGroup.getId()+"번 강의에 수강 신청되었습니다.";
-    }
+//        // 결제로 넘기기
+//        waitingService.processPayment(lectureGroup);
+//
+//        LectureApply lectureApply = lectureApplyRepository.save(dto.toEntity(lectureGroup, memberId, memberName));
+//
+//        return lectureGroup.getId()+"번 강의에 수강 신청되었습니다.";
+//    }
 
     public LectureGroupPayResDto getLectureGroupByApplyId(Long id){
         LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
@@ -347,4 +342,5 @@ public class LectureApplyService {
         }
         lectureApplyRepository.save(lectureApply);
     }
+
 }
