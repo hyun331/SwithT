@@ -17,6 +17,7 @@ import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
+import com.tweety.SwithT.lecture_apply.service.WaitingService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -149,38 +150,38 @@ public class LectureService {
 
     // Delete: role=TUTOR & limitPeople=0
 
-//    public Page<LectureListResDto> showLectureList(LectureSearchDto searchDto, Pageable pageable) {
-//        Specification<Lecture> specification = new Specification<Lecture>() {
-//            @Override
-//            public Predicate toPredicate(Root<Lecture> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
-//
-//                List<Predicate> predicates = new ArrayList<>();
-//                predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
-//
-//                if(searchDto.getSearchTitle() != null){
-//                    predicates.add(criteriaBuilder.like(root.get("title"), "%"+searchDto.getSearchTitle()+"%"));
-//                }
-//                if(searchDto.getCategory() != null){
-//                    predicates.add(criteriaBuilder.like(root.get("category"), "%"+searchDto.getCategory()+"%"));
-//                }
-//                if(searchDto.getLectureType() != null){
-//                    predicates.add(criteriaBuilder.like(root.get("lectureType"), "%"+searchDto.getLectureType()+"%"));
-//                }
-//                if(searchDto.getStatus() != null){
-//                    predicates.add(criteriaBuilder.like(root.get("status"), "%"+searchDto.getStatus()+"%"));
-//                }
-//
-//                Predicate[] predicateArr = new Predicate[predicates.size()];
-//                for(int i=0; i<predicateArr.length; i++){
-//                    predicateArr[i] = predicates.get(i);
-//                }
-//                return criteriaBuilder.and(predicateArr);
-//            }
-//        };
-//        Page<Lecture> lectures = lectureRepository.findAll(specification, pageable);
-//
-//        return lectures.map(Lecture::fromEntityToLectureListResDto);
-//    }
+    public Page<LectureListResDto> showLectureList(LectureSearchDto searchDto, Pageable pageable) {
+        Specification<Lecture> specification = new Specification<Lecture>() {
+            @Override
+            public Predicate toPredicate(Root<Lecture> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+
+                List<Predicate> predicates = new ArrayList<>();
+                predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
+
+                if(searchDto.getSearchTitle() != null){
+                    predicates.add(criteriaBuilder.like(root.get("title"), "%"+searchDto.getSearchTitle()+"%"));
+                }
+                if(searchDto.getCategory() != null){
+                    predicates.add(criteriaBuilder.like(root.get("category"), "%"+searchDto.getCategory()+"%"));
+                }
+                if(searchDto.getLectureType() != null){
+                    predicates.add(criteriaBuilder.like(root.get("lectureType"), "%"+searchDto.getLectureType()+"%"));
+                }
+                if(searchDto.getStatus() != null){
+                    predicates.add(criteriaBuilder.like(root.get("status"), "%"+searchDto.getStatus()+"%"));
+                }
+
+                Predicate[] predicateArr = new Predicate[predicates.size()];
+                for(int i=0; i<predicateArr.length; i++){
+                    predicateArr[i] = predicates.get(i);
+                }
+                return criteriaBuilder.and(predicateArr);
+            }
+        };
+        Page<Lecture> lectures = lectureRepository.findAll(specification, pageable);
+
+        return lectures.map(Lecture::fromEntityToLectureListResDto);
+    }
 
 
 
@@ -418,7 +419,6 @@ public class LectureService {
         lecture.updateStatus(newStatus);
         if(newStatus.equals(Status.ADMIT)){
             getGroupTimes(statusUpdateDto.getLectureId());
-            // 튜터만 있는 채팅방 만드는 메서드 추가
         }
         lectureRepository.save(lecture);
     }
@@ -486,6 +486,76 @@ public class LectureService {
 
         return groupTimesDto;
     }
+
+
+    // 강의 최신순 10개 조회
+    public List<LectureInfoListResDto> getLatestLectures() {
+        Pageable pageable = PageRequest.of(0, 10); // 첫 페이지, 10개 가져오기
+        List<Lecture> lectures = lectureRepository.findByDelYnOrderByCreatedTime(pageable);
+        List<LectureInfoListResDto> lectureInfos = new ArrayList<>();
+        for (Lecture lecture : lectures){
+            lectureInfos.add(lecture.fromEntityToLectureInfoListResDto());
+        }
+        return lectureInfos;
+    }
+
+    // 무료 강의 10개 최신순 조회
+    public List<LectureInfoListResDto> getFreeLectures(){
+        Pageable pageable = PageRequest.of(0, 10); // 첫 페이지, 10개 가져오기
+        List<Lecture> lectures = lectureRepository.findLecturesWithAvailableGroups(pageable);
+        List<LectureInfoListResDto> lectureInfos = new ArrayList<>();
+        for (Lecture lecture : lectures){
+            lectureInfos.add(lecture.fromEntityToLectureInfoListResDto());
+        }
+        return lectureInfos;
+    }
+
+    public LectureHomeResDto LectureHomeInfoGet(Long lectureGroupId){
+        // 강의 그룹 정보
+        LectureGroup lectureGroup = lectureGroupRepository.findById(lectureGroupId).orElseThrow(()->new EntityNotFoundException("해당 그룹이 없습니다."));
+        LectureHomeResDto dto = LectureHomeResDto.builder()
+                .groupId(lectureGroup.getId())
+                .limitPeople(lectureGroup.getLimitPeople())
+                .latitude(lectureGroup.getLatitude())
+                .longitude(lectureGroup.getLongitude())
+                .startDate(lectureGroup.getStartDate())
+                .build();
+        // 강의 그룹의 강의 id -> 강의 정보 불러오기
+        Lecture lecture = lectureRepository.findById(lectureGroup.getLecture().getId()).orElseThrow(()->new EntityNotFoundException("해당 강의 및 과외가 없습니다."));
+        dto.setLectureId(lecture.getId());
+        dto.setTitle(lecture.getTitle());
+        dto.setContents(lecture.getContents());
+        dto.setImage(lecture.getImage());
+        dto.setMemberId(lecture.getMemberId());
+        dto.setMemberName(lecture.getMemberName());
+        dto.setCategory(lecture.getCategory());
+
+        // 단체 채팅방
+        List<LectureChatRoom> lectureChatRoomList = lectureChatRoomRepository.findByLectureGroupAndDelYn(lectureGroup,"N");
+        // Todo 채팅방 id는 좀 더 생각 필요
+        dto.setChatRoomId(lectureChatRoomList.get(0).getId());
+        // 강의 그룹 시간 list
+        List<GroupTimeResDto> groupTimeResDtos = new ArrayList<>();
+        for(GroupTime groupTime: lectureGroup.getGroupTimes()){
+            GroupTimeResDto groupTimeResDto = GroupTimeResDto.builder()
+                    .memberId(lecture.getMemberId())
+                    .groupTimeId(groupTime.getId())
+                    .lectureGroupId(lectureGroup.getId())
+                    .lectureType(lecture.getLectureType().toString())
+                    .lectureDay(groupTime.getLectureDay().name()) // MON, TUE, 등
+                    .startTime(groupTime.getStartTime().toString()) // HH:mm
+                    .endTime(groupTime.getEndTime().toString()) // HH:mm
+                    .startDate(lectureGroup.getStartDate().toString()) // 강의 시작 날짜
+                    .endDate(lectureGroup.getEndDate().toString()) // 강의 종료 날짜
+                    .schedulerTitle(lectureGroup.getLecture().getTitle()) // 강의 제목을 일정 제목으로 설정
+                    .alertYn('N') // 기본값 'N'
+                    .build();
+            groupTimeResDtos.add(groupTimeResDto);
+        }
+        dto.setLectureGroupTimes(groupTimeResDtos);
+        return dto;
+    }
+
 
     public LectureTitleAndImageResDto getTitleAndThumbnail(Long id){
         Lecture lecture = lectureRepository.findById(id)

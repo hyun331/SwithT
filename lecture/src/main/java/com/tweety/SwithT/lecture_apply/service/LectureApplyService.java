@@ -13,6 +13,10 @@ import com.tweety.SwithT.lecture.dto.TuteeMyLectureListResDto;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
+import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyAfterResDto;
+import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyListDto;
+import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
+import com.tweety.SwithT.lecture_apply.dto.SingleLectureTuteeListDto;
 import com.tweety.SwithT.lecture_apply.dto.*;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatRoom;
@@ -24,21 +28,26 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class LectureApplyService {
     private final LectureGroupRepository lectureGroupRepository;
@@ -48,11 +57,16 @@ public class LectureApplyService {
     private final LectureRepository lectureRepository;
     private final MemberFeign memberFeign;
     private final RedisStreamProducer redisStreamProducer;
-    private final WaitingService waitingService;
+
+    @Qualifier("5")
+    private final RedisTemplate<String, Object> redisTemplate;
 
 
     @Value("${jwt.secretKey}")
     private String secretKey;
+
+    private final Object lock = new Object();
+
 
     //튜티가 과외 신청
     @Transactional
@@ -133,6 +147,26 @@ public class LectureApplyService {
         return result;
     }
 
+    // 강의홈 튜티 리스트
+    public Page<SingleLectureTuteeListDto> singleLectureTuteeList(Long id, Pageable pageable) {
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+
+        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{
+            throw new EntityNotFoundException("해당 강의 그룹이 없습니다");
+        });
+        Lecture lecture = lectureGroup.getLecture();
+        if(lecture.getMemberId() != memberId){  //소유자가 아닌 경우
+            throw new IllegalArgumentException("접근할 수 없는 강의 그룹입니다");
+        }
+        List<LectureApply> lectureApplyList = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(lectureGroup, Status.ADMIT, "N");
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        int start = (int) pageRequest.getOffset();
+        int end = Math.min((start + pageRequest.getPageSize()), lectureApplyList.size());
+        Page<LectureApply> lectureApplyPage = new PageImpl<>(lectureApplyList.subList(start, end), pageRequest, lectureApplyList.size());
+        return lectureApplyPage.map(a->a.fromEntityToSingleLectureTuteeListDto());
+    }
+
+
     //튜터 - 튜티의 신청 승인
     @Transactional
     public String singleLecturePaymentRequest(Long id) {
@@ -148,8 +182,7 @@ public class LectureApplyService {
         lectureApply.updateStatus(Status.WAITING);
 
         //결제 요청 보내기
-        redisStreamProducer.publishMessage(lectureApply.getMemberId().toString(),
-                "결제요청", "수학천재가 되는 길에서 결제 요청을 했습니다.", lectureApply.getId().toString());
+        redisStreamProducer.publishMessage(lectureApply.getMemberId().toString(), "결제요청", lectureGroup.getLecture().getTitle()+"에서 결제 요청을 했습니다.", lectureApply.getId().toString());
 
 
         return "튜터가 해당 수강신청을 승인했습니다.";
@@ -199,6 +232,7 @@ public class LectureApplyService {
                             .price(lectureApply.getLectureGroup().getPrice())
                             .applyId(lectureApply.getId())
                             .lectureGroupId(lectureApply.getLectureGroup().getId())
+                            .createdTime(lectureApply.getCreatedTime())
                             .status(lectureApply.getStatus())
                     .build());
         }
@@ -213,76 +247,55 @@ public class LectureApplyService {
 
     // 강의 신청
     @Transactional
-    public LectureApplyAfterResDto tuteeLectureApply(LectureApplySavedDto dto) throws InterruptedException {
+    public LectureApplyAfterResDto tuteeLectureApply(Long lectureGroupId, Long memberId, String memberName) throws InterruptedException {
+        synchronized (lock) {
+            LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(lectureGroupId, "N")
+                    .orElseThrow(() -> new EntityNotFoundException("해당 강의는 존재하지 않습니다."));
 
-        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
-        CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
-        ObjectMapper objectMapper = new ObjectMapper();
-        MemberNameResDto memberNameResDto = objectMapper.convertValue(commonResDto.getResult(), MemberNameResDto.class);
-        String memberName = memberNameResDto.getName();
+            if (lectureGroup.getIsAvailable().equals("N")) {
+                throw new RuntimeException("해당 강의는 신청할 수 없습니다.");
+            }
 
-        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(dto.getLectureGroupId(), "N").orElseThrow(() -> {
-            throw new EntityNotFoundException("해당 강의는 존재하지 않습니다.");
-        });
+            List<LectureApply> lectureApplyList = lectureApplyRepository.findByMemberIdAndLectureGroup(memberId, lectureGroup);
+            if (!lectureApplyList.isEmpty()) {
+                throw new RuntimeException("이미 신청한 강의입니다.");
+            }
 
-        if (lectureGroup.getIsAvailable().equals("N")) {
-            throw new RuntimeException("해당 강의는 신청할 수 없습니다.");
-        }
+            final long now = System.currentTimeMillis();
+            redisTemplate.opsForZSet().add(lectureGroupId.toString(), memberId, now);
+            log.info("대기열에 추가 - {}번 유저 ({}초)", memberId, now);
 
-        List<LectureApply> lectureApplyList = lectureApplyRepository.findByMemberIdAndLectureGroup(memberId, lectureGroup);
-        if(!lectureApplyList.isEmpty()) {
-            int rejectedCount = 0;
-            for (LectureApply lectureApply : lectureApplyList) {
-                if (lectureApply.getStatus() == Status.STANDBY) {
-                    throw new RuntimeException("이미 신청한 과외입니다.");
+            Set<Object> queue = redisTemplate.opsForZSet().range(lectureGroupId.toString(), 0, 0); // 앞에 있는 사람
+
+            if (queue != null && !queue.isEmpty()) {
+                // 앞에 있는 유저부터 큐에서 제거
+                Object frontUser = queue.iterator().next();
+//                System.out.println("queue에서 가장 앞에 있는 유저: " + frontUser);
+                redisTemplate.opsForZSet().remove(lectureGroupId.toString(), frontUser);
+
+                // 남은 자리수 감소 및 처리
+                if (lectureGroup.getRemaining() > 0) {
+                    lectureGroup.decreaseRemaining();
+                    lectureGroupRepository.saveAndFlush(lectureGroup);
+
+                    Long user = (frontUser instanceof Integer) ? ((Integer) frontUser).longValue() : (Long) frontUser;
+
+                    // 대기열 상태 저장
+                    lectureApplyRepository.save(LectureApply.builder()
+                            .lectureGroup(lectureGroup)
+                            .memberId(user)
+                            .memberName(memberName)
+                            .status(Status.STANDBY)
+                            .build());
+
+                    log.info("현재 대기열 상태 업데이트 완료.");
+                } else {
+                    throw new RuntimeException("남은 자리가 없습니다.");
                 }
             }
+            return LectureApplyAfterResDto.builder().lectureGroupId(lectureGroup.getId()).build();
         }
-
-        // 강의 신청
-        waitingService.addQueue(dto.getLectureGroupId(), memberId);
-        // 대기열 순번 표출
-        waitingService.getOrder(memberId.toString(), dto.getLectureGroupId().toString());
-        // 결제로 넘기기
-        waitingService.processPayment(lectureGroup);
-
-        lectureApplyRepository.save(dto.toEntity(lectureGroup, memberId, memberName));
-
-        return LectureApplyAfterResDto.builder().lectureGroupId(lectureGroup.getId()).build();
     }
-
-
-    @Transactional
-    public String testTuteeLectureApply(LectureApplySavedDto dto, LectureGroup lectureGroup, Long memberId, String memberName, Long lectureGroupId, int limitPeople) throws InterruptedException {
-
-//        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
-//        CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        MemberNameResDto memberNameResDto = objectMapper.convertValue(commonResDto.getResult(), MemberNameResDto.class);
-//        String memberName = memberNameResDto.getName();
-
-//        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(dto.getLectureGroupId(), "N").orElseThrow(() -> {
-//            throw new EntityNotFoundException("해당 강의는 존재하지 않습니다.");
-//        });
-//
-//        if (lectureGroup.getIsAvailable().equals("N")) {
-//            throw new RuntimeException("해당 강의는 신청할 수 없습니다.");
-//        }
-//        List<LectureApply> lectureApplyList = lectureApplyRepository.findByMemberIdAndLectureGroup(memberId, lectureGroup);
-//        if(!lectureApplyList.isEmpty()) {
-//            int rejectedCount = 0;
-//            for (LectureApply lectureApply : lectureApplyList) {
-//                if (lectureApply.getStatus() == Status.STANDBY) {
-//                    throw new RuntimeException("이미 신청한 과외입니다.");
-//                }
-//            }
-//        }
-
-        // 강의 신청
-        waitingService.addQueue(dto.getLectureGroupId(), memberId);
-
-        // 순번 표출
-        waitingService.getOrder(memberId.toString(), dto.getLectureGroupId().toString());
 
         // 결제로 넘기기
         waitingService.processPayment(lectureGroup);

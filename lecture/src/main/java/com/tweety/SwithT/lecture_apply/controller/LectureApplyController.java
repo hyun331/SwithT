@@ -2,10 +2,8 @@ package com.tweety.SwithT.lecture_apply.controller;
 
 import com.tweety.SwithT.common.dto.CommonErrorDto;
 import com.tweety.SwithT.common.dto.CommonResDto;
-import com.tweety.SwithT.lecture_apply.dto.LectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.service.LectureApplyService;
-import com.tweety.SwithT.lecture_apply.service.WaitingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -19,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 public class LectureApplyController {
 
     private final LectureApplyService lectureApplyService;
-    private final WaitingService waitingService;
 
     //과외 신청
     @PreAuthorize("hasRole('TUTEE')")
@@ -35,6 +32,13 @@ public class LectureApplyController {
     @GetMapping("/single-lecture-apply-list/{id}")
     public ResponseEntity<?> showSingleLectureApplyList(@PathVariable("id") Long id, @PageableDefault(size = 5)Pageable pageable){
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "튜티의 과외 신청자 리스트", lectureApplyService.singleLectureApplyList(id, pageable));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+    // 강의 홈 - 튜티 리스트. id는 강의 그룹
+    @GetMapping("/single-lecture-tutee-list/{id}")
+    public ResponseEntity<?> showSingleLectureTuteeList(@PathVariable("id") Long id, @PageableDefault(size = 5)Pageable pageable){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의홈 튜티 리스트", lectureApplyService.singleLectureTuteeList(id, pageable));
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
@@ -63,13 +67,11 @@ public class LectureApplyController {
     }
 
 
-
     // 강의 신청
-    // 미테스트
-    @PreAuthorize("hasRole('TUTEE')")
+//    @PreAuthorize("hasRole('TUTEE')")
     @PostMapping("/lecture-apply")
-    public ResponseEntity<?> tuteeLectureApply(@RequestBody LectureApplySavedDto dto) throws InterruptedException {
-        CommonResDto commonResDto = new CommonResDto(HttpStatus.CREATED, "튜티의 강의 신청 완료", lectureApplyService.tuteeLectureApply(dto));
+    public ResponseEntity<?> tuteeLectureApply( @RequestParam Long lectureGroupId, @RequestParam Long memberId, @RequestParam String memberName) throws InterruptedException {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.CREATED, "튜티의 강의 신청 완료", lectureApplyService.tuteeLectureApply(lectureGroupId, memberId, memberName));
         return new ResponseEntity<>(commonResDto, HttpStatus.CREATED);
     }
 

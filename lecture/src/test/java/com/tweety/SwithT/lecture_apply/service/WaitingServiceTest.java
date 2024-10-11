@@ -1,118 +1,142 @@
 package com.tweety.SwithT.lecture_apply.service;
-
-//@ExtendWith(MockitoExtension.class)
-//class WaitingServiceTest {
+//
+//import com.tweety.SwithT.common.domain.Status;
+//import com.tweety.SwithT.common.service.RedisStreamProducer;
+//import com.tweety.SwithT.lecture.domain.LectureApply;
+//import com.tweety.SwithT.lecture.domain.LectureGroup;
+//import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
+//import com.tweety.SwithT.lecture.repository.LectureRepository;
+//import com.tweety.SwithT.lecture_apply.dto.LectureApplyAfterResDto;
+//import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
+//import org.junit.jupiter.api.BeforeEach;
+//import org.junit.jupiter.api.Test;
+//import org.mockito.ArgumentCaptor;
+//import org.mockito.Mock;
+//import org.mockito.MockitoAnnotations;
+//import org.springframework.data.redis.core.RedisTemplate;
+//
+//import java.util.HashSet;
+//import java.util.Optional;
+//import java.util.Set;
+//
+//import static org.junit.jupiter.api.Assertions.assertEquals;
+//import static org.mockito.Mockito.*;
+//
+//public class WaitingServiceTest {
+//
+//    private WaitingService waitingService;
 //
 //    @Mock
 //    private RedisTemplate<String, Object> redisTemplate;
 //
 //    @Mock
-//    private ZSetOperations<String, Object> zSetOperations;
+//    private LectureGroupRepository lectureGroupRepository;
 //
-//    @InjectMocks
-//    private WaitingService waitingService;
+//    @Mock
+//    private LectureApplyRepository lectureApplyRepository; // 추가된 부분
 //
-//    private final Long lectureGroupId = 3L;
-//    private final int limitPeople = 100; // 제한 인원
+//    @Mock
+//    private LectureApplyService lectureApplyService;
 //
-//    public class User {
-//        private Long memberId;
-//        private String memberName;
+//    @Mock
+//    private RedisStreamProducer redisStreamProducer;
 //
-//        public User(Long memberId, String memberName) {
-//            this.memberId = memberId;
-//            this.memberName = memberName;
-//        }
-//
-//        public Long getMemberId() {
-//            return memberId;
-//        }
-//
-//        public String getMemberName() {
-//            return memberName;
-//        }
-//    }
+//    private LectureGroup lectureGroup;
 //
 //    @BeforeEach
-//    void setUp() {
-//        waitingService.createQueue(lectureGroupId, limitPeople);
-//        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+//    public void setUp() {
+//        MockitoAnnotations.openMocks(this);
+//        // LectureApplyRepository를 추가하여 WaitingService 초기화
+//        waitingService = new WaitingService(redisTemplate, lectureGroupRepository, lectureApplyRepository, redisStreamProducer);
+//
+//        // 기본 강의 그룹 설정
+//        lectureGroup = new LectureGroup();
+//        lectureGroup.setId(1L);
+//        lectureGroup.setRemaining(5);
+//        lectureGroup.setIsAvailable("Y");
 //    }
 //
 //    @Test
-//    void 대기열에_500명_신청_테스트() {
-//        // 500명의 사용자를 대기열에 추가
-//        IntStream.range(0, 500).forEach(i -> {
-//            String user = "User" + i;
-//            Thread.currentThread().setName(user); // 스레드 이름 설정
-//            waitingService.addQueue(lectureGroupId, (long) i);
-//        });
+//    public void testAddQueue_UserAddedSuccessfully() {
+//        Long memberId = 100L;
+//        Long lectureGroupId = lectureGroup.getId();
 //
-//        // 대기열에 추가된 사용자 수를 모킹
-//        when(zSetOperations.size(lectureGroupId.toString())).thenReturn((long) limitPeople);
+//        // Redis에서 해당 멤버가 대기열에 없음을 시뮬레이션
+//        when(redisTemplate.opsForZSet().score(lectureGroupId.toString(), memberId)).thenReturn(null);
 //
-//        // 대기열의 현재 사이즈를 확인
-//        long currentSize = waitingService.getSize(lectureGroupId);
-//        assertEquals(limitPeople, currentSize); // 대기열 사이즈는 최대 100명이어야 함
+//        String response = waitingService.addQueue(lectureGroupId, memberId);
+//
+//        assertEquals("Successfully created & applied for the lecture.", response);
+//        verify(redisTemplate.opsForZSet()).add(lectureGroupId.toString(), memberId, anyInt());
 //    }
 //
 //    @Test
-//    void 대기열_상태_조회() {
+//    public void testAddQueue_UserAlreadyInQueue() {
+//        Long memberId = 100L;
+//        Long lectureGroupId = lectureGroup.getId();
 //
-//        for (int i = 0; i < limitPeople; i++) {
-//            new User((long) i, "USER" + 1);
-//            waitingService.addQueue(lectureGroupId, (long) i);
-//        }
-//        waitingService.getOrder(lectureGroupId);
+//        // Redis에서 해당 멤버가 대기열에 이미 있음을 시뮬레이션
+//        when(redisTemplate.opsForZSet().score(lectureGroupId.toString(), memberId)).thenReturn(1.0);
 //
-////        // Mocking을 통해 대기열에 사용자 추가된 상태
-////        when(zSetOperations.range(lectureGroupId.toString(), 0, -1))
-////                .thenReturn(IntStream.range(0, 100)
-////                        .mapToObj(i -> "User" + i)
-////                        .collect(Collectors.toSet()));
+//        String response = waitingService.addQueue(lectureGroupId, memberId);
 //
-////        // 대기열 상태 조회
-////        waitingService.getOrder(lectureGroupId, i);
-//
-//        // 확인을 위한 verify
-//        verify(zSetOperations).range(lectureGroupId.toString(), 0, -1);
+//        assertEquals("User is already in the queue.", response);
+//        verify(redisTemplate.opsForZSet(), never()).add(anyString(), any(), anyInt());
 //    }
 //
 //    @Test
-//    void 결제_처리(){
-//        // Mocking을 통해 대기열에 이미 100명이 추가된 상태
-//        when(zSetOperations.range(lectureGroupId.toString(), 0, limitPeople - 1))
-//                .thenReturn(IntStream.range(0, limitPeople)
-//                        .mapToObj(i -> "User" + i)
-//                        .collect(Collectors.toSet()));
+//    public void testGetOrder() {
+//        Long memberId = 100L;
+//        String queueKey = lectureGroup.getId().toString();
 //
-//        // Mocking 결제 후 대기열 사이즈
-//        when(zSetOperations.size(lectureGroupId.toString())).thenReturn((long) limitPeople);
+//        Set<Object> queue = new HashSet<>();
+//        queue.add(memberId);
 //
-//        // 결제 처리
-//        waitingService.processPayment(lectureGroupId);
+//        // 대기열을 설정
+//        when(redisTemplate.opsForZSet().range(queueKey, 0, -1)).thenReturn(queue);
+//        when(redisTemplate.opsForZSet().rank(queueKey, memberId)).thenReturn(0L);
 //
-//        // 대기열 사이즈 확인
-//        when(zSetOperations.size(lectureGroupId.toString())).thenReturn(0L);
-//        long sizeAfterPayment = waitingService.getSize(lectureGroupId);
-//        assertEquals(0, sizeAfterPayment); // 결제 후 대기열은 비어 있어야 함
+//        waitingService.getOrder(memberId.toString(), queueKey);
+//
+//        // 대기열 상태 확인 메서드 호출 확인
+//        verify(redisStreamProducer).publishWaitingMessage(any(), any(), any(), any());
 //    }
 //
-////    @Test
-////    void 대기열_종료_검증() {
-////        // 대기열에 사용자 추가
-////        for (int i = 0; i < limitPeople; i++) {
-////            waitingService.addQueue(lectureGroupId);
-////        }
-////        waitingService.processPayment(lectureGroupId); // 대기열 비워도 끝남
-////
-////        assertEquals(0, waitingService.getGroupLimit().getLimitPeople(), "Expected limitPeople to be 0");
-////
-////        // 대기열이 종료되었는지 검증
-////        assertTrue(waitingService.validEnd());
-////        System.out.println("Current limitPeople: " + waitingService.getGroupLimit().getLimitPeople());
-////    }
+//    @Test
+//    public void testGetQueueSize() {
+//        Long lectureGroupId = lectureGroup.getId();
+//        when(redisTemplate.opsForZSet().size(lectureGroupId.toString())).thenReturn(10L);
 //
+//        long queueSize = waitingService.getQueueSize(lectureGroupId);
 //
+//        assertEquals(10L, queueSize);
+//    }
+//
+//    @Test
+//    public void testTuteeLectureApply_StatusSTANDBY() throws InterruptedException {
+//        Long memberId = 100L;
+//        Long lectureGroupId = lectureGroup.getId();
+//
+//        // 강의 그룹이 사용 가능함을 설정
+//        when(lectureGroupRepository.findByIdAndDelYn(lectureGroupId, "N")).thenReturn(Optional.of(lectureGroup));
+//
+//        // 대기열에 추가된 멤버가 없음을 시뮬레이션
+//        when(redisTemplate.opsForZSet().score(lectureGroupId.toString(), memberId)).thenReturn(null);
+//
+//        // 대기열에 추가하고, 대기열 확인
+//        waitingService.addQueue(lectureGroupId, memberId);
+//
+//        // 대기열에서 자신의 순서가 0이 되도록 시뮬레이션
+//        when(redisTemplate.opsForZSet().rank(lectureGroupId.toString(), memberId)).thenReturn(0L);
+//        when(redisTemplate.opsForZSet().size(lectureGroupId.toString())).thenReturn(1L);
+//
+//        // 신청 상태를 저장하는 로직 실행
+//        LectureApplyAfterResDto result = lectureApplyService.tuteeLectureApply(lectureGroupId, memberId, "testUser");
+//
+//        // 강의 신청 상태가 STANDBY로 저장되었는지 확인
+//        ArgumentCaptor<LectureApply> lectureApplyCaptor = ArgumentCaptor.forClass(LectureApply.class);
+//        verify(lectureApplyRepository).save(lectureApplyCaptor.capture());
+//        assertEquals(Status.STANDBY, lectureApplyCaptor.getValue().getStatus());
+//    }
 //}
 //
