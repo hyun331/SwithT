@@ -1,6 +1,4 @@
 package com.tweety.SwithT.member.handler;
-
-
 import com.tweety.SwithT.common.auth.JwtTokenProvider;
 import com.tweety.SwithT.member.domain.Member;
 import com.tweety.SwithT.member.repository.MemberRepository;
@@ -12,22 +10,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.util.Optional;
-/*
-프론트엔드 작업하면서 추가정보 입력 테스트를 진행해야합니다!!!!!!!!!!!!!!!!!!!!
-프론트엔드 작업하면서 추가정보 입력 테스트를 진행해야합니다!!!!!!!!!!!!!!!!!!!!
-프론트엔드 작업하면서 추가정보 입력 테스트를 진행해야합니다!!!!!!!!!!!!!!!!!!!!
-프론트 붙이면서 완성하겠습니다!!!!!!!!!!!!!!!!!!!!
- */
+
 @Component
 public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final MemberRepository memberRepository;
-    private final String REDIRECT_URL = "http://localhost:8082/mypage"; //테스트를 위해서 임시로 뒀음.
-    private final String REDIRECT_URL_EXIST = "http://localhost:8082/"; //테스트를 위해서 임시로 뒀음.
+    private final String REDIRECT_URL = "http://localhost:8081/member/explain"; //테스트를 위해서 임시로 뒀음.
+    private final String REDIRECT_URL_EXIST = "http://localhost:8081/"; //테스트를 위해서 임시로 뒀음.
 
     public CustomSuccessHandler(JwtTokenProvider jwtTokenProvider, MemberRepository memberRepository) {
         this.jwtTokenProvider = jwtTokenProvider;
@@ -64,6 +56,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 String redirectUrl = REDIRECT_URL_EXIST; // 메인 페이지 URL
                 response.sendRedirect(redirectUrl);
             }
+
         } else {
             // 회원 정보가 없을때 예외
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "없는 회원 입니다. 관리자에게 문의하세요.");

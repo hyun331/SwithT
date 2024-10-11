@@ -51,7 +51,6 @@ public class MemberController {
             @RequestPart(value = "data" ) MemberSaveReqDto dto,
             @RequestPart(value = "file", required = false) MultipartFile imgFile)
     {
-
             Member member = memberService.memberCreate(dto, imgFile);
             CommonResDto commonResDto =
                     new CommonResDto(HttpStatus.CREATED, "회원가입 성공.", " 회원 번호 : " + member.getId() );
@@ -63,9 +62,6 @@ public class MemberController {
     public ResponseEntity<CommonResDto> addInfoUpdate(@RequestBody MemberAddInfoReqDto memberAddInfoReqDto) {
 
         Member member = memberService.addInfoUpdate(memberAddInfoReqDto);
-        System.out.println(member.getEmail());
-        System.out.println(member.getId());
-
         // AccesToken
         String jwtToken =
                 jwtTokenProvider.createToken(String.valueOf(member.getId()),member.getEmail(), member.getRole().toString(),member.getName());
@@ -124,14 +120,6 @@ public class MemberController {
         loginInfo.put("refreshToken", refreshToken);
 
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "로그인 성공", loginInfo);
-
-        // 로그 출력
-        System.out.println("ID: " + member.getId());
-        System.out.println("Email: " + member.getEmail());
-        System.out.println("name: " + member.getName());
-        System.out.println("Role: " + member.getRole().toString());
-        System.out.println("Access Token: " + jwtToken);
-        System.out.println("Refresh Token: " + refreshToken);
 
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }

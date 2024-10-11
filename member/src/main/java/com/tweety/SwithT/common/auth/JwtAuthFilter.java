@@ -35,12 +35,7 @@ public class JwtAuthFilter extends GenericFilter {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         String bearerToken = request.getHeader("Authorization");
 
-//       테스트 후 문제 없을 시 삭제하기
-//        // 구글 로그인 관련 요청을 제외
-//        if (path.startsWith("/member-service/oauth2/authorization/google") || path.startsWith("/member-service/login/oauth2/code/google")) {
-//            filterChain.doFilter(servletRequest, servletResponse);
-//            return; // 필터를 여기서 종료
-//        }
+        String path = request.getRequestURI();
 
         try {
             if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
