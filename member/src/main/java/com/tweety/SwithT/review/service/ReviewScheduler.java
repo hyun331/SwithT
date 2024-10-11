@@ -28,7 +28,7 @@ public class ReviewScheduler {
     @Scheduled(cron = "0 0 * * * *") // 매 정시마다 실행
     @Transactional
     public void postSchedule() {
-        System.out.println("스케줄러 시작");
+        System.out.println("ReviewScheduler : 스케줄러 시작");
 
         List<Member> tutors = memberRepository.findAllByRole(Role.TUTOR); // 튜터 리스트 가져오기
 

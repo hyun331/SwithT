@@ -19,8 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
-
 @Transactional
 @Service
 public class MemberService {
@@ -55,19 +53,20 @@ public class MemberService {
         }
         return member;
     }
-//      추후 삭제하기. 안 쓰임.
-//    public Member SocialMemberCreate(MemberSaveReqDto memberSaveReqDto) {
-//
-//        memberRepository.findByEmail(memberSaveReqDto.getEmail()).ifPresent(existingMember -> {
-//            throw new EntityExistsException("이미 존재하는 이메일입니다.");
-//        });
-//
-//        return memberRepository.save(memberSaveReqDto.SocialtoEntity());
-//    }
+
+    public Member addInfoUpdate(MemberAddInfoReqDto memberAddInfoReqDto){
+
+        Member member = memberRepository.findById(Long.valueOf(memberAddInfoReqDto.getId()))
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 회원 입니다."));
+
+        return member.addInfoUpdate(memberAddInfoReqDto);
+    }
 
     public Member memberCreate(MemberSaveReqDto memberSaveReqDto,MultipartFile imgFile) {
 
         // 레디스에 인증이 된 상태인지 확인
+        System.out.println(memberSaveReqDto.getAddress()+"서비스단 address");
+
         String chkVerified = redisService.getValues(AUTH_EMAIL_PREFIX + memberSaveReqDto.getEmail());
 
         if (chkVerified == null || !chkVerified.equals("true")) {
@@ -139,6 +138,18 @@ public class MemberService {
                 .name(member.getName())
                 .build();
     }
+
+    //회원 프로필 이미지 가져오는 메서드(feignClient에서 사용)
+    public MemberProfileResDto memberProfileGet(Long id) {
+        Member member = memberRepository.findById(id).orElseThrow(()->{
+            throw new EntityExistsException("존재하지 않는 회원입니다.");
+        });
+
+        return MemberProfileResDto.builder()
+                .image(member.getProfileImage())
+                .build();
+    }
+
 //    public void lectureStatusUpdate(Long lectureId, Status newStatus){
 //        LectureStatusUpdateDto statusUpdateDto = LectureStatusUpdateDto.builder()
 //                .lectureId(lectureId)
@@ -180,23 +191,9 @@ public class MemberService {
         }
     }
 
-//    강의 정보를 가져옴
-    private CommonResDto getLectureInfo(Long lectureId) {
-        return lectureFeign.getLectureById(lectureId);
-    }
+//  강의 정보를 가져옴
+    private CommonResDto getLectureInfo(Long lecturePayId) {
 
-//    강사 정보 가져오는 메서드
-    public TutorInfoResDto getTutorInfo(Long memberId){
-        Member member = memberRepository.findById(memberId).orElseThrow(
-                ()-> new EntityNotFoundException("정보 불러오기 실패"));
-        int thisYear = LocalDateTime.now().getYear();
-        int age = thisYear - member.getBirthday().getYear();
-        return TutorInfoResDto.builder()
-                .age(age)
-                .avgScore(member.getAvgScore())
-                .gender(member.getGender())
-                .introduce(member.getIntroduce())
-                .name(member.getName())
-                .build();
+        return lectureFeign.getLectureById(lecturePayId);
     }
 }

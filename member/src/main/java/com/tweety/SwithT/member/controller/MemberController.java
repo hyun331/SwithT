@@ -51,11 +51,33 @@ public class MemberController {
             @RequestPart(value = "data" ) MemberSaveReqDto dto,
             @RequestPart(value = "file", required = false) MultipartFile imgFile)
     {
-            System.out.println("test");
             Member member = memberService.memberCreate(dto, imgFile);
             CommonResDto commonResDto =
                     new CommonResDto(HttpStatus.CREATED, "회원가입 성공.", " 회원 번호 : " + member.getId() );
             return new ResponseEntity<>(commonResDto, HttpStatus.CREATED);
+    }
+
+    // 회원 추가 정보 입력
+    @PostMapping("/member/AddInfoUpdate")
+    public ResponseEntity<CommonResDto> addInfoUpdate(@RequestBody MemberAddInfoReqDto memberAddInfoReqDto) {
+
+        Member member = memberService.addInfoUpdate(memberAddInfoReqDto);
+        // AccesToken
+        String jwtToken =
+                jwtTokenProvider.createToken(String.valueOf(member.getId()),member.getEmail(), member.getRole().toString(),member.getName());
+        // RefreshToken
+        String refreshToken =
+                jwtTokenProvider.createRefreshToken(String.valueOf(member.getId()),member.getEmail(), member.getRole().toString(),member.getName());
+
+        redisTemplate.opsForValue().set(member.getEmail(), refreshToken, 240, TimeUnit.HOURS); // 240시간
+
+        Map<String, Object> loginInfo = new HashMap<>();
+        loginInfo.put("id", member.getId());
+        loginInfo.put("token", jwtToken);
+        loginInfo.put("refreshToken", refreshToken);
+
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "소셜 로그인 회원 추가정보 입력 성공", loginInfo);
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
     // 회원 정보 조회
@@ -97,15 +119,7 @@ public class MemberController {
         loginInfo.put("token", jwtToken);
         loginInfo.put("refreshToken", refreshToken);
 
-        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "Login is successful", loginInfo);
-
-        // 로그 출력
-        System.out.println("ID: " + member.getId());
-        System.out.println("Email: " + member.getEmail());
-        System.out.println("name: " + member.getName());
-        System.out.println("Role: " + member.getRole().toString());
-        System.out.println("Access Token: " + jwtToken);
-        System.out.println("Refresh Token: " + refreshToken);
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "로그인 성공", loginInfo);
 
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
@@ -152,6 +166,12 @@ public class MemberController {
     @GetMapping("/member-name-get/{id}")
     public ResponseEntity<?> getMemberNameById(@PathVariable("id")Long id){
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "로그인한 멤버의 이름", memberService.memberNameGet(id));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+    @GetMapping(value="/member-profile-get/{id}")
+    public ResponseEntity<?> getMemberProfileById(@PathVariable("id") Long id){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "각 튜티의 프로필 이미지", memberService.memberProfileGet(id));
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 

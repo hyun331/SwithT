@@ -38,12 +38,12 @@ public class LectureController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
-//    //과외 또는 강의 리스트
-//    @GetMapping("/list-of-lecture")
-//    public ResponseEntity<?> showLectureList(@ModelAttribute LectureSearchDto searchDto, Pageable pageable) {
-//        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 리스트", lectureService.showLectureList(searchDto, pageable));
-//        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
-//    }
+    //과외 또는 강의 리스트
+    @GetMapping("/list-of-lecture")
+    public ResponseEntity<?> showLectureList(@ModelAttribute LectureSearchDto searchDto, Pageable pageable) {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 리스트", lectureService.showLectureList(searchDto, pageable));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
 
     //튜터 자신의 과외/강의 리스트
     @PreAuthorize("hasRole('TUTOR')")
@@ -145,6 +145,27 @@ public class LectureController {
         lectureService.lectureGroupDelete(id);
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 그룹 삭제", id);
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+    // 최신순 강의 4개 조회
+    @GetMapping("/lectures/latest")
+    public ResponseEntity<?> getLatestLectures() {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 조회", lectureService.getLatestLectures());
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+    @GetMapping("/lectures/free")
+    public ResponseEntity<?> getFreeLectures() {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 조회", lectureService.getFreeLectures());
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+
+    // 강의 홈 정보 - id : lecture group id
+    @GetMapping("/lecture-group-home/{id}")
+    public  ResponseEntity<?> lectureHomeInfoGet(@PathVariable("id") Long id){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 홈 정보", lectureService.LectureHomeInfoGet(id));
+        return new ResponseEntity<>(commonResDto,HttpStatus.OK);
     }
 
     // 강의 제목, 썸네일 가져오는 요청

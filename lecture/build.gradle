@@ -54,6 +54,9 @@ dependencies {
 	implementation 'org.apache.httpcomponents:httpclient:4.5.13'  // HTTP 클라이언트
 
 
+	//채팅 의존성
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
 }
 
 ext{

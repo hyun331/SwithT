@@ -1,6 +1,5 @@
 package com.tweety.SwithT.lecture.repository;
 
-import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
