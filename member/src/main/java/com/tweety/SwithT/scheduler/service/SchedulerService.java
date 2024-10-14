@@ -7,10 +7,6 @@ import com.tweety.SwithT.member.domain.Member;
 import com.tweety.SwithT.member.repository.MemberRepository;
 import com.tweety.SwithT.scheduler.domain.Scheduler;
 import com.tweety.SwithT.scheduler.dto.*;
-import com.tweety.SwithT.scheduler.dto.GroupTimeResDto;
-import com.tweety.SwithT.scheduler.dto.ScheduleResDto;
-import com.tweety.SwithT.scheduler.dto.ScheduleCreateDto;
-import com.tweety.SwithT.scheduler.dto.ScheduleUpdateDto;
 import com.tweety.SwithT.scheduler.repository.SchedulerAlertRepository;
 import com.tweety.SwithT.scheduler.repository.SchedulerRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -25,6 +21,7 @@ import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -257,26 +254,22 @@ public class SchedulerService {
         } else return scheduler.fromEntity();
     }
 
-    public List<ScheduleResDto> getMonthSchedule(LocalDate month){
+    public List<ScheduleResDto> getMonthSchedule(LocalDate month) {
         Member member = memberRepository.findById(
                 Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName())).orElseThrow(
-                ()-> new EntityNotFoundException("존재하지 않는 회원 정보입니다."));
+                () -> new EntityNotFoundException("존재하지 않는 회원 정보입니다."));
 
         LocalDate startOfMonth = month.withDayOfMonth(1);
-
-        // 해당 달의 마지막 날 구하기 (예: 2024-09-30)
         LocalDate endOfMonth = month.with(TemporalAdjusters.lastDayOfMonth());
 
+        // delYn이 'N'인 스케줄만 가져오도록 수정
         List<Scheduler> monthlyScheduleList = schedulerRepository
-                .findAllByMemberAndSchedulerDateBetween(member, startOfMonth, endOfMonth);
+                .findAllByMemberAndSchedulerDateBetweenAndDelYn(member, startOfMonth, endOfMonth, "N");
 
-        List<ScheduleResDto> resDtos = new ArrayList<>();
-
-        for (Scheduler scheduler: monthlyScheduleList){
-            resDtos.add(scheduler.fromEntity());
-        }
-
-        return resDtos;
+        // ScheduleResDto로 변환하여 반환
+        return monthlyScheduleList.stream()
+                .map(Scheduler::fromEntity)
+                .collect(Collectors.toList());
     }
 
 }
