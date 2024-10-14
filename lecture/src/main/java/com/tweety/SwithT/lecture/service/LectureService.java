@@ -122,6 +122,7 @@ public class LectureService {
                             .memberName(detail.getMemberName())
                             .memberId(detail.getMemberId())
                             .image(detail.getImage())
+                            .isContainsFree(isContainsFreeGroup(detail.getId()))
                             .build())
                     .collect(Collectors.toList());
 
@@ -132,6 +133,17 @@ public class LectureService {
             // 예외 발생 시 로그 출력 및 빈 페이지 반환
             throw new IllegalArgumentException(e);
         }
+    }
+
+//    그룹 중 하나라도 무료이면 재능 기부로 침.
+    private Boolean isContainsFreeGroup(Long lectureId){
+        List<LectureGroup> lectureGroups = lectureGroupRepository.findByLectureId(lectureId);
+        for(LectureGroup lectureGroup: lectureGroups){
+            if(lectureGroup.getPrice().equals(0)){
+                return true;
+            }
+        }
+        return false;
     }
 
     // Update: limitPeople=0

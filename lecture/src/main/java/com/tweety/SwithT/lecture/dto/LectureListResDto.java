@@ -21,4 +21,5 @@ public class LectureListResDto {
     private String image;
     private LocalDateTime createdTime;
     private Status status;
+    private Boolean isContainsFree;
 }
