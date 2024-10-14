@@ -77,6 +77,17 @@ public class SchedulerAlertService {
         }
     }
 
+    public ScheduleAlertDto getAlertInfo(Long id){
+        ScheduleAlert scheduleAlert = schedulerAlertRepository.findBySchedulerId(id);
+
+        return ScheduleAlertDto.builder()
+                .id(scheduleAlert.getId())
+                .schedulerId(scheduleAlert.getScheduler().getId())
+                .reserveDay(scheduleAlert.getReserveDay())
+                .reserveTime(scheduleAlert.getReserveTime())
+                .build();
+    }
+
     public void createAndSetAlert(ScheduleAlertCreateDto dto) {
         // 현재 인증된 사용자 정보를 통해 회원 조회
         Member member = memberRepository.findById(
@@ -105,7 +116,7 @@ public class SchedulerAlertService {
         // 스케줄에 알림이 설정되었음을 표시
         scheduler.makingAlert();
 
-        // 스케줄 업데이트는 더티 체킹에 의해 생략 가능 (필요 시 명시적으로 저장 가능)
+        schedulerRepository.save(scheduler);
     }
 
     public void cancelAlert(Long alertId){
@@ -133,11 +144,11 @@ public class SchedulerAlertService {
                 () -> new EntityNotFoundException("존재하지 않는 회원 정보입니다.")
         );
 
-        ScheduleAlert scheduleAlert = schedulerAlertRepository.findById(dto.getScheduleId()).orElseThrow(
-                () -> new EntityNotFoundException("알람 정보 불러오기에 실패했습니다.")
-        );
+        ScheduleAlert scheduleAlert = schedulerAlertRepository.findBySchedulerId(dto.getScheduleId());
 
         scheduleAlert.updateAlert(dto);
+
+        schedulerAlertRepository.save(scheduleAlert);
 
         return scheduleAlert;
     }
