@@ -127,7 +127,7 @@ public class OpenSearchService {
         String endpoint = openSearchUrl + "/" + indexName;
 
         // S3에서 인덱스 설정 파일 다운로드
-        String key = "path/to/lecture-index.json";
+        String key = "lecture-service/lecture-index.json";
         String indexMapping = downloadIndexConfigFromS3(bucketName, key);
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -207,25 +207,26 @@ public class OpenSearchService {
         // 필터가 있을 경우만 'filter'를 추가
         String requestBody;
         requestBody = String.format("""
-    {
-        "query": {
-            "bool": {
-                "must": [
-                    {
-                        "multi_match": {
-                            "query": "%s",
-                            "fields": ["title", "contents", "memberName"],
-                            "type": "best_fields",
-                            "fuzziness": "AUTO"
+        {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "multi_match": {
+                                "query": "%s",
+                                "fields": ["title", "contents", "memberName"],
+                                "type": "phrase_prefix",
+                                "analyzer": "ngram_analyzer"
+                            }
                         }
-                    }
-                ]%s
-            }
-        },
-        "from": %d,
-        "size": %d
-    }
-    """, keyword, filters.isEmpty() ? "" : String.format(", \"filter\": [%s]", filterQuery), pageable.getOffset(), pageable.getPageSize());
+                    ]%s
+                }
+            },
+            "from": %d,
+            "size": %d
+        }
+        """, keyword, filters.isEmpty() ? "" : String.format(", \"filter\": [%s]", filterQuery), pageable.getOffset(), pageable.getPageSize());
+
 
         // 쿼리 내용 로그 출력 (디버깅용)
         System.out.println("OpenSearch Request Body: " + requestBody);
@@ -239,6 +240,57 @@ public class OpenSearchService {
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         System.out.println("response: " + response.body());
+        if (response.statusCode() == 200) {
+            return parseSearchResults(response.body());
+        } else {
+            throw new IOException("OpenSearch 검색 요청 실패: " + response.body());
+        }
+    }
+
+    // OpenSearch에서 category로만 검색하는 메서드
+    public List<LectureDetailResDto> searchLecturesByCategory(String category, Pageable pageable) throws IOException, InterruptedException {
+        String endpoint = openSearchUrl + "/lecture-service/_search";
+
+        // 필터가 비어있지 않으면 카테고리 필터를 추가
+        String filterQuery = "";
+        if (category != null && !category.isEmpty()) {
+            filterQuery = String.format("""
+        {
+            "match": {
+                "category": "%s"
+            }
+        }
+        """, category);
+        }
+
+        // 필터가 있을 경우에만 filter를 추가
+        String requestBody = String.format("""
+        {
+            "query": {
+                "bool": {
+                    "filter": [
+                        %s
+                    ]
+                }
+            },
+            "from": %d,
+            "size": %d
+        }
+        """, filterQuery, pageable.getOffset(), pageable.getPageSize());
+
+        // 쿼리 내용 로그 출력 (디버깅용)
+        System.out.println("OpenSearch Request Body: " + requestBody);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(endpoint))
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes()))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println("response: " + response.body());
+
         if (response.statusCode() == 200) {
             return parseSearchResults(response.body());
         } else {
