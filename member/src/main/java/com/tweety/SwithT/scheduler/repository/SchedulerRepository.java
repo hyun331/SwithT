@@ -11,5 +11,6 @@ import java.util.List;
 @Repository
 public interface SchedulerRepository extends JpaRepository<Scheduler,Long> {
     List<Scheduler> findByLectureAssignmentId(Long lectureAssignmentId);
-    List<Scheduler> findAllByMemberAndSchedulerDateBetween(Member member,LocalDate startOfMonth, LocalDate endOfMonth);
+    List<Scheduler> findAllByMemberAndSchedulerDateBetweenAndDelYn(
+            Member member, LocalDate startDate, LocalDate endDate, String delYn);
 }
