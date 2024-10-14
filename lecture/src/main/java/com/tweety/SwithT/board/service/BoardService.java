@@ -18,7 +18,9 @@ import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,8 +57,16 @@ public class BoardService {
     }
 
     public Page<BoardListResDto> boardList(Long lectureGroupId, Pageable pageable){
-        Page<Board> boardList = boardRepository.findAllByLectureGroupId(lectureGroupId,pageable);
-        return boardList.map(BoardListResDto::fromEntity);
+        // Sort by createdTime in descending order
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "createdTime")
+        );
+        // securityContextHolder에서 member id 가져옴
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+        Page<Board> boardList = boardRepository.findAllByLectureGroupId(lectureGroupId,sortedPageable);
+        return boardList.map(board -> BoardListResDto.fromEntity(board, memberId));
     }
 
     public BoardDetailResDto boardDetail(Long boardId){
