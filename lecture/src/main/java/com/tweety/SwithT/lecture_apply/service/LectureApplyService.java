@@ -340,6 +340,8 @@ public class LectureApplyService {
             LectureGroup lectureGroup = lectureApply.getLectureGroup();
             lectureGroup.decreaseRemaining();
         }
+//        스케줄러 업데이트 코드 작성(lectureService 코드 참조)
+
         lectureApplyRepository.save(lectureApply);
     }
 
