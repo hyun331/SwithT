@@ -46,9 +46,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class LectureService {
-
     private final LectureRepository lectureRepository;
     private final LectureGroupRepository lectureGroupRepository;
+    private final LectureChatRoomRepository lectureChatRoomRepository;
     private final GroupTimeRepository groupTimeRepository;
     private final LectureApplyRepository lectureApplyRepository;
     private final ObjectMapper objectMapper;
@@ -57,6 +57,7 @@ public class LectureService {
     private final S3Service s3Service;
     private final OpenSearchService openSearchService;
     private final LectureChatRoomRepository lectureChatRoomRepository;
+
 
 
     // Create
