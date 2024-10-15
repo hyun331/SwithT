@@ -5,8 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -20,13 +21,14 @@ public class Balance {
     private Long id;
 
     @Column(nullable = false)
-    private LocalDate balancedTime;
+    private LocalDateTime balancedTime;
 
     @Column(nullable = false)
-    private int cost;
+    private Long cost;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @ColumnDefault("Standby")
     private Status status;
 
     @OneToOne
