@@ -11,6 +11,7 @@ import com.tweety.SwithT.common.service.S3Service;
 import com.tweety.SwithT.lecture.domain.GroupTime;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
+import com.tweety.SwithT.lecture.domain.LectureType;
 import com.tweety.SwithT.lecture.dto.*;
 import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
@@ -45,9 +46,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class LectureService {
-
     private final LectureRepository lectureRepository;
     private final LectureGroupRepository lectureGroupRepository;
+    private final LectureChatRoomRepository lectureChatRoomRepository;
     private final GroupTimeRepository groupTimeRepository;
     private final LectureApplyRepository lectureApplyRepository;
     private final ObjectMapper objectMapper;
@@ -56,6 +57,7 @@ public class LectureService {
     private final S3Service s3Service;
     private final OpenSearchService openSearchService;
     private final LectureChatRoomRepository lectureChatRoomRepository;
+
 
 
     // Create
@@ -192,16 +194,16 @@ public class LectureService {
                 predicates.add(criteriaBuilder.equal(root.get("memberId"), memberId));
                 predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
 
-                if(searchDto.getSearchTitle() != null){
+                if(searchDto.getSearchTitle() != null && !searchDto.getSearchTitle().isEmpty()){
                     predicates.add(criteriaBuilder.like(root.get("title"), "%"+searchDto.getSearchTitle()+"%"));
                 }
-                if(searchDto.getCategory() != null){
+                if(searchDto.getCategory() != null && !searchDto.getCategory().isEmpty()){
                     predicates.add(criteriaBuilder.like(root.get("category"), "%" + searchDto.getCategory() + "%"));
                 }
-                if (searchDto.getLectureType() != null) {
-                    predicates.add(criteriaBuilder.like(root.get("lectureType"), "%" + searchDto.getLectureType() + "%"));
+                if (searchDto.getLectureType() != null && !searchDto.getLectureType().isEmpty()) {
+                    predicates.add(criteriaBuilder.equal(root.get("lectureType"), searchDto.getLectureType().equals("LESSON")? LectureType.LESSON:LectureType.LECTURE));
                 }
-                if (searchDto.getStatus() != null) {
+                if (searchDto.getStatus() != null && !searchDto.getStatus().isEmpty()) {
                     predicates.add(criteriaBuilder.like(root.get("status"), "%" + searchDto.getStatus() + "%"));
                 }
 
@@ -265,9 +267,21 @@ public class LectureService {
                 groupTitle.setLength(groupTitle.length() - 5);
             }
 
+            String memberName = null;
+            if(isAvailable.equals("N") && a.getLimitPeople()==1){
+                //진행중인 과외인 경우
+                if(!lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(a, Status.ADMIT, "N").isEmpty()){
+                    LectureApply lectureApply = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(a, Status.ADMIT, "N").get(0);
+                    memberName = lectureApply.getMemberName();
+                }
+
+
+            }
+
             return LectureGroupListResDto.builder()
                     .title(groupTitle.toString())
                     .lectureGroupId(a.getId())
+                    .memberName(memberName)
                     .build();
         });
 

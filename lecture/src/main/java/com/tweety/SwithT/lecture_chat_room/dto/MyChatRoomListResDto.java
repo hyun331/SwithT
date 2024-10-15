@@ -1,5 +1,6 @@
 package com.tweety.SwithT.lecture_chat_room.dto;
 
+import com.tweety.SwithT.lecture.domain.LectureType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,9 +10,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SendMessageDto {
+public class MyChatRoomListResDto {
     private Long chatRoomId;
-    private String message;
-    private Long memberId;
+    private String chatRoomTitle;
+    private LectureType lectureType;
     private String memberName;
+
 }
