@@ -28,4 +28,13 @@ public class MemberLectureController {
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 상태가 변경되었습니다.", null);
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
+
+    @GetMapping("/lecture/tutor-info/{memberId}")
+    public ResponseEntity<?> getTutorInfo(@PathVariable Long memberId){
+
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK,
+                "정보 불러오기에 성공했습니다", memberService.getTutorInfo(memberId));
+        
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
 }

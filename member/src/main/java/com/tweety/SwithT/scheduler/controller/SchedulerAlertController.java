@@ -72,4 +72,17 @@ public class SchedulerAlertController {
             return new ResponseEntity<>(commonErrorDto, HttpStatus.NOT_FOUND);
         }
     }
+
+    @PostMapping("/scheduler/get-alert/{id}")
+    public ResponseEntity<?> getAlertInfo(@PathVariable Long id){
+        try {
+            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "불러오기 성공",
+                    schedulerAlertService.getAlertInfo(id));
+            return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+        } catch (EntityNotFoundException e){
+            CommonErrorDto commonErrorDto = new CommonErrorDto(
+                    HttpStatus.NOT_FOUND.value(), e.getMessage());
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.NOT_FOUND);
+        }
+    }
 }

@@ -19,4 +19,5 @@ public class LectureGroupResDto {
     private List<LectureGroupTimeResDto> times;
     private String tutorName;
     private String category;
+    private int remaining;
 }
