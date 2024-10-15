@@ -122,6 +122,36 @@ public class LectureService {
                             .memberName(detail.getMemberName())
                             .memberId(detail.getMemberId())
                             .image(detail.getImage())
+                            .category(detail.getCategory())
+                            .isContainsFree(isContainsFreeGroup(detail.getId()))
+                            .build())
+                    .collect(Collectors.toList());
+
+            // PageImpl로 페이지네이션 적용하여 반환
+            return new PageImpl<>(lectureList, pageable, searchResults.size());
+
+        } catch (IOException | InterruptedException e) {
+            // 예외 발생 시 로그 출력 및 빈 페이지 반환
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    public Page<LectureListResDto> showLectureListByCategory(LectureSearchDto searchDto, Pageable pageable) {
+
+        try {
+            // OpenSearch에서 검색 수행
+            List<LectureDetailResDto> searchResults = openSearchService.searchLecturesByCategory(searchDto.getCategory(), pageable);
+//            System.out.println(searchResults.get(0));
+            // 검색 결과를 LectureListResDto로 변환하여 페이지 객체로 반환
+            List<LectureListResDto> lectureList = searchResults.stream()
+//                    여기서 필요한 데이터 조립
+                    .map(detail -> LectureListResDto.builder()
+                            .id(detail.getId())
+                            .title(detail.getTitle())
+                            .memberName(detail.getMemberName())
+                            .memberId(detail.getMemberId())
+                            .image(detail.getImage())
+                            .category(detail.getCategory())
                             .isContainsFree(isContainsFreeGroup(detail.getId()))
                             .build())
                     .collect(Collectors.toList());
@@ -589,6 +619,7 @@ public class LectureService {
                 .longitude(lectureGroup.getLongitude())
                 .latitude(lectureGroup.getLatitude())
                 .times(timeResDtos)
+                .remaining(lectureGroup.getRemaining())
                 .tutorName(lectureGroup.getLecture().getMemberName())
                 .category(lectureGroup.getLecture().getCategory().name())
                 .build();
