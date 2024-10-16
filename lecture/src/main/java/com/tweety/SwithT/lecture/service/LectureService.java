@@ -602,9 +602,20 @@ public class LectureService {
         List<LectureGroupsResDto> lectureGroupsResDtos = new ArrayList<>();
 
         for (LectureGroup lectureGroup : lectureGroups) {
+            List<GroupTimesResDto> groupTimesResDtos = new ArrayList<>();
+           for (GroupTime groupTime : lectureGroup.getGroupTimes()) {
+               groupTimesResDtos.add(
+                       GroupTimesResDto.builder()
+                               .groupTimeId(groupTime.getId())
+                               .lectureDay(groupTime.getLectureDay())
+                               .startTime(groupTime.getStartTime())
+                               .endTime(groupTime.getEndTime())
+                               .build()
+               );
+           }
             LectureGroupsResDto dto = LectureGroupsResDto.builder()
                     .lectureGroupId(lectureGroup.getId())
-                    .groupTimes(lectureGroup.getGroupTimes())
+                    .groupTimes(groupTimesResDtos)
                     .isAvailable(lectureGroup.getIsAvailable())
                     .remaining(lectureGroup.getRemaining())
                     .price(lectureGroup.getPrice())

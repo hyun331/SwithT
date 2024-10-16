@@ -311,14 +311,6 @@ public class LectureApplyService {
         }
     }
 
-//        // 결제로 넘기기
-//        waitingService.processPayment(lectureGroup);
-//
-//        LectureApply lectureApply = lectureApplyRepository.save(dto.toEntity(lectureGroup, memberId, memberName));
-//
-//        return lectureGroup.getId()+"번 강의에 수강 신청되었습니다.";
-//    }
-
     public LectureGroupPayResDto getLectureGroupByApplyId(Long id){
         LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("수강 번호 불러오기 실패"));

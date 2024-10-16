@@ -1,6 +1,5 @@
 package com.tweety.SwithT.lecture.dto;
 
-import com.tweety.SwithT.lecture.domain.GroupTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 public class LectureGroupsResDto {
     private Long lectureGroupId;
-    private List<GroupTime> groupTimes;
+    private List<GroupTimesResDto> groupTimes;
     private String isAvailable;
     private int remaining;
     private int price;
