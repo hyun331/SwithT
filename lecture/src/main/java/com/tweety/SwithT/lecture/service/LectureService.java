@@ -577,6 +577,7 @@ public class LectureService {
         dto.setMemberId(lecture.getMemberId());
         dto.setMemberName(lecture.getMemberName());
         dto.setCategory(lecture.getCategory());
+        dto.setLectureType(lecture.getLectureType());
 
         // 단체 채팅방
         List<LectureChatRoom> lectureChatRoomList = lectureChatRoomRepository.findByLectureGroupAndDelYn(lectureGroup,"N");

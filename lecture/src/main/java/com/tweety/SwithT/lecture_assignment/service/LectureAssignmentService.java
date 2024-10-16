@@ -21,7 +21,9 @@ import com.tweety.SwithT.lecture_assignment.dto.update.LectureAssignmentUpdateRe
 import com.tweety.SwithT.lecture_assignment.repository.LectureAssignmentRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -84,8 +86,14 @@ public class LectureAssignmentService {
 
     }
     public Page<LectureAssignmentListResDto> assignmentList(Long lectureGroupId, Pageable pageable){
+        // Sort by createdTime in descending order
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "createdTime")
+        );
         // delete yn
-        Page<LectureAssignment> lectureAssignments = lectureAssignmentRepository.findByLectureGroupIdAndDelYn(lectureGroupId,"N",pageable);
+        Page<LectureAssignment> lectureAssignments = lectureAssignmentRepository.findByLectureGroupIdAndDelYn(lectureGroupId,"N",sortedPageable);
         return lectureAssignments.map(LectureAssignmentListResDto::fromEntity);
     }
 

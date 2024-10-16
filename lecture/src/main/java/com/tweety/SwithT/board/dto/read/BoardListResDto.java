@@ -17,16 +17,19 @@ public class BoardListResDto {
     private Long id;
     private String memberName;
     private String title;
-    private Type type;
     private LocalDate postDate;
+    private Type type;
+    private boolean isAuthor;
 
-    public static BoardListResDto fromEntity(Board board){
+
+    public static BoardListResDto fromEntity(Board board, Long memberId){
         return BoardListResDto.builder()
                 .id(board.getId())
                 .title(board.getTitle())
                 .type(board.getType())
                 .postDate(board.getCreatedTime().toLocalDate())
                 .memberName(board.getMemberName())
+                .isAuthor(board.getMemberId().equals(memberId))
                 .build();
     }
 }
