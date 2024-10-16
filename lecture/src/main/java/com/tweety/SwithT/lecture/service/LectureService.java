@@ -56,7 +56,6 @@ public class LectureService {
     private final MemberFeign memberFeign;
     private final S3Service s3Service;
     private final OpenSearchService openSearchService;
-    private final LectureChatRoomRepository lectureChatRoomRepository;
 
 
 
