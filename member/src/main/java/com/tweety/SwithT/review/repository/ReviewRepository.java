@@ -1,5 +1,6 @@
 package com.tweety.SwithT.review.repository;
 
+import com.tweety.SwithT.member.domain.Member;
 import com.tweety.SwithT.review.domain.Review;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,4 +22,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("SELECT AVG(r.star) FROM Review r WHERE r.tutorId.id = :tutorId")
     BigDecimal findAverageScoreByTutorId(@Param("tutorId") Long tutorId);
 
+    // 특정 tutorId에 해당하는 리뷰만 조회 (Member 타입 사용)
+    Page<Review> findByTutorId(Member tutorId, Pageable pageable);
 }

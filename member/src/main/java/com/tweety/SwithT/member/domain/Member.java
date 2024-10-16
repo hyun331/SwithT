@@ -113,6 +113,7 @@ public class Member extends BaseTimeEntity {
                 .education(this.education)
                 .introduce(this.introduce)
                 .role(this.role)
+                .avgScore(this.avgScore)
                 .build();
     }
 
@@ -135,6 +136,8 @@ public class Member extends BaseTimeEntity {
         this.phoneNumber = memberAddInfoReqDto.getPhoneNumber();
         this.education = memberAddInfoReqDto.getEducation();
         this.introduce = memberAddInfoReqDto.getIntroduce();
+        this.profileImage = memberAddInfoReqDto.getProfileImage(); // 어떻게 될지 모르겟는데 일단 해봐
+        
         return this;
     }
 
