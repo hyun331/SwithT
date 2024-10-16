@@ -1,13 +1,11 @@
 package com.tweety.SwithT.lecture.dto;
 
-import com.tweety.SwithT.lecture.domain.GroupTime;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 
 import java.time.LocalDate;
 import java.util.List;
@@ -38,6 +36,7 @@ public class LectureGroupReqDto {
                 .price(this.price)
                 .isAvailable("Y")
                 .limitPeople(this.limitPeople)
+                .remaining(this.limitPeople)
                 .latitude(this.latitude)
                 .longitude(this.longitude)
                 .startDate(this.startDate)

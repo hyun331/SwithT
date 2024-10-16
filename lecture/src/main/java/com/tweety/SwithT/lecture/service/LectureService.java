@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.dto.MemberNameResDto;
+import com.tweety.SwithT.common.dto.MemberScoreResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.common.service.OpenSearchService;
 import com.tweety.SwithT.common.service.S3Service;
@@ -38,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -87,7 +89,7 @@ public class LectureService {
 
         // OpenSearch에 데이터 동기화
         try {
-            openSearchService.registerLecture(createdLecture.fromEntityToLectureDetailResDto());
+            openSearchService.registerLecture(createdLecture.fromEntityToLectureResDto());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -222,7 +224,13 @@ public class LectureService {
         Lecture lecture = lectureRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{
             throw new EntityNotFoundException("해당 id에 맞는 강의가 존재하지 않습니다.");
         });
-        return lecture.fromEntityToLectureDetailResDto();
+
+        CommonResDto commonResDto = memberFeign.getMemberScoreById(lecture.getMemberId());
+        ObjectMapper objectMapper = new ObjectMapper();
+        MemberScoreResDto memberScoreResDto = objectMapper.convertValue(commonResDto.getResult(), MemberScoreResDto.class);
+        BigDecimal avgScore = memberScoreResDto.getAvgScore();
+
+        return lecture.fromEntityToLectureDetailResDto(avgScore);
     }
 
     //강의 그룹 및 그룹 시간 조회
@@ -253,6 +261,7 @@ public class LectureService {
                 return criteriaBuilder.and(predicateArr);
             }
         };
+
         Page<LectureGroup> lectureGroups = lectureGroupRepository.findAll(specification, pageable);
         Page<LectureGroupListResDto> lectureGroupResDtos = lectureGroups.map((a)->{
             List<GroupTime> groupTimeList = groupTimeRepository.findByLectureGroupId(a.getId());
@@ -295,12 +304,12 @@ public class LectureService {
 
         // OpenSearch에 데이터 동기화
         try {
-            openSearchService.registerLecture(lecture.fromEntityToLectureDetailResDto());
+            openSearchService.registerLecture(lecture.fromEntityToLectureResDto());
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return lecture.fromEntityToLectureDetailResDto();
+        return lecture.fromEntityToLectureResDto();
     }
 
     // 강의 삭제
@@ -577,9 +586,37 @@ public class LectureService {
                 .longitude(lectureGroup.getLongitude())
                 .latitude(lectureGroup.getLatitude())
                 .times(timeResDtos)
+                .remaining(lectureGroup.getRemaining())
                 .tutorName(lectureGroup.getLecture().getMemberName())
                 .category(lectureGroup.getLecture().getCategory().name())
                 .build();
+    }
+
+
+    // 해당 강의의 강의 그룹들 정보 조회
+    public List<LectureGroupsResDto> getLectureGroupsInfo(Long lectureId){
+        Lecture lecture = lectureRepository.findById(lectureId).orElseThrow(
+                () -> new EntityNotFoundException("강의 정보 가져오기 실패"));
+
+        List<LectureGroup> lectureGroups = lectureGroupRepository.findByLectureId(lectureId);
+        List<LectureGroupsResDto> lectureGroupsResDtos = new ArrayList<>();
+
+        for (LectureGroup lectureGroup : lectureGroups) {
+            LectureGroupsResDto dto = LectureGroupsResDto.builder()
+                    .lectureGroupId(lectureGroup.getId())
+                    .groupTimes(lectureGroup.getGroupTimes())
+                    .isAvailable(lectureGroup.getIsAvailable())
+                    .remaining(lectureGroup.getRemaining())
+                    .price(lectureGroup.getPrice())
+//                    .address(lectureGroup.getAddress)
+                    .startDate(lectureGroup.getStartDate())
+                    .endDate(lectureGroup.getEndDate())
+                    .build();
+
+            lectureGroupsResDtos.add(dto);
+        }
+
+        return lectureGroupsResDtos;
     }
 
 }
