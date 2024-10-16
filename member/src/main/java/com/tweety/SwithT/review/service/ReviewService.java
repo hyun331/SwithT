@@ -47,10 +47,19 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ReviewListResDto> getReviews(Pageable pageable) {
-        Page<Review> reviews = reviewRepository.findAll(pageable);
-        return reviews.map(Review::fromEntity);
+    public Page<ReviewListResDto> getReviewsByTutorId(Long tutorId, Pageable pageable) {
+        Member tutor = memberRepository.findById(tutorId)
+                .orElseThrow(() -> new EntityNotFoundException("Tutor not found"));
+
+        return reviewRepository.findByTutorId(tutor, pageable)
+                .map(Review::fromEntity);
     }
+
+//    @Transactional(readOnly = true)
+//    public Page<ReviewListResDto> getReviews(Pageable pageable) {
+//        Page<Review> reviews = reviewRepository.findAll(pageable);
+//        return reviews.map(Review::fromEntity);
+//    }
 
     public ReviewUpdateDto updateReview(Long id, ReviewUpdateDto updateDto) {
 
