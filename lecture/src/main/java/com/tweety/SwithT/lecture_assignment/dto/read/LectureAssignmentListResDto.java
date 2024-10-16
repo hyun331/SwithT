@@ -21,6 +21,8 @@ public class LectureAssignmentListResDto {
     private LocalTime endTime;
 
     public static LectureAssignmentListResDto fromEntity(LectureAssignment lectureAssignment){
+        LocalDate startDate = lectureAssignment.getCreatedTime().toLocalDate();
+        LocalTime startTime = lectureAssignment.getCreatedTime().toLocalTime();
         return LectureAssignmentListResDto.builder()
                 .id(lectureAssignment.getId())
                 .title(lectureAssignment.getTitle())

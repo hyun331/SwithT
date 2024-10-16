@@ -33,6 +33,7 @@ public class ReviewController {
 
         Review review = reviewService.createReview(dto);
         CommonResDto commonResDto = new CommonResDto(HttpStatus.CREATED, "리뷰 등록 완료", "튜터 id :" + review.getTutorId().getId());
+
         return new ResponseEntity<>(commonResDto, HttpStatus.CREATED);
 
     }

@@ -21,13 +21,14 @@ public class BoardListResDto {
     private Type type;
     private boolean isAuthor;
 
+
     public static BoardListResDto fromEntity(Board board, Long memberId){
         return BoardListResDto.builder()
                 .id(board.getId())
                 .title(board.getTitle())
                 .type(board.getType())
-                .memberName(board.getMemberName())
                 .postDate(board.getCreatedTime().toLocalDate())
+                .memberName(board.getMemberName())
                 .isAuthor(board.getMemberId().equals(memberId))
                 .build();
     }
