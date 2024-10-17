@@ -418,8 +418,8 @@ public class LectureService {
         if (dto.getLimitPeople() != null) {
             lectureGroup.updateLimitPeople(dto.getLimitPeople());
         }
-        if (dto.getLatitude() != null && dto.getLongitude() != null) {
-            lectureGroup.updatePoint(dto.getLatitude(), dto.getLongitude());
+        if (dto.getAddress() != null) {
+            lectureGroup.updateAddress(dto.getAddress());
         }
         if (dto.getStartDate() != null && dto.getEndDate() != null) {
             lectureGroup.updateDate(dto.getStartDate(), dto.getEndDate());
@@ -572,8 +572,9 @@ public class LectureService {
         LectureHomeResDto dto = LectureHomeResDto.builder()
                 .groupId(lectureGroup.getId())
                 .limitPeople(lectureGroup.getLimitPeople())
-                .latitude(lectureGroup.getLatitude())
-                .longitude(lectureGroup.getLongitude())
+                .address(lectureGroup.getAddress())
+//                .latitude(lectureGroup.getLatitude())
+//                .longitude(lectureGroup.getLongitude())
                 .startDate(lectureGroup.getStartDate())
                 .build();
         // 강의 그룹의 강의 id -> 강의 정보 불러오기

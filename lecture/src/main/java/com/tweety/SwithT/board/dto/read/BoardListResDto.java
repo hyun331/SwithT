@@ -17,6 +17,7 @@ public class BoardListResDto {
     private Long id;
     private String memberName;
     private String title;
+    private String contents;
     private LocalDate postDate;
     private Type type;
     private boolean isAuthor;
@@ -26,6 +27,7 @@ public class BoardListResDto {
         return BoardListResDto.builder()
                 .id(board.getId())
                 .title(board.getTitle())
+                .contents(board.getContents())
                 .type(board.getType())
                 .postDate(board.getCreatedTime().toLocalDate())
                 .memberName(board.getMemberName())

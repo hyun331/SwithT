@@ -19,10 +19,11 @@ public class LectureGroupReqDto {
     private Integer price;
 
     private Integer limitPeople;
+    private String address;
 
-    private String latitude;
+//    private String latitude;
 
-    private String longitude;
+//    private String longitude;
 
     private LocalDate startDate;
 
@@ -36,9 +37,9 @@ public class LectureGroupReqDto {
                 .price(this.price)
                 .isAvailable("Y")
                 .limitPeople(this.limitPeople)
-                .remaining(this.limitPeople)
-                .latitude(this.latitude)
-                .longitude(this.longitude)
+                .address(this.address)
+//                .latitude(this.latitude)
+//                .longitude(this.longitude)
                 .startDate(this.startDate)
                 .endDate(this.endDate)
                 .build();

@@ -2,6 +2,7 @@ package com.tweety.SwithT.board.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweety.SwithT.board.domain.Board;
+import com.tweety.SwithT.board.domain.Type;
 import com.tweety.SwithT.board.dto.create.BoardCreateReqDto;
 import com.tweety.SwithT.board.dto.create.BoardCreateResDto;
 import com.tweety.SwithT.board.dto.delete.BoardDeleteResDto;
@@ -17,13 +18,12 @@ import com.tweety.SwithT.lecture.domain.LectureGroup;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
 
 @Service
 public class BoardService {
@@ -56,7 +56,7 @@ public class BoardService {
         return BoardCreateResDto.fromEntity(savedBoard);
     }
 
-    public Page<BoardListResDto> boardList(Long lectureGroupId, Pageable pageable){
+    public Page<BoardListResDto> boardList(Long lectureGroupId, Pageable pageable, String type){
         // Sort by createdTime in descending order
         Pageable sortedPageable = PageRequest.of(
                 pageable.getPageNumber(),
@@ -65,7 +65,12 @@ public class BoardService {
         );
         // securityContextHolder에서 member id 가져옴
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
-        Page<Board> boardList = boardRepository.findAllByLectureGroupId(lectureGroupId,sortedPageable);
+        // param으로 type이 all인지 notice인지 받기..!
+        // notice
+        Page<Board> boardList = null;
+        if(Objects.equals(type, "notice")) boardList = boardRepository.findAllByLectureGroupIdAndType(lectureGroupId,sortedPageable, Type.NOTICE);
+        else if(type==null) boardList = boardRepository.findAllByLectureGroupId(lectureGroupId,sortedPageable);
+        else System.out.println("없음");
         return boardList.map(board -> BoardListResDto.fromEntity(board, memberId));
     }
 

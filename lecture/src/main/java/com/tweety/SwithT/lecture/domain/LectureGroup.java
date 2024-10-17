@@ -37,9 +37,11 @@ public class LectureGroup extends BaseTimeEntity {
 
     private Integer remaining;  // 남은 자리수
 
-    private String latitude;
+    private String address;
 
-    private String longitude;
+//    private String latitude;
+//
+//    private String longitude;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate startDate;
@@ -63,9 +65,8 @@ public class LectureGroup extends BaseTimeEntity {
     public void updateLimitPeople(Integer limitPeople){
         this.limitPeople = limitPeople;
     }
-    public void updatePoint(String latitude, String longitude){
-        this.latitude = latitude;
-        this.longitude = longitude;
+    public void updateAddress(String address){
+        this.address = address;
     }
     public void updateDate(LocalDate startDate, LocalDate endDate){
         this.startDate = startDate;
