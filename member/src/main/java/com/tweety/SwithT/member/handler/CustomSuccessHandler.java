@@ -19,7 +19,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final JwtTokenProvider jwtTokenProvider;
     private final MemberRepository memberRepository;
     private final String REDIRECT_URL = "http://localhost:8081/member/explain"; //테스트를 위해서 임시로 뒀음.
-    private final String REDIRECT_URL_EXIST = "http://localhost:8081/"; //테스트를 위해서 임시로 뒀음.
+    private final String REDIRECT_URL_EXIST = "http://localhost:8081/loginSuccess"; //테스트를 위해서 임시로 뒀음.
 
     public CustomSuccessHandler(JwtTokenProvider jwtTokenProvider, MemberRepository memberRepository) {
         this.jwtTokenProvider = jwtTokenProvider;
@@ -37,13 +37,33 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         if (member.isPresent()) {
             Member existingMember = member.get();
-            String name = existingMember.getName();
             Long memberId = existingMember.getId();
 
+            // JWT 토큰 생성
+            String accessToken =
+                    jwtTokenProvider.createToken(String.valueOf(memberId),email, String.valueOf(existingMember.getRole()),String.valueOf(existingMember.getName()));
 
+            String refreshToken =
+                    jwtTokenProvider.createRefreshToken(String.valueOf(memberId),email, String.valueOf(existingMember.getRole()),String.valueOf(existingMember.getName()));
+
+            // Access Token을 쿠키에 저장 (HttpOnly로 설정하여 보안 강화)
+            Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
+//            accessTokenCookie.setHttpOnly(false);  // JavaScript로 접근 못하도록 설정
+            accessTokenCookie.setPath("/");
+            accessTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
+            response.addCookie(accessTokenCookie);
+
+            // Refresh Token을 쿠키에 저장
+            Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+//            refreshTokenCookie.setHttpOnly(true); 이게 true로 설정되어있으면 쿠키값 못 가져옴.
+            refreshTokenCookie.setPath("/");
+            refreshTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
+            response.addCookie(refreshTokenCookie);
+
+            // memberId도 쿠키에 저장
             Cookie memberCookie = new Cookie("memberId", String.valueOf(memberId));
-            memberCookie.setPath("/"); // 전체 도메인에서 접근 가능하도록 설정 -> 추후 추가정보 입력화면만 하도록 수정 예정
-            memberCookie.setMaxAge(60 * 60 * 24); // 쿠키 유효 기간 (1일) -> 추후 1시간 혹은 10분으로 수정 예정
+            memberCookie.setPath("/");
+            memberCookie.setMaxAge(60 * 60 );  // 1시간 유지
             response.addCookie(memberCookie);
 
             // phoneNumber 필드가 null인지 확인

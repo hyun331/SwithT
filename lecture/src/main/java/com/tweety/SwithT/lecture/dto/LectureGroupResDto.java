@@ -1,5 +1,6 @@
 package com.tweety.SwithT.lecture.dto;
 
+import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,4 +21,6 @@ public class LectureGroupResDto {
     private String tutorName;
     private String category;
     private int remaining;
+    private List<LectureApply> lectureApplies;
 }
+

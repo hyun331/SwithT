@@ -29,12 +29,12 @@ public class MemberLectureController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
-    @GetMapping("/lecture/tutor-info/{memberId}")
-    public ResponseEntity<?> getTutorInfo(@PathVariable Long memberId){
-
-        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK,
-                "정보 불러오기에 성공했습니다", memberService.getTutorInfo(memberId));
-        
-        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
-    }
+//    @GetMapping("/lecture/tutor-info/{memberId}") 정하님이 날려도 된다고 하신 코드
+//    public ResponseEntity<?> getTutorInfo(@PathVariable Long memberId){
+//
+//        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK,
+//                "정보 불러오기에 성공했습니다", memberService.getTutorInfo(memberId));
+//
+//        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+//    }
 }
