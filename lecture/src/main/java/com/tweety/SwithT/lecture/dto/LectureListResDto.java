@@ -1,6 +1,7 @@
 package com.tweety.SwithT.lecture.dto;
 
 import com.tweety.SwithT.common.domain.Status;
+import com.tweety.SwithT.lecture.domain.Category;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,4 +22,6 @@ public class LectureListResDto {
     private String image;
     private LocalDateTime createdTime;
     private Status status;
+    private Boolean isContainsFree;
+    private Category category;
 }

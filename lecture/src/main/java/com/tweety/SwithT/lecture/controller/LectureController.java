@@ -9,6 +9,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
@@ -48,7 +49,7 @@ public class LectureController {
     //튜터 자신의 과외/강의 리스트
     @PreAuthorize("hasRole('TUTOR')")
     @GetMapping("/my-lecture-list")
-    public ResponseEntity<?> showMyLectureList(@ModelAttribute LectureSearchDto searchDto, Pageable pageable) {
+    public ResponseEntity<?> showMyLectureList(@ModelAttribute LectureSearchDto searchDto, @PageableDefault(size = 5, page = 0)Pageable pageable) {
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "나의 강의 리스트", lectureService.showMyLectureList(searchDto, pageable));
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }

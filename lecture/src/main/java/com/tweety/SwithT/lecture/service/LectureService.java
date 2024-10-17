@@ -12,6 +12,7 @@ import com.tweety.SwithT.common.service.S3Service;
 import com.tweety.SwithT.lecture.domain.GroupTime;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
+import com.tweety.SwithT.lecture.domain.LectureType;
 import com.tweety.SwithT.lecture.dto.*;
 import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
@@ -47,9 +48,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class LectureService {
-
     private final LectureRepository lectureRepository;
     private final LectureGroupRepository lectureGroupRepository;
+    private final LectureChatRoomRepository lectureChatRoomRepository;
     private final GroupTimeRepository groupTimeRepository;
     private final LectureApplyRepository lectureApplyRepository;
     private final ObjectMapper objectMapper;
@@ -57,7 +58,7 @@ public class LectureService {
     private final MemberFeign memberFeign;
     private final S3Service s3Service;
     private final OpenSearchService openSearchService;
-    private final LectureChatRoomRepository lectureChatRoomRepository;
+
 
 
     // Create
@@ -124,6 +125,8 @@ public class LectureService {
                             .memberName(detail.getMemberName())
                             .memberId(detail.getMemberId())
                             .image(detail.getImage())
+                            .category(detail.getCategory())
+                            .isContainsFree(isContainsFreeGroup(detail.getId()))
                             .build())
                     .collect(Collectors.toList());
 
@@ -134,6 +137,46 @@ public class LectureService {
             // 예외 발생 시 로그 출력 및 빈 페이지 반환
             throw new IllegalArgumentException(e);
         }
+    }
+
+    public Page<LectureListResDto> showLectureListByCategory(LectureSearchDto searchDto, Pageable pageable) {
+
+        try {
+            // OpenSearch에서 검색 수행
+            List<LectureDetailResDto> searchResults = openSearchService.searchLecturesByCategory(searchDto.getCategory(), pageable);
+//            System.out.println(searchResults.get(0));
+            // 검색 결과를 LectureListResDto로 변환하여 페이지 객체로 반환
+            List<LectureListResDto> lectureList = searchResults.stream()
+//                    여기서 필요한 데이터 조립
+                    .map(detail -> LectureListResDto.builder()
+                            .id(detail.getId())
+                            .title(detail.getTitle())
+                            .memberName(detail.getMemberName())
+                            .memberId(detail.getMemberId())
+                            .image(detail.getImage())
+                            .category(detail.getCategory())
+                            .isContainsFree(isContainsFreeGroup(detail.getId()))
+                            .build())
+                    .collect(Collectors.toList());
+
+            // PageImpl로 페이지네이션 적용하여 반환
+            return new PageImpl<>(lectureList, pageable, searchResults.size());
+
+        } catch (IOException | InterruptedException e) {
+            // 예외 발생 시 로그 출력 및 빈 페이지 반환
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+//    그룹 중 하나라도 무료이면 재능 기부로 침.
+    private Boolean isContainsFreeGroup(Long lectureId){
+        List<LectureGroup> lectureGroups = lectureGroupRepository.findByLectureId(lectureId);
+        for(LectureGroup lectureGroup: lectureGroups){
+            if(lectureGroup.getPrice().equals(0)){
+                return true;
+            }
+        }
+        return false;
     }
 
     // Update: limitPeople=0
@@ -194,16 +237,16 @@ public class LectureService {
                 predicates.add(criteriaBuilder.equal(root.get("memberId"), memberId));
                 predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
 
-                if(searchDto.getSearchTitle() != null){
+                if(searchDto.getSearchTitle() != null && !searchDto.getSearchTitle().isEmpty()){
                     predicates.add(criteriaBuilder.like(root.get("title"), "%"+searchDto.getSearchTitle()+"%"));
                 }
-                if(searchDto.getCategory() != null){
+                if(searchDto.getCategory() != null && !searchDto.getCategory().isEmpty()){
                     predicates.add(criteriaBuilder.like(root.get("category"), "%" + searchDto.getCategory() + "%"));
                 }
-                if (searchDto.getLectureType() != null) {
-                    predicates.add(criteriaBuilder.like(root.get("lectureType"), "%" + searchDto.getLectureType() + "%"));
+                if (searchDto.getLectureType() != null && !searchDto.getLectureType().isEmpty()) {
+                    predicates.add(criteriaBuilder.equal(root.get("lectureType"), searchDto.getLectureType().equals("LESSON")? LectureType.LESSON:LectureType.LECTURE));
                 }
-                if (searchDto.getStatus() != null) {
+                if (searchDto.getStatus() != null && !searchDto.getStatus().isEmpty()) {
                     predicates.add(criteriaBuilder.like(root.get("status"), "%" + searchDto.getStatus() + "%"));
                 }
 
@@ -274,9 +317,21 @@ public class LectureService {
                 groupTitle.setLength(groupTitle.length() - 5);
             }
 
+            String memberName = null;
+            if(isAvailable.equals("N") && a.getLimitPeople()==1){
+                //진행중인 과외인 경우
+                if(!lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(a, Status.ADMIT, "N").isEmpty()){
+                    LectureApply lectureApply = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(a, Status.ADMIT, "N").get(0);
+                    memberName = lectureApply.getMemberName();
+                }
+
+
+            }
+
             return LectureGroupListResDto.builder()
                     .title(groupTitle.toString())
                     .lectureGroupId(a.getId())
+                    .memberName(memberName)
                     .build();
         });
 
@@ -530,6 +585,7 @@ public class LectureService {
         dto.setMemberId(lecture.getMemberId());
         dto.setMemberName(lecture.getMemberName());
         dto.setCategory(lecture.getCategory());
+        dto.setLectureType(lecture.getLectureType());
 
         // 단체 채팅방
         List<LectureChatRoom> lectureChatRoomList = lectureChatRoomRepository.findByLectureGroupAndDelYn(lectureGroup,"N");

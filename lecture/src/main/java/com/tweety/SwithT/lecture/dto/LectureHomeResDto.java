@@ -2,6 +2,7 @@ package com.tweety.SwithT.lecture.dto;
 
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.lecture.domain.Category;
+import com.tweety.SwithT.lecture.domain.LectureType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,6 +26,7 @@ public class LectureHomeResDto {
     private Long memberId;
     private String memberName;
     private Category category;
+    private LectureType lectureType;
     
     // 강의 그룹 정보
     private Long groupId;

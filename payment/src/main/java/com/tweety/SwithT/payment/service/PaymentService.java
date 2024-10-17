@@ -34,7 +34,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -82,6 +81,12 @@ public class PaymentService {
             throw new IllegalArgumentException("결제가 완료되지 않았습니다.");
         }
 
+        int remaining = lectureFeign.getRemaining(lecturePayResDto.getId());
+        if(remaining <= 0){
+            System.out.println("case 5");
+            throw new IllegalArgumentException("제한 인원 초과입니다.");
+        }
+
         // 결제 금액 검증
         long paidAmount = payment.getAmount().longValue();
         long lecturePrice = lecturePayResDto.getPrice();
@@ -119,7 +124,16 @@ public class PaymentService {
                 .build();
 
         paymentRepository.save(payments);
+        Long memberId = lectureFeign.getTuteeId(lecturePayResDto.getId());
 
+        Balance balance = Balance.builder()
+                .cost(lecturePrice)
+                .memberId(memberId)
+                .status(Status.STANDBY)
+                .balancedTime(LocalDateTime.now())
+                .build();
+
+        balanceRepository.save(balance);
         return payment.getStatus();
     }
 
@@ -172,10 +186,10 @@ public class PaymentService {
     @Scheduled(cron = "0 0 0 * * *") // 매일 00시에
     public void balanceScheduler() {
         List<Balance> balanceList = balanceRepository.findByStatus(Status.STANDBY);
-        LocalDate today = LocalDate.now();
+        LocalDateTime today = LocalDateTime.now();
 
         for (Balance balance : balanceList) {
-            LocalDate balancedDate = balance.getBalancedTime().plusDays(7);
+            LocalDateTime balancedDate = balance.getBalancedTime().plusDays(7);
 
             if (today.isAfter(balancedDate)) {
                 balance.changeStatus();

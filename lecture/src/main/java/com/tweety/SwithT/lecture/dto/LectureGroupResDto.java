@@ -23,3 +23,4 @@ public class LectureGroupResDto {
     private int remaining;
     private List<LectureApply> lectureApplies;
 }
+

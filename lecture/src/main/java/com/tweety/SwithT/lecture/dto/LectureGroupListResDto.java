@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class LectureGroupListResDto {
     private String title;
     private Long lectureGroupId;
+    private String memberName;
 }

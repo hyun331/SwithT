@@ -12,5 +12,5 @@ public interface SchedulerAlertRepository extends JpaRepository<ScheduleAlert, L
 
     // 현재 시간과 예약 시간 사이의 알림들 가져오기
     List<ScheduleAlert> findByReserveTimeBetween(LocalTime start, LocalTime end);
-
+    ScheduleAlert findBySchedulerId(Long id);
 }
