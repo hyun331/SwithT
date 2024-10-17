@@ -38,6 +38,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -571,6 +573,7 @@ public class LectureService {
 //                .latitude(lectureGroup.getLatitude())
 //                .longitude(lectureGroup.getLongitude())
                 .startDate(lectureGroup.getStartDate())
+                .endDate(lectureGroup.getEndDate())
                 .build();
         // 강의 그룹의 강의 id -> 강의 정보 불러오기
         Lecture lecture = lectureRepository.findById(lectureGroup.getLecture().getId()).orElseThrow(()->new EntityNotFoundException("해당 강의 및 과외가 없습니다."));
@@ -589,6 +592,10 @@ public class LectureService {
         dto.setChatRoomId(lectureChatRoomList.get(0).getId());
         // 강의 그룹 시간 list
         List<GroupTimeResDto> groupTimeResDtos = new ArrayList<>();
+        int totalDayCount=0;
+        int pastDayCount=0;
+        LocalDate today = LocalDate.now();
+
         for(GroupTime groupTime: lectureGroup.getGroupTimes()){
             GroupTimeResDto groupTimeResDto = GroupTimeResDto.builder()
                     .memberId(lecture.getMemberId())
@@ -604,11 +611,34 @@ public class LectureService {
                     .alertYn('N') // 기본값 'N'
                     .build();
             groupTimeResDtos.add(groupTimeResDto);
+
+            // 요일 수업 개수 계산 (모든 GroupTime의 요일을 합산)
+            totalDayCount += countDaysBetweenDates(lectureGroup.getStartDate(), lectureGroup.getEndDate(), groupTime.getLectureDay());
+
+            // 현재 날짜까지의 수업 개수 계산
+            pastDayCount += countDaysBetweenDates(lectureGroup.getStartDate(), today, groupTime.getLectureDay());
         }
+        dto.setTotalDayCount(totalDayCount);
+        dto.setPastDayCount(pastDayCount);
         dto.setLectureGroupTimes(groupTimeResDtos);
         return dto;
     }
+    public int countDaysBetweenDates(LocalDate startDate, LocalDate endDate, LectureDay lectureDay) {
+        DayOfWeek targetDayOfWeek = DayOfWeek.valueOf(lectureDay.name());
 
+        int count = 0;
+        LocalDate date = startDate;
+
+        // 시작일부터 종료일까지 날짜 순회
+        while (!date.isAfter(endDate)) {
+            if (date.getDayOfWeek() == targetDayOfWeek) {
+                count++;
+            }
+            date = date.plusDays(1);
+        }
+
+        return count;
+    }
 
     public LectureTitleAndImageResDto getTitleAndThumbnail(Long id){
         Lecture lecture = lectureRepository.findById(id)
@@ -635,8 +665,7 @@ public class LectureService {
         return LectureGroupResDto.builder()
                 .title(lectureGroup.getLecture().getTitle())
                 .image(lectureGroup.getLecture().getImage())
-//                .longitude(lectureGroup.getLongitude())
-//                .latitude(lectureGroup.getLatitude())
+                .address(lectureGroup.getAddress())
                 .times(timeResDtos)
                 .remaining(lectureGroup.getRemaining())
                 .tutorName(lectureGroup.getLecture().getMemberName())
