@@ -9,10 +9,7 @@ import com.tweety.SwithT.common.dto.MemberScoreResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.common.service.OpenSearchService;
 import com.tweety.SwithT.common.service.S3Service;
-import com.tweety.SwithT.lecture.domain.GroupTime;
-import com.tweety.SwithT.lecture.domain.Lecture;
-import com.tweety.SwithT.lecture.domain.LectureGroup;
-import com.tweety.SwithT.lecture.domain.LectureType;
+import com.tweety.SwithT.lecture.domain.*;
 import com.tweety.SwithT.lecture.dto.*;
 import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
@@ -308,7 +305,7 @@ public class LectureService {
             List<GroupTime> groupTimeList = groupTimeRepository.findByLectureGroupId(a.getId());
             StringBuilder groupTitle = new StringBuilder();
             for(GroupTime groupTime : groupTimeList){
-                groupTitle.append(groupTime.getLectureDay()+" "+groupTime.getStartTime()+"-"+groupTime.getEndTime()+"  /  ");
+                groupTitle.append(changeLectureDayKorean(groupTime.getLectureDay())+" "+groupTime.getStartTime()+"~"+groupTime.getEndTime()+"  /  ");
             }
 
             if (groupTitle.length() > 0) {
@@ -322,9 +319,9 @@ public class LectureService {
                     LectureApply lectureApply = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(a, Status.ADMIT, "N").get(0);
                     memberName = lectureApply.getMemberName();
                 }
-
-
             }
+
+
 
             return LectureGroupListResDto.builder()
                     .title(groupTitle.toString())
@@ -683,6 +680,18 @@ public class LectureService {
         }
 
         return lectureGroupsResDtos;
+    }
+
+    public String changeLectureDayKorean(LectureDay lectureDay){
+        return switch (lectureDay) {
+            case MONDAY -> "월";
+            case TUESDAY -> "화";
+            case WEDNESDAY -> "수";
+            case THURSDAY -> "목";
+            case FRIDAY -> "금";
+            case SATURDAY -> "토";
+            case SUNDAY -> "일";
+        };
     }
 
 }

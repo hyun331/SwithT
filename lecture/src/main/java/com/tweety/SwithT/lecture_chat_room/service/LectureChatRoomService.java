@@ -106,6 +106,7 @@ public class LectureChatRoomService {
 
     }
 
+    // 튜터가 채팅하기 클릭 (과외)
     @Transactional
     public ChatRoomResDto tutorLessonChatCheckOrCreate(ChatRoomCheckDto dto) {
         LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(dto.getLectureGroupId(), "N").orElseThrow(()->{
@@ -150,6 +151,7 @@ public class LectureChatRoomService {
                 .build();
     }
 
+    //튜터가 강의 채팅방 있는지 확인하기
     public ChatRoomResDto tutorLectureChatCheck(Long lectureGroupId) {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
         LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(lectureGroupId, "N").orElseThrow(()->{
@@ -172,8 +174,6 @@ public class LectureChatRoomService {
 
     //채팅방 입장
     public void chatRoomEntered(String roomId) {
-//        final String msg = "누군가님이 입장하셨습니다.";
-//        kafkaTemplate.send("chat-"+roomId, msg);
         System.out.println(roomId + "방에 입장했습니다.");
     }
 
@@ -189,19 +189,10 @@ public class LectureChatRoomService {
                 .memberName(memberName)
                 .build();
         try{
-            ObjectMapper objectMapper = new ObjectMapper();
-
-            String messagePayload = objectMapper.writeValueAsString(sendMessageDto);
-            kafkaTemplate.send("chat-" + roomId, messagePayload);
-        }catch (JsonProcessingException e){
+            kafkaTemplate.send("chat-topic", roomId, sendMessageDto);
+        }catch (Exception e){
             e.printStackTrace();
         }
-
-
-//        CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        MemberNameResDto memberNameResDto = objectMapper.convertValue(commonResDto.getResult(), MemberNameResDto.class);
-//        String memberName = memberNameResDto.getName();
 
         LectureChatRoom lectureChatRoom = chatRoomRepository.findById(Long.parseLong(roomId)).orElseThrow(()->{
             throw new EntityNotFoundException("채팅방이 존재하지 않습니다.");
@@ -213,25 +204,14 @@ public class LectureChatRoomService {
                 .contents(message)
                 .build();
         lectureChatLogsRepository.save(chatLogs);
-
-
-
     }
 
-    @KafkaListener(topicPattern = "chat-.*", groupId = "lecture-group", containerFactory = "kafkaListenerContainerFactory")
-    public void consumerChat(@Payload String messagePayload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        System.out.println("messagePayload "+messagePayload);
-
+    @KafkaListener(topics = "chat-topic", groupId = "lecture-group", containerFactory = "kafkaListenerContainerFactory")
+    public void consumerChat(@Header(KafkaHeaders.RECEIVED_KEY) String chatRoomId, @Payload String msg) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            messagePayload = messagePayload.replace("\\\"", "\"").replace("\"{", "{").replace("}\"", "}");
-
-
-            SendMessageDto sendMessageDto = objectMapper.readValue(messagePayload, SendMessageDto.class);
-
-            String chatRoomId = topic.split("-")[1];
-            System.out.println("Received message for room " + chatRoomId + ": " + sendMessageDto.getMessage());
-
+            SendMessageDto sendMessageDto = objectMapper.readValue(msg, SendMessageDto.class);
+//            System.out.println("Received message for room " + chatRoomId + ": " + sendMessageDto.getMessage());
             template.convertAndSend("/topic/chat-" + chatRoomId, sendMessageDto);
         } catch (Exception e) {
             System.out.println("카프카 리스너 에러!!!!!"+e.getMessage()+"\n\n\n\n\n\n\n\n\n\n\n");
@@ -239,8 +219,9 @@ public class LectureChatRoomService {
         }
     }
 
+
     //내 채팅방 리스트
-    public Page<MyChatRoomListResDto> myChatRoomList(Pageable pageable, String chatRoomId) {
+    public List<MyChatRoomListResDto> myChatRoomList(String chatRoomId) {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
 
         List<LectureChatParticipants> lectureChatParticipantsList = new ArrayList<>();
@@ -251,7 +232,6 @@ public class LectureChatRoomService {
                 throw new EntityNotFoundException("채팅방이 존재하지 않습니다.");
             });
             lectureChatParticipantsList.add(selectedChatRoom);
-
         }
 
         if(!lectureChatParticipantsList.isEmpty()){
@@ -281,9 +261,7 @@ public class LectureChatRoomService {
             return a.fromEntityToMyChatRoomListResDto(memberName);
         }).toList();
 
-        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-        int start = (int) pageRequest.getOffset();
-        int end = Math.min((start + pageRequest.getPageSize()), myChatRoomListResDtoList.size());
-        return new PageImpl<>(myChatRoomListResDtoList.subList(start, end), pageRequest, myChatRoomListResDtoList.size());
+
+        return myChatRoomListResDtoList;
     }
 }
