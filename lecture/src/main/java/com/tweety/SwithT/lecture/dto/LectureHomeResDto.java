@@ -32,9 +32,10 @@ public class LectureHomeResDto {
     private Long groupId;
     private Integer limitPeople;
 
-    private String latitude;
+    private String address;
+//    private String latitude;
 
-    private String longitude;
+//    private String longitude;
 
     private LocalDate startDate;
 
