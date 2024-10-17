@@ -194,4 +194,11 @@ public class LectureController {
             return ResponseEntity.status(500).build();
         }
     }
+
+    @GetMapping("/lecture-group-info/{id}")
+    public ResponseEntity<?> getLectureGroupInfo(@PathVariable Long id){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "해당 강의의 강의 그룹들 정보", lectureService.getLectureGroupsInfo(id));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
 }

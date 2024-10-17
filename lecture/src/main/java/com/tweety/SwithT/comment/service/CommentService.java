@@ -18,7 +18,9 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -55,7 +57,12 @@ public class CommentService {
 
     // 댓글 목록 조회
     public Page<CommentListResDto> commentList(Long id, Pageable pageable){
-        Page<Comment> comments = commentRepository.findAllByBoardId(id,pageable);
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "createdTime")
+        );
+        Page<Comment> comments = commentRepository.findByBoardIdAndDelYn(id,"N",sortedPageable);
         return comments.map(CommentListResDto::fromEntity);
     }
 

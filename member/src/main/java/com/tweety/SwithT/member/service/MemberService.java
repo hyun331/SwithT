@@ -104,6 +104,12 @@ public class MemberService {
         return member.infoFromEntity();
     }
 
+    // 공용 정보 조회
+    public MemberInfoResDto publicInfoGet(Long id){
+        Member member = memberRepository.findById(Long.valueOf(id)).orElseThrow(EntityNotFoundException::new);
+        return member.infoFromEntity();
+    }
+
     public Member infoUpdate(MemberUpdateDto memberUpdateDto){
         String id = tokenCheck();
         Member member = memberRepository.findById(Long.valueOf(id))
@@ -195,5 +201,16 @@ public class MemberService {
     private CommonResDto getLectureInfo(Long lecturePayId) {
 
         return lectureFeign.getLectureById(lecturePayId);
+    }
+
+    //회원 별점 가져오는 메서드(feignClient에서 사용)
+    public MemberScoreResDto memberScoreGet(Long id) {
+        Member member = memberRepository.findById(id).orElseThrow(()->{
+            throw new EntityExistsException("존재하지 않는 회원입니다.");
+        });
+
+        return MemberScoreResDto.builder()
+                .avgScore(member.getAvgScore())
+                .build();
     }
 }

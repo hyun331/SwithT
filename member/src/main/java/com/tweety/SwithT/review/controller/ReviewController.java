@@ -48,30 +48,59 @@ public class ReviewController {
 
     }
 
-    //리뷰 리스트 조회 ( 최신순,오래된순,별점높은순,별점낮은순) , postman에서 param에 값 넣어야함
+    // 리뷰 리스트 조회 ( 최신순, 오래된순, 별점높은순, 별점낮은순 )
+// 특정 tutorId에 해당하는 리뷰만 조회
     @GetMapping("/review/list")
     public ResponseEntity<?> getReviews(
             @PageableDefault(size = 5) Pageable pageable,
+            @RequestParam Long tutorId, // tutorId를 추가로 받음
             @RequestParam(required = false, defaultValue = "createdTime") String sortBy,
             @RequestParam(required = false, defaultValue = "DESC") String order) {
-        
+
         Sort sort;
         if (sortBy.equals("star")) {
             sort = order.equalsIgnoreCase("ASC") ? Sort.by("star").ascending() : Sort.by("star").descending();
         } else if (sortBy.equals("createdTime")) {
             sort = order.equalsIgnoreCase("ASC") ? Sort.by("createdTime").ascending() : Sort.by("createdTime").descending();
         } else {
-            // 기본 정렬은 createdTime DESC , Params 값 null인 경우
+            // 기본 정렬은 createdTime DESC, Params 값 null인 경우
             sort = Sort.by("createdTime").descending();
         }
 
         // pageable에 정렬 추가
         pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
-        Page<ReviewListResDto> reviewListResDtos = reviewService.getReviews(pageable);
+        // tutorId로 필터링하여 리뷰 조회
+        Page<ReviewListResDto> reviewListResDtos = reviewService.getReviewsByTutorId(tutorId, pageable);
+
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "리뷰 리스트 조회 성공", reviewListResDtos);
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
+
+//    //리뷰 리스트 조회 ( 최신순,오래된순,별점높은순,별점낮은순) , postman에서 param에 값 넣어야함
+//    @GetMapping("/review/list")
+//    public ResponseEntity<?> getReviews(
+//            @PageableDefault(size = 5) Pageable pageable,
+//            @RequestParam(required = false, defaultValue = "createdTime") String sortBy,
+//            @RequestParam(required = false, defaultValue = "DESC") String order) {
+//
+//        Sort sort;
+//        if (sortBy.equals("star")) {
+//            sort = order.equalsIgnoreCase("ASC") ? Sort.by("star").ascending() : Sort.by("star").descending();
+//        } else if (sortBy.equals("createdTime")) {
+//            sort = order.equalsIgnoreCase("ASC") ? Sort.by("createdTime").ascending() : Sort.by("createdTime").descending();
+//        } else {
+//            // 기본 정렬은 createdTime DESC , Params 값 null인 경우
+//            sort = Sort.by("createdTime").descending();
+//        }
+//
+//        // pageable에 정렬 추가
+//        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+//
+//        Page<ReviewListResDto> reviewListResDtos = reviewService.getReviews(pageable);
+//        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "리뷰 리스트 조회 성공", reviewListResDtos);
+//        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+//    }
 
 
 }

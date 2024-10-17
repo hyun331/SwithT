@@ -87,6 +87,13 @@ public class MemberController {
             return new ResponseEntity<>(new CommonResDto(HttpStatus.OK, "내 정보 조회 성공", memberInfoResDto), HttpStatus.OK);
     }
 
+    // 공용으로 써야할 회원 정보 조회
+    @GetMapping("/public-infoGet/{id}")
+    public ResponseEntity<?> publicinfoGet(@PathVariable("id")Long id) {
+        MemberInfoResDto memberInfoResDto = memberService.publicInfoGet(id);
+        return new ResponseEntity<>(new CommonResDto(HttpStatus.OK, "공용 정보 조회 성공", memberInfoResDto), HttpStatus.OK);
+    }
+
     // 회원 정보 수정 ( 사진 제외 )
     @PostMapping("/infoUpdate")
     public ResponseEntity<CommonResDto> infoUpdate(@RequestBody MemberUpdateDto dto) {
@@ -174,5 +181,12 @@ public class MemberController {
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "각 튜티의 프로필 이미지", memberService.memberProfileGet(id));
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
+
+    @GetMapping(value = "/member-score-get/{id}")
+    public ResponseEntity<?> getMemberScoreById(@PathVariable("id") Long id){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "각 튜터의 평점", memberService.memberScoreGet(id));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
 
 }

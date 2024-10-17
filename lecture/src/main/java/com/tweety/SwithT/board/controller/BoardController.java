@@ -33,8 +33,8 @@ public class BoardController {
 
     // 게시글 목록 조회 - Todo :공지사항인 것만 또는 전체
     @GetMapping("/lecture/{lectureGroupId}/board/list")
-    public ResponseEntity<CommonResDto> boardList(@PathVariable("lectureGroupId") Long lectureGroupId, @PageableDefault(size = 5)Pageable pageable){
-        Page<BoardListResDto> boardList = boardService.boardList(lectureGroupId,pageable);
+    public ResponseEntity<CommonResDto> boardList(@PathVariable("lectureGroupId") Long lectureGroupId, @PageableDefault(size = 5)Pageable pageable, @RequestParam(required = false, name = "type")String type){
+        Page<BoardListResDto> boardList = boardService.boardList(lectureGroupId,pageable,type);
 
         return new ResponseEntity<>(new CommonResDto(HttpStatus.OK,"게시글 목록 조회입니다.",boardList),HttpStatus.OK);
     }

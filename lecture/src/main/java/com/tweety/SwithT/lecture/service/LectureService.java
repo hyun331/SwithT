@@ -5,12 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.dto.MemberNameResDto;
+import com.tweety.SwithT.common.dto.MemberScoreResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.common.service.OpenSearchService;
 import com.tweety.SwithT.common.service.S3Service;
 import com.tweety.SwithT.lecture.domain.GroupTime;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
+import com.tweety.SwithT.lecture.domain.LectureType;
 import com.tweety.SwithT.lecture.dto.*;
 import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
@@ -38,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,6 +50,7 @@ import java.util.stream.Collectors;
 public class LectureService {
     private final LectureRepository lectureRepository;
     private final LectureGroupRepository lectureGroupRepository;
+    private final LectureChatRoomRepository lectureChatRoomRepository;
     private final GroupTimeRepository groupTimeRepository;
     private final LectureApplyRepository lectureApplyRepository;
     private final ObjectMapper objectMapper;
@@ -54,7 +58,7 @@ public class LectureService {
     private final MemberFeign memberFeign;
     private final S3Service s3Service;
     private final OpenSearchService openSearchService;
-    private final LectureChatRoomRepository lectureChatRoomRepository;
+
 
 
     // Create
@@ -86,7 +90,7 @@ public class LectureService {
 
         // OpenSearch에 데이터 동기화
         try {
-            openSearchService.registerLecture(createdLecture.fromEntityToLectureDetailResDto());
+            openSearchService.registerLecture(createdLecture.fromEntityToLectureResDto());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -107,7 +111,7 @@ public class LectureService {
 
     public Page<LectureListResDto> showLectureListInOpenSearch(LectureSearchDto searchDto, Pageable pageable) {
         String keyword = searchDto.getSearchTitle(); // 검색 제목
-        System.out.println(keyword);
+
         try {
             if(!searchDto.getCategory().isEmpty()){
                 // OpenSearch에서 검색 수행
@@ -156,7 +160,7 @@ public class LectureService {
         }
     }
 
-    //    그룹 중 하나라도 무료이면 재능 기부로 침.
+//    그룹 중 하나라도 무료이면 재능 기부로 침.
     private Boolean isContainsFreeGroup(Long lectureId){
         List<LectureGroup> lectureGroups = lectureGroupRepository.findByLectureId(lectureId);
         for(LectureGroup lectureGroup: lectureGroups){
@@ -231,16 +235,16 @@ public class LectureService {
                 predicates.add(criteriaBuilder.equal(root.get("memberId"), memberId));
                 predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
 
-                if(searchDto.getSearchTitle() != null){
+                if(searchDto.getSearchTitle() != null && !searchDto.getSearchTitle().isEmpty()){
                     predicates.add(criteriaBuilder.like(root.get("title"), "%"+searchDto.getSearchTitle()+"%"));
                 }
-                if(searchDto.getCategory() != null){
+                if(searchDto.getCategory() != null && !searchDto.getCategory().isEmpty()){
                     predicates.add(criteriaBuilder.like(root.get("category"), "%" + searchDto.getCategory() + "%"));
                 }
-                if (searchDto.getLectureType() != null) {
-                    predicates.add(criteriaBuilder.like(root.get("lectureType"), "%" + searchDto.getLectureType() + "%"));
+                if (searchDto.getLectureType() != null && !searchDto.getLectureType().isEmpty()) {
+                    predicates.add(criteriaBuilder.equal(root.get("lectureType"), searchDto.getLectureType().equals("LESSON")? LectureType.LESSON:LectureType.LECTURE));
                 }
-                if (searchDto.getStatus() != null) {
+                if (searchDto.getStatus() != null && !searchDto.getStatus().isEmpty()) {
                     predicates.add(criteriaBuilder.like(root.get("status"), "%" + searchDto.getStatus() + "%"));
                 }
 
@@ -261,7 +265,13 @@ public class LectureService {
         Lecture lecture = lectureRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{
             throw new EntityNotFoundException("해당 id에 맞는 강의가 존재하지 않습니다.");
         });
-        return lecture.fromEntityToLectureDetailResDto();
+
+        CommonResDto commonResDto = memberFeign.getMemberScoreById(lecture.getMemberId());
+        ObjectMapper objectMapper = new ObjectMapper();
+        MemberScoreResDto memberScoreResDto = objectMapper.convertValue(commonResDto.getResult(), MemberScoreResDto.class);
+        BigDecimal avgScore = memberScoreResDto.getAvgScore();
+
+        return lecture.fromEntityToLectureDetailResDto(avgScore);
     }
 
     //강의 그룹 및 그룹 시간 조회
@@ -292,6 +302,7 @@ public class LectureService {
                 return criteriaBuilder.and(predicateArr);
             }
         };
+
         Page<LectureGroup> lectureGroups = lectureGroupRepository.findAll(specification, pageable);
         Page<LectureGroupListResDto> lectureGroupResDtos = lectureGroups.map((a)->{
             List<GroupTime> groupTimeList = groupTimeRepository.findByLectureGroupId(a.getId());
@@ -304,9 +315,21 @@ public class LectureService {
                 groupTitle.setLength(groupTitle.length() - 5);
             }
 
+            String memberName = null;
+            if(isAvailable.equals("N") && a.getLimitPeople()==1){
+                //진행중인 과외인 경우
+                if(!lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(a, Status.ADMIT, "N").isEmpty()){
+                    LectureApply lectureApply = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(a, Status.ADMIT, "N").get(0);
+                    memberName = lectureApply.getMemberName();
+                }
+
+
+            }
+
             return LectureGroupListResDto.builder()
                     .title(groupTitle.toString())
                     .lectureGroupId(a.getId())
+                    .memberName(memberName)
                     .build();
         });
 
@@ -334,12 +357,12 @@ public class LectureService {
 
         // OpenSearch에 데이터 동기화
         try {
-            openSearchService.registerLecture(lecture.fromEntityToLectureDetailResDto());
+            openSearchService.registerLecture(lecture.fromEntityToLectureResDto());
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return lecture.fromEntityToLectureDetailResDto();
+        return lecture.fromEntityToLectureResDto();
     }
 
     // 강의 삭제
@@ -393,8 +416,8 @@ public class LectureService {
         if (dto.getLimitPeople() != null) {
             lectureGroup.updateLimitPeople(dto.getLimitPeople());
         }
-        if (dto.getLatitude() != null && dto.getLongitude() != null) {
-            lectureGroup.updatePoint(dto.getLatitude(), dto.getLongitude());
+        if (dto.getAddress() != null) {
+            lectureGroup.updateAddress(dto.getAddress());
         }
         if (dto.getStartDate() != null && dto.getEndDate() != null) {
             lectureGroup.updateDate(dto.getStartDate(), dto.getEndDate());
@@ -547,8 +570,9 @@ public class LectureService {
         LectureHomeResDto dto = LectureHomeResDto.builder()
                 .groupId(lectureGroup.getId())
                 .limitPeople(lectureGroup.getLimitPeople())
-                .latitude(lectureGroup.getLatitude())
-                .longitude(lectureGroup.getLongitude())
+                .address(lectureGroup.getAddress())
+//                .latitude(lectureGroup.getLatitude())
+//                .longitude(lectureGroup.getLongitude())
                 .startDate(lectureGroup.getStartDate())
                 .build();
         // 강의 그룹의 강의 id -> 강의 정보 불러오기
@@ -560,6 +584,7 @@ public class LectureService {
         dto.setMemberId(lecture.getMemberId());
         dto.setMemberName(lecture.getMemberName());
         dto.setCategory(lecture.getCategory());
+        dto.setLectureType(lecture.getLectureType());
 
         // 단체 채팅방
         List<LectureChatRoom> lectureChatRoomList = lectureChatRoomRepository.findByLectureGroupAndDelYn(lectureGroup,"N");
@@ -613,13 +638,51 @@ public class LectureService {
         return LectureGroupResDto.builder()
                 .title(lectureGroup.getLecture().getTitle())
                 .image(lectureGroup.getLecture().getImage())
-                .longitude(lectureGroup.getLongitude())
-                .latitude(lectureGroup.getLatitude())
+//                .longitude(lectureGroup.getLongitude())
+//                .latitude(lectureGroup.getLatitude())
                 .times(timeResDtos)
                 .remaining(lectureGroup.getRemaining())
                 .tutorName(lectureGroup.getLecture().getMemberName())
                 .category(lectureGroup.getLecture().getCategory().name())
                 .build();
+    }
+
+
+    // 해당 강의의 강의 그룹들 정보 조회
+    public List<LectureGroupsResDto> getLectureGroupsInfo(Long lectureId){
+        Lecture lecture = lectureRepository.findById(lectureId).orElseThrow(
+                () -> new EntityNotFoundException("강의 정보 가져오기 실패"));
+
+        List<LectureGroup> lectureGroups = lectureGroupRepository.findByLectureId(lectureId);
+        List<LectureGroupsResDto> lectureGroupsResDtos = new ArrayList<>();
+
+        for (LectureGroup lectureGroup : lectureGroups) {
+            List<GroupTimesResDto> groupTimesResDtos = new ArrayList<>();
+           for (GroupTime groupTime : lectureGroup.getGroupTimes()) {
+               groupTimesResDtos.add(
+                       GroupTimesResDto.builder()
+                               .groupTimeId(groupTime.getId())
+                               .lectureDay(groupTime.getLectureDay())
+                               .startTime(groupTime.getStartTime())
+                               .endTime(groupTime.getEndTime())
+                               .build()
+               );
+           }
+            LectureGroupsResDto dto = LectureGroupsResDto.builder()
+                    .lectureGroupId(lectureGroup.getId())
+                    .groupTimes(groupTimesResDtos)
+                    .isAvailable(lectureGroup.getIsAvailable())
+                    .remaining(lectureGroup.getRemaining())
+                    .price(lectureGroup.getPrice())
+//                    .address(lectureGroup.getAddress)
+                    .startDate(lectureGroup.getStartDate())
+                    .endDate(lectureGroup.getEndDate())
+                    .build();
+
+            lectureGroupsResDtos.add(dto);
+        }
+
+        return lectureGroupsResDtos;
     }
 
 }

@@ -25,6 +25,7 @@ public class InitialDataLoader implements CommandLineRunner {
 		if (memberRepository.findByEmail("admin@gmail.com").isEmpty()) {
 			Member admin = Member.builder()
 					.email("admin@gmail.com")
+					.profileImage("https://minseong-file.s3.ap-northeast-2.amazonaws.com/member/%EC%9D%B4%EC%9E%AC%EC%9A%A9+%EC%82%AC%EC%A7%84.webp")
 					.password(passwordEncoder.encode("12341234")) // 비밀번호 인코딩
 					.name("AdminUser")
 					.birthday(LocalDate.now())

@@ -19,4 +19,6 @@ public interface LectureGroupRepository extends JpaRepository<LectureGroup, Long
     Page<LectureGroup> findAll(Specification<LectureGroup> specification, Pageable pageable);
 
     Optional<LectureGroup> findByIdAndDelYn(Long lectureGroupId, String delYn);
+
+
 }
