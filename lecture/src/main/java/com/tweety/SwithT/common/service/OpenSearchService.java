@@ -134,6 +134,7 @@ public class OpenSearchService {
         // S3에서 인덱스 설정 파일 다운로드
         String key = "lecture-service/lecture-index.json";
         String indexMapping = downloadIndexConfigFromS3(bucketName, key);
+        System.out.println("다운로드된 인덱스 매핑 설정: " + indexMapping);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(endpoint))
@@ -403,6 +404,76 @@ public class OpenSearchService {
         System.out.println("Total Hits: " + totalHits);
 
         return lectureList;
+    }
+
+    public List<String> getSuggestions(String keyword) throws IOException, InterruptedException {
+        String endpoint = openSearchUrl + "/lecture-service/_search";
+
+        // 검색된 횟수를 기준으로 정렬하고 상위 10개의 검색어만 반환하는 쿼리
+        String requestBody = String.format("""
+        {
+                 "query": {
+                     "bool": {
+                         "should": [
+                             {
+                                 "wildcard": {
+                                     "title": {
+                                         "value": "*%s*"
+                                     }
+                                 }
+                             },
+                             {
+                                 "wildcard": {
+                                     "contents": {
+                                         "value": "*%s*"
+                                     }
+                                 }
+                             },
+                             {
+                                 "wildcard": {
+                                     "memberName": {
+                                         "value": "*%s*"
+                                     }
+                                 }
+                             }
+                         ]
+                     }
+                 },
+                 "sort": [
+                     { "search_count": { "order": "desc" } }
+                 ],
+                 "size": 10
+             }
+        """, keyword, keyword, keyword);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(endpoint))
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes()))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() == 200) {
+            return parseSuggestions(response.body());
+        } else {
+            throw new IOException("추천 검색 요청 실패: " + response.body());
+        }
+    }
+
+    // 응답 파싱 메서드
+    private List<String> parseSuggestions(String responseBody) throws IOException {
+        List<String> suggestions = new ArrayList<>();
+        JsonNode jsonNode = objectMapper.readTree(responseBody);
+        JsonNode hits = jsonNode.path("hits").path("hits");
+
+        for (JsonNode hit : hits) {
+            String suggestion = hit.path("_source").path("title").asText();  // 제목을 추천어로 사용
+            suggestions.add(suggestion);
+        }
+
+        return suggestions;
     }
 
     @PostConstruct

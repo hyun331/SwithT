@@ -18,7 +18,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -178,6 +180,17 @@ public class LectureController {
         } catch (EntityNotFoundException e){
             CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.NOT_FOUND.value(), e.getMessage());
             return new ResponseEntity<>(commonErrorDto, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    // 추천 검색어 API
+    @PostMapping("/lecture/recommend")
+    public ResponseEntity<List<String>> getRecommendedSearch(@RequestParam String keyword) {
+        try {
+            List<String> suggestions = lectureService.getSuggestions(keyword);
+            return ResponseEntity.ok(suggestions);
+        } catch (IOException | InterruptedException e) {
+            return ResponseEntity.status(500).build();
         }
     }
 }

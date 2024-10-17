@@ -11,6 +11,7 @@ import com.tweety.SwithT.common.service.S3Service;
 import com.tweety.SwithT.lecture.domain.GroupTime;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
+import com.tweety.SwithT.lecture.domain.LectureType;
 import com.tweety.SwithT.lecture.dto.*;
 import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
@@ -45,7 +46,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class LectureService {
-
     private final LectureRepository lectureRepository;
     private final LectureGroupRepository lectureGroupRepository;
     private final GroupTimeRepository groupTimeRepository;
@@ -108,11 +108,10 @@ public class LectureService {
 
     public Page<LectureListResDto> showLectureListInOpenSearch(LectureSearchDto searchDto, Pageable pageable) {
         String keyword = searchDto.getSearchTitle(); // 검색 제목
-        System.out.println(keyword);
+
         try {
             if(!searchDto.getCategory().isEmpty()){
                 // OpenSearch에서 검색 수행
-                System.out.println("카테고리 검색");
                 List<LectureDetailResDto> searchResults = openSearchService.searchLecturesByCategory(searchDto.getCategory(), pageable);
 //            System.out.println(searchResults.get(0));
                 // 검색 결과를 LectureListResDto로 변환하여 페이지 객체로 반환
@@ -132,7 +131,6 @@ public class LectureService {
                 // PageImpl로 페이지네이션 적용하여 반환
                 return new PageImpl<>(lectureList, pageable, searchResults.size());
             } else{
-                System.out.println("여기!");
                 List<LectureDetailResDto> searchResults = openSearchService.searchLectures(keyword, pageable, searchDto);
                 // OpenSearch에서 검색 수행
 //            System.out.println(searchResults.get(0));
@@ -169,6 +167,12 @@ public class LectureService {
         }
         return false;
     }
+
+    // 검색어 추천 메서드
+    public List<String> getSuggestions(String keyword) throws IOException, InterruptedException {
+        return openSearchService.getSuggestions(keyword);
+    }
+
 
     // Update: limitPeople=0
 //    public void lectureUpdate(LectureUpdateReqDto lectureUpdateReqDto, List<LectureGroupReqDto> lectureGroupReqDtos){
