@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,21 +47,7 @@ public class Lecture extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private LectureType lectureType;
 
-
-    public LectureListResDto fromEntityToLectureListResDto(){
-        return LectureListResDto.builder()
-                .id(this.id)
-                .title(this.title)
-                .contents(this.contents)
-                .memberName(this.memberName)
-                .memberId(this.memberId)
-                .image(this.image)
-                .createdTime(this.getCreatedTime())
-                .status(this.status)
-                .build();
-    }
-
-    public LectureDetailResDto fromEntityToLectureDetailResDto(){
+    public LectureDetailResDto fromEntityToLectureResDto(){
         return LectureDetailResDto.builder()
                 .id(this.id)
                 .title(this.title)
@@ -70,6 +57,33 @@ public class Lecture extends BaseTimeEntity {
                 .category(this.category)
                 .memberId(this.memberId)
                 .memberName(this.memberName)
+                .lectureType(this.lectureType)
+                .build();
+    }
+
+    public LectureListResDto fromEntityToLectureListResDto(){
+        return LectureListResDto.builder()
+                .id(this.id)
+                .title(this.title)
+                .memberName(this.memberName)
+                .memberId(this.memberId)
+                .image(this.image)
+                .createdTime(this.getCreatedTime())
+                .status(this.status)
+                .build();
+    }
+
+    public LectureDetailResDto fromEntityToLectureDetailResDto(BigDecimal avgScore){
+        return LectureDetailResDto.builder()
+                .id(this.id)
+                .title(this.title)
+                .contents(this.contents)
+                .image(this.image)
+                .status(this.status)
+                .category(this.category)
+                .memberId(this.memberId)
+                .memberName(this.memberName)
+                .avgScore(avgScore)
                 .lectureType(this.lectureType)
                 .build();
     }

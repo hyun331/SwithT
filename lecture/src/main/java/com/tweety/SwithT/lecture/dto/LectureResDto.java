@@ -8,20 +8,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class LectureDetailResDto {
+public class LectureResDto {
     private Long id;
     private String title;
     private String contents;
     private String image;
     private Long memberId;
     private String memberName;
-    private BigDecimal avgScore;
     private Status status;
     private Category category;
     private LectureType lectureType;

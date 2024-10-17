@@ -17,7 +17,6 @@ public class LectureAssignmentListResDto {
     private Long id;
     private String title;
     private LocalDate startDate;
-    private LocalTime startTime;
     private LocalDate endDate;
     private LocalTime endTime;
 
@@ -27,8 +26,7 @@ public class LectureAssignmentListResDto {
         return LectureAssignmentListResDto.builder()
                 .id(lectureAssignment.getId())
                 .title(lectureAssignment.getTitle())
-                .startDate(startDate)
-                .startTime(startTime)
+                .startDate(lectureAssignment.getCreatedTime().toLocalDate())
                 .endDate(lectureAssignment.getEndDate())
                 .endTime(lectureAssignment.getEndTime())
                 .build();

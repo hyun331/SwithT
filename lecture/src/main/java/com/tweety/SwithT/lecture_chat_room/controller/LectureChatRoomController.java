@@ -8,6 +8,8 @@ import com.tweety.SwithT.lecture_chat_room.dto.SendMessageDto;
 import com.tweety.SwithT.lecture_chat_room.service.LectureChatRoomService;
 import jakarta.ws.rs.Path;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -62,15 +64,26 @@ public class LectureChatRoomController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
+    //채팅방 입장
     @MessageMapping("/room/{roomId}/entered")
     public void entered(@DestinationVariable(value = "roomId") String roomId){
         lectureChatRoomService.chatRoomEntered(roomId);
 
     }
 
+    //채팅 전송
     @MessageMapping("/room/{roomId}")
     public void sendMessage(@DestinationVariable(value = "roomId") String roomId, @Payload SendMessageDto chatMessage) {
-        lectureChatRoomService.chatSend(roomId, chatMessage.getMessage(), chatMessage.getMemberId());
+        lectureChatRoomService.chatSend(roomId, chatMessage.getMessage(), chatMessage.getMemberId(), chatMessage.getMemberName());
+    }
+
+    //채팅방 목록
+    @GetMapping("/room/list")
+    public ResponseEntity<?>  myRoomList(@PageableDefault(size = 6, page = 0)Pageable pageable, String chatRoomId){
+        System.out.println("정하님 과외 매칭 성공되면 나머지 채팅방 delYn = Y 해주셨나요?? 집에 가고싶어요");
+
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "나의 채팅방 리스트", lectureChatRoomService.myChatRoomList(pageable, chatRoomId));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
 //    @MessageMapping("/chatroom-connect")

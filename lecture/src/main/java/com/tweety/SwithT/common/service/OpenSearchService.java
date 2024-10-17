@@ -482,7 +482,7 @@ public class OpenSearchService {
         List<Lecture> lectures = lectureRepository.findAll();
         for (Lecture lecture : lectures) {
             try {
-                registerLecture(lecture.fromEntityToLectureDetailResDto());
+                registerLecture(lecture.fromEntityToLectureResDto());
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             }

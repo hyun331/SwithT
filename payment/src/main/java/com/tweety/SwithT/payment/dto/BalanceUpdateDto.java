@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class BalanceUpdateDto {
     private Long memberId;
-    private Integer balance;
+    private Long balance;
 }
