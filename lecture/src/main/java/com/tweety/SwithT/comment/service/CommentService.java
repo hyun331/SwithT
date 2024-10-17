@@ -87,7 +87,7 @@ public class CommentService {
         Long loginMemberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
         if(!comment.getMemberId().equals(loginMemberId)) throw new RuntimeException("해당 댓글을 작성한 회원만 삭제 가능합니다.");
 
-        comment.deleteComment();
+        comment.updateDelYn();
         return CommentDeleteResDto.fromEntity(comment);
     }
 }

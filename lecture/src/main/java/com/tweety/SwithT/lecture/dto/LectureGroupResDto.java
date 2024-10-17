@@ -15,8 +15,7 @@ import java.util.List;
 public class LectureGroupResDto {
     private String title;
     private String image;
-    private String longitude;
-    private String latitude;
+    private String address;
     private List<LectureGroupTimeResDto> times;
     private String tutorName;
     private String category;

@@ -179,14 +179,6 @@ public class LectureService {
         return false;
     }
 
-    // Update: limitPeople=0
-//    public void lectureUpdate(LectureUpdateReqDto lectureUpdateReqDto, List<LectureGroupReqDto> lectureGroupReqDtos){
-//        Long memberId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
-//        if (memberId == )
-//    }
-
-    // Delete: role=TUTOR & limitPeople=0
-
     public Page<LectureListResDto> showLectureList(LectureSearchDto searchDto, Pageable pageable) {
         Specification<Lecture> specification = new Specification<Lecture>() {
             @Override
@@ -220,11 +212,6 @@ public class LectureService {
         return lectures.map(Lecture::fromEntityToLectureListResDto);
     }
 
-
-
-//    public Page<LectureDetailResDto> showLectureStatusList(){
-//
-//    }
 
     //튜터 - 자신의 강의 리스트
     public Page<LectureListResDto> showMyLectureList(LectureSearchDto searchDto, Pageable pageable) {
@@ -640,8 +627,7 @@ public class LectureService {
         return LectureGroupResDto.builder()
                 .title(lectureGroup.getLecture().getTitle())
                 .image(lectureGroup.getLecture().getImage())
-                .longitude(lectureGroup.getLongitude())
-                .latitude(lectureGroup.getLatitude())
+                .address(lectureGroup.getAddress())
                 .times(timeResDtos)
                 .remaining(lectureGroup.getRemaining())
                 .tutorName(lectureGroup.getLecture().getMemberName())
@@ -655,7 +641,7 @@ public class LectureService {
         Lecture lecture = lectureRepository.findById(lectureId).orElseThrow(
                 () -> new EntityNotFoundException("강의 정보 가져오기 실패"));
 
-        List<LectureGroup> lectureGroups = lectureGroupRepository.findByLectureId(lectureId);
+        List<LectureGroup> lectureGroups = lectureGroupRepository.findByLectureIdAndDelYn(lectureId, "N");
         List<LectureGroupsResDto> lectureGroupsResDtos = new ArrayList<>();
 
         for (LectureGroup lectureGroup : lectureGroups) {
@@ -676,7 +662,7 @@ public class LectureService {
                     .isAvailable(lectureGroup.getIsAvailable())
                     .remaining(lectureGroup.getRemaining())
                     .price(lectureGroup.getPrice())
-//                    .address(lectureGroup.getAddress)
+                    .address(lectureGroup.getAddress())
                     .startDate(lectureGroup.getStartDate())
                     .endDate(lectureGroup.getEndDate())
                     .build();
