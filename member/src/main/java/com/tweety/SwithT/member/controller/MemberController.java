@@ -87,6 +87,13 @@ public class MemberController {
             return new ResponseEntity<>(new CommonResDto(HttpStatus.OK, "내 정보 조회 성공", memberInfoResDto), HttpStatus.OK);
     }
 
+    // 공용으로 써야할 회원 정보 조회
+    @GetMapping("/public-infoGet/{id}")
+    public ResponseEntity<?> publicinfoGet(@PathVariable("id")Long id) {
+        MemberInfoResDto memberInfoResDto = memberService.publicInfoGet(id);
+        return new ResponseEntity<>(new CommonResDto(HttpStatus.OK, "공용 정보 조회 성공", memberInfoResDto), HttpStatus.OK);
+    }
+
     // 회원 정보 수정 ( 사진 제외 )
     @PostMapping("/infoUpdate")
     public ResponseEntity<CommonResDto> infoUpdate(@RequestBody MemberUpdateDto dto) {
