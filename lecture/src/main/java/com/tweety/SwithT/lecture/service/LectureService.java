@@ -115,7 +115,7 @@ public class LectureService {
         try {
             if(!searchDto.getCategory().isEmpty()){
                 // OpenSearch에서 검색 수행
-                List<LectureDetailResDto> searchResults = openSearchService.searchLecturesByCategory(searchDto.getCategory(), pageable);
+                List<LectureDetailResDto> searchResults = openSearchService.searchLecturesByCategory(searchDto, pageable);
 //            System.out.println(searchResults.get(0));
                 // 검색 결과를 LectureListResDto로 변환하여 페이지 객체로 반환
                 List<LectureListResDto> lectureList = searchResults.stream()

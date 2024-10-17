@@ -297,26 +297,34 @@ public class OpenSearchService {
     }
 
     // 카테고리로만 검색하는 메서드
-    public List<LectureDetailResDto> searchLecturesByCategory(String category, Pageable pageable) throws IOException, InterruptedException {
+    public List<LectureDetailResDto> searchLecturesByCategory(LectureSearchDto searchDto, Pageable pageable) throws IOException, InterruptedException {
         String endpoint = openSearchUrl + "/lecture-service/_search?scroll=1m";
 
+        List<String> filters = new ArrayList<>();
+
         // 카테고리 필터
-        String filterQuery = "";
-        if (category != null && !category.isEmpty()) {
-            filterQuery = String.format("""
-            {
-                "match": {
-                    "category": "%s"
-                }
-            }
-        """, category);
+        if (searchDto.getCategory() != null && !searchDto.getCategory().isEmpty()) {
+            filters.add(String.format("{\"match\": {\"category\": \"%s\"}}", searchDto.getCategory()));
         }
+
+        // 상태 필터
+        if (searchDto.getStatus() != null && !searchDto.getStatus().isEmpty()) {
+            filters.add(String.format("{\"match\": {\"status\": \"%s\"}}", searchDto.getStatus()));
+        }
+
+        // 강의 유형 필터
+        if (searchDto.getLectureType() != null && !searchDto.getLectureType().isEmpty()) {
+            filters.add(String.format("{\"match\": {\"lectureType\": \"%s\"}}", searchDto.getLectureType()));
+        }
+
+        // 필터를 연결하여 쿼리 생성
+        String filterQuery = filters.isEmpty() ? "" : String.join(",", filters);
 
         // OpenSearch 요청에 페이지네이션 값 적용
         int size = 100; // `scroll` API의 최대 크기를 사용
 
-        // 필터가 없는 경우 빈 배열 처리
-        String filterPart = filterQuery.isEmpty() ? "" : String.format(", \"filter\": [%s]", filterQuery);
+        // 필터가 없으면 빈 배열로 처리, 있으면 join으로 연결
+        String filterPart = filters.isEmpty() ? "" : String.format(", \"filter\": [%s]", filterQuery);
 
         // 필터 쿼리 생성
         String requestBody = String.format("""
@@ -355,11 +363,11 @@ public class OpenSearchService {
         // scroll API를 통해 계속해서 데이터를 가져옴
         while (true) {
             String scrollRequestBody = String.format("""
-        {
-            "scroll": "1m",
-            "scroll_id": "%s"
-        }
-        """, scrollId);
+            {
+                "scroll": "1m",
+                "scroll_id": "%s"
+            }
+            """, scrollId);
 
             HttpRequest scrollRequest = HttpRequest.newBuilder()
                     .uri(URI.create(openSearchUrl + "/_search/scroll"))
@@ -386,7 +394,6 @@ public class OpenSearchService {
 
         return lectureList;
     }
-
 
     private List<LectureDetailResDto> parseSearchResults(String responseBody) throws IOException {
         List<LectureDetailResDto> lectureList = new ArrayList<>();
