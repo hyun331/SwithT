@@ -175,4 +175,11 @@ public class MemberController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
+    @GetMapping(value = "/member-score-get/{id}")
+    public ResponseEntity<?> getMemberScoreById(@PathVariable("id") Long id){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "각 튜터의 평점", memberService.memberScoreGet(id));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+
 }

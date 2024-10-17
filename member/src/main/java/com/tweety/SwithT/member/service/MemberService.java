@@ -196,4 +196,15 @@ public class MemberService {
 
         return lectureFeign.getLectureById(lecturePayId);
     }
+
+    //회원 별점 가져오는 메서드(feignClient에서 사용)
+    public MemberScoreResDto memberScoreGet(Long id) {
+        Member member = memberRepository.findById(id).orElseThrow(()->{
+            throw new EntityExistsException("존재하지 않는 회원입니다.");
+        });
+
+        return MemberScoreResDto.builder()
+                .avgScore(member.getAvgScore())
+                .build();
+    }
 }

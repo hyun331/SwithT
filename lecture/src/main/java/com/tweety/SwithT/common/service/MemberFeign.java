@@ -13,4 +13,8 @@ public interface MemberFeign {
 
     @GetMapping(value="/member-profile-get/{id}")
     CommonResDto getMemberProfileById(@PathVariable("id") Long id);
+
+    @GetMapping(value="/member-score-get/{id}")
+    CommonResDto getMemberScoreById(@PathVariable("id") Long id);
+
 }
