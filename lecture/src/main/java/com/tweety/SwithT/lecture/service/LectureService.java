@@ -315,20 +315,33 @@ public class LectureService {
             }
 
             String memberName = null;
+            LocalDate startDate = null;
+            LocalDate endDate = null;
             if(isAvailable.equals("N") && a.getLimitPeople()==1){
                 //진행중인 과외인 경우
                 if(!lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(a, Status.ADMIT, "N").isEmpty()){
                     LectureApply lectureApply = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(a, Status.ADMIT, "N").get(0);
                     memberName = lectureApply.getMemberName();
+                    startDate = a.getStartDate();
+                    endDate = a.getEndDate();
                 }
             }
-
+            int limitPeople = 0;
+            if(a.getLecture().getLectureType() == LectureType.LECTURE){
+                limitPeople = a.getLimitPeople();
+                startDate = a.getStartDate();
+                endDate = a.getEndDate();
+            }
 
 
             return LectureGroupListResDto.builder()
                     .title(groupTitle.toString())
                     .lectureGroupId(a.getId())
                     .memberName(memberName)
+                    .price(a.getPrice())
+                    .limitPeople(limitPeople)
+                    .startDate(startDate)
+                    .endDate(endDate)
                     .build();
         });
 
