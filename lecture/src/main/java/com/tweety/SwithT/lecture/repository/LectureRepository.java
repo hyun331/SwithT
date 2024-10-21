@@ -19,11 +19,11 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
 
     Optional<Lecture> findByIdAndDelYn(Long id, String delYn);
 
-    @Query("SELECT l FROM Lecture l WHERE l.delYn = 'N' ORDER BY l.createdTime DESC")
+    @Query("SELECT l FROM Lecture l WHERE l.delYn = 'N' AND l.status = 'ADMIT' ORDER BY l.createdTime DESC")
     List<Lecture> findByDelYnOrderByCreatedTime(Pageable pageable);
 
     @Query("SELECT l FROM Lecture l JOIN l.lectureGroups lg " +
-            "WHERE lg.price = 0 AND lg.isAvailable = 'Y' " +
+            "WHERE lg.price = 0 AND lg.isAvailable = 'Y' AND l.status = 'ADMIT' " +
             "ORDER BY l.createdTime DESC")
     List<Lecture> findLecturesWithAvailableGroups(Pageable pageable);
 }

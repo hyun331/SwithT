@@ -87,6 +87,13 @@ public class MemberController {
             return new ResponseEntity<>(new CommonResDto(HttpStatus.OK, "내 정보 조회 성공", memberInfoResDto), HttpStatus.OK);
     }
 
+    // 공용으로 써야할 회원 정보 조회
+    @GetMapping("/public-infoGet/{id}")
+    public ResponseEntity<?> publicinfoGet(@PathVariable("id")Long id) {
+        MemberInfoResDto memberInfoResDto = memberService.publicInfoGet(id);
+        return new ResponseEntity<>(new CommonResDto(HttpStatus.OK, "공용 정보 조회 성공", memberInfoResDto), HttpStatus.OK);
+    }
+
     // 회원 정보 수정 ( 사진 제외 )
     @PostMapping("/infoUpdate")
     public ResponseEntity<CommonResDto> infoUpdate(@RequestBody MemberUpdateDto dto) {
@@ -133,6 +140,7 @@ public class MemberController {
     @PostMapping("/refresh-token")
     public ResponseEntity<?> generateNewAccessToken(@RequestBody MemberRefreshDto dto) {
 
+        System.out.println("리프래쉬 토큰이 호출 됐습니다.");
         String rt = dto.getRefreshToken();
         Claims claims = null;
 

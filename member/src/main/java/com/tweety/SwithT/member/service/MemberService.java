@@ -104,6 +104,12 @@ public class MemberService {
         return member.infoFromEntity();
     }
 
+    // 공용 정보 조회
+    public MemberInfoResDto publicInfoGet(Long id){
+        Member member = memberRepository.findById(Long.valueOf(id)).orElseThrow(EntityNotFoundException::new);
+        return member.infoFromEntity();
+    }
+
     public Member infoUpdate(MemberUpdateDto memberUpdateDto){
         String id = tokenCheck();
         Member member = memberRepository.findById(Long.valueOf(id))
