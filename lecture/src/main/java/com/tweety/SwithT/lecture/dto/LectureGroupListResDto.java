@@ -17,4 +17,6 @@ public class LectureGroupListResDto {
     private String memberName;
     private LocalDate startDate;
     private LocalDate endDate;
+    private int price;
+    private int limitPeople;
 }
