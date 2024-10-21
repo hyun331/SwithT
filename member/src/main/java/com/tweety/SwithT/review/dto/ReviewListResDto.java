@@ -23,7 +23,7 @@ public class ReviewListResDto {
     private String contents;
     @JsonFormat(pattern = "yyyy-MM-dd") // 날짜를 "yyyy-MM-dd" 형식으로 변환
     private LocalDateTime createdTime;
-
+    private Long writerId;
     @Column(nullable = true)
     private String profileImage;
 
