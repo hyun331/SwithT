@@ -135,16 +135,16 @@ public class LectureController {
     }
 
     // 강의 그룹 수정
-    @PostMapping("/update/lecture-group/{id}")
-    public ResponseEntity<?> lectureGroupUpdate(@PathVariable Long id, @RequestBody LectureGroupReqDto dto) {
+    @PutMapping("/update/lecture-group/{id}")
+    public ResponseEntity<?> lectureGroupUpdate(@PathVariable("id") Long id, @RequestBody LectureGroupReqDto dto) {
         lectureService.lectureGroupUpdate(id, dto);
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 그룹 업데이트", id);
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
     // 강의 그룹 삭제
-    @PostMapping("/delete/lecture-group/{id}")
-    public ResponseEntity<?> lectureGroupDelete(@PathVariable Long id) {
+    @PutMapping("/delete/lecture-group/{id}")
+    public ResponseEntity<?> lectureGroupDelete(@PathVariable("id") Long id) {
         lectureService.lectureGroupDelete(id);
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 그룹 삭제", id);
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);

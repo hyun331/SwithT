@@ -68,8 +68,8 @@ public class BoardService {
         // param으로 type이 all인지 notice인지 받기..!
         // notice
         Page<Board> boardList = null;
-        if(Objects.equals(type, "notice")) boardList = boardRepository.findAllByLectureGroupIdAndType(lectureGroupId,sortedPageable, Type.NOTICE);
-        else if(type==null) boardList = boardRepository.findAllByLectureGroupId(lectureGroupId,sortedPageable);
+        if(Objects.equals(type, "notice")) boardList = boardRepository.findAllByLectureGroupIdAndTypeAndDelYn(lectureGroupId,sortedPageable, Type.NOTICE, "N");
+        else if(type==null) boardList = boardRepository.findAllByLectureGroupIdAndDelYn(lectureGroupId,sortedPageable, "N");
         else System.out.println("없음");
         return boardList.map(board -> BoardListResDto.fromEntity(board, memberId));
     }
@@ -97,7 +97,8 @@ public class BoardService {
         Long loginMemberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
         if(!board.getMemberId().equals(loginMemberId)) throw new RuntimeException("해당 게시글을 작성한 회원만 삭제가 가능합니다.");
         board.updateDelYn();
-        return BoardDeleteResDto.fromEntity(board);
+        Board saveBoard = boardRepository.save(board);
+        return BoardDeleteResDto.fromEntity(saveBoard);
     }
 
 
