@@ -50,6 +50,7 @@ public class Review extends BaseTimeEntity {
 
     public ReviewListResDto fromEntity(){
         return ReviewListResDto.builder()
+                .writerId(this.writerId.getId())
                 .id(this.id)
                 .createdTime(this.getCreatedTime())
                 .star(this.star)
