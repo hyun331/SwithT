@@ -131,6 +131,7 @@ public class PaymentService {
                 .memberId(memberId)
                 .status(Status.STANDBY)
                 .balancedTime(LocalDateTime.now())
+                .payments(payments)
                 .build();
 
         balanceRepository.save(balance);

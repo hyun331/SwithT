@@ -313,7 +313,7 @@ public class LectureApplyService {
     @Transactional
     public void updateLectureApplyStatus(Long id, String message){
         LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
-                ()-> new EntityNotFoundException("수강 정보 불러오기 실패"));
+                   ()-> new EntityNotFoundException("수강 정보 불러오기 실패"));
 
         lectureApply.updatePaidStatus(message);
         if(message.equals("paid")){
@@ -322,16 +322,19 @@ public class LectureApplyService {
         }
 
         Long memberId = lectureApply.getMemberId();
-        if(lectureApply.getLectureGroup().getLecture().getLectureType().equals("LESSON")){
+        System.out.println(lectureApply.getLectureGroup().getLecture().getLectureType());
+        if(lectureApply.getLectureGroup().getLecture().getLectureType().toString().equals("LESSON")){
             List<LectureChatRoom> lectureChatRooms = lectureChatRoomRepository.findByLectureGroupAndDelYn
                     (lectureApply.getLectureGroup(), "N");
+            lectureApply.getLectureGroup().updateIsAvailable("N");
             for(LectureChatRoom lectureChatRoom: lectureChatRooms){
                 List<LectureChatParticipants> lectureChatParticipantsList = lectureChatParticipantsRepository.findByLectureChatRoom(lectureChatRoom);
                 for(LectureChatParticipants lectureChatParticipants: lectureChatParticipantsList){
-                    if(lectureChatParticipants.getMemberId() != memberId){
+                    if(!lectureChatParticipants.getMemberId().equals(memberId)){
                         lectureChatParticipants.updateDelYn();
                     }
                 }
+                lectureChatRoom.updateDelYn();
             }
         }
 
@@ -356,7 +359,6 @@ public class LectureApplyService {
                     .schedulerTitle(lectureGroup.getLecture().getTitle()) // 강의 제목을 일정 제목으로 설정
                     .alertYn('N') // 기본값 'N'
                     .build();
-
             groupTimesDto.add(groupTimeResDto);
         }
         try {

@@ -256,6 +256,8 @@ public class LectureService {
         MemberScoreResDto memberScoreResDto = objectMapper.convertValue(commonResDto.getResult(), MemberScoreResDto.class);
         BigDecimal avgScore = memberScoreResDto.getAvgScore();
 
+        lecture.increaseCount();
+        lectureRepository.save(lecture);
         return lecture.fromEntityToLectureDetailResDto(avgScore);
     }
 

@@ -71,10 +71,8 @@ public class LectureApply extends BaseTimeEntity {
     }
 
     public void updatePaidStatus(String updateStatus) {
-        System.out.println("잘 들어옴, 결과: " + updateStatus);
         switch (updateStatus) {
             case "paid":
-                System.out.println("paid일 때");
                 this.status = Status.ADMIT; // 결제 완료 시 ADMIT 상태로 변경
                 break;
             case "cancelled":
