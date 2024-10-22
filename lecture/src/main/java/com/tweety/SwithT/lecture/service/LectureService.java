@@ -570,8 +570,7 @@ public class LectureService {
                 .groupId(lectureGroup.getId())
                 .limitPeople(lectureGroup.getLimitPeople())
                 .address(lectureGroup.getAddress())
-//                .latitude(lectureGroup.getLatitude())
-//                .longitude(lectureGroup.getLongitude())
+                .price(lectureGroup.getPrice())
                 .startDate(lectureGroup.getStartDate())
                 .endDate(lectureGroup.getEndDate())
                 .build();
