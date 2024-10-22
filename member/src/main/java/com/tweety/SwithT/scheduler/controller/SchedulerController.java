@@ -65,7 +65,7 @@ public class SchedulerController {
         }
     }
 
-    @PatchMapping("/scheduler/{id}/delete")
+    @PutMapping("/scheduler/{id}/delete")
     public ResponseEntity<?> deleteSchedule(@PathVariable Long id){
         schedulerService.deleteSchedule(id);
         try{

@@ -15,7 +15,6 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Getter
-@Setter
 public class LectureGroup extends BaseTimeEntity {
 
     @Id
@@ -71,6 +70,10 @@ public class LectureGroup extends BaseTimeEntity {
     public void updateDate(LocalDate startDate, LocalDate endDate){
         this.startDate = startDate;
         this.endDate = endDate;
+    }
+
+    public void updateIsAvailable(String status){
+        this.isAvailable = status;
     }
 
     // 남은 자리수 감소
