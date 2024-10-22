@@ -508,20 +508,21 @@ public class LectureService {
 
         List<GroupTimeResDto> groupTimesDto = new ArrayList<>();
 
-        for(LectureGroup lectureGroup: lectureGroups){
-            for(GroupTime groupTime: lectureGroup.getGroupTimes()){
+        for (LectureGroup lectureGroup : lectureGroups) {
+            for (GroupTime groupTime : lectureGroup.getGroupTimes()) {
                 GroupTimeResDto groupTimeResDto = GroupTimeResDto.builder()
                         .memberId(lecture.getMemberId())
                         .groupTimeId(groupTime.getId())
                         .lectureGroupId(lectureGroup.getId())
                         .lectureType(lecture.getLectureType().toString())
-                        .lectureDay(groupTime.getLectureDay().name()) // MON, TUE, 등
-                        .startTime(groupTime.getStartTime().toString()) // HH:mm
-                        .endTime(groupTime.getEndTime().toString()) // HH:mm
-                        .startDate(lectureGroup.getStartDate().toString()) // 강의 시작 날짜
-                        .endDate(lectureGroup.getEndDate().toString()) // 강의 종료 날짜
-                        .schedulerTitle(lectureGroup.getLecture().getTitle()) // 강의 제목을 일정 제목으로 설정
-                        .alertYn('N') // 기본값 'N'
+                        .lectureDay(groupTime.getLectureDay().name())
+                        .startTime(groupTime.getStartTime().toString())
+                        .endTime(groupTime.getEndTime().toString())
+                        // startDate가 null일 때 null 처리를 위한 조건 추가
+                        .startDate(lectureGroup.getStartDate() != null ? lectureGroup.getStartDate().toString() : "No start date")
+                        .endDate(lectureGroup.getEndDate() != null ? lectureGroup.getEndDate().toString() : "No end date")
+                        .schedulerTitle(lectureGroup.getLecture().getTitle())
+                        .alertYn('N')
                         .build();
 
                 groupTimesDto.add(groupTimeResDto);
