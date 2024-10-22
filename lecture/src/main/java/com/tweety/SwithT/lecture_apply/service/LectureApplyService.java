@@ -396,10 +396,28 @@ public class LectureApplyService {
             throw new IllegalArgumentException("접근할 수 없는 강의 그룹입니다");
         }
         List<LectureApply> lectureApplyList = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(lectureGroup, Status.ADMIT, "N");
+//        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+//        int start = (int) pageRequest.getOffset();
+//        int end = Math.min((start + pageRequest.getPageSize()), lectureApplyList.size());
+//        Page<LectureApply> lectureApplyPage = new PageImpl<>(lectureApplyList.subList(start, end), pageRequest, lectureApplyList.size());
+        List<SingleLectureTuteeListDto> dtoList = new ArrayList<>();
+        for(LectureApply apply : lectureApplyList){
+            CommonResDto commonResDto = memberFeign.getMemberProfileById(apply.getMemberId());
+            ObjectMapper objectMapper = new ObjectMapper();
+            MemberProfileResDto memberProfileResDto = objectMapper.convertValue(commonResDto.getResult(), MemberProfileResDto.class);
+            String image = memberProfileResDto.getImage();
+            SingleLectureTuteeListDto dto =  SingleLectureTuteeListDto.builder()
+                    .tuteeName(apply.getMemberName())
+                    .tuteeProfile(image)
+                    .memberId(apply.getMemberId())
+                    .build();
+            dtoList.add(dto);
+        }
         PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         int start = (int) pageRequest.getOffset();
-        int end = Math.min((start + pageRequest.getPageSize()), lectureApplyList.size());
-        Page<LectureApply> lectureApplyPage = new PageImpl<>(lectureApplyList.subList(start, end), pageRequest, lectureApplyList.size());
-        return lectureApplyPage.map(a->a.fromEntityToSingleLectureTuteeListDto());
+        int end = Math.min((start + pageRequest.getPageSize()), dtoList.size());
+        Page<SingleLectureTuteeListDto> result = new PageImpl<>(dtoList.subList(start, end), pageRequest, dtoList.size());
+//        return lectureApplyPage.map(a->a.fromEntityToSingleLectureTuteeListDto());
+        return result;
     }
 }

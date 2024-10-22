@@ -406,7 +406,7 @@ public class LectureService {
 
         // LectureApply가 하나라도 존재한다면 수정 불가
         if (!lectureGroup.getLectureApplies().isEmpty()) {
-            throw new IllegalArgumentException("LectureApply가 존재하여 Lecture를 삭제할 수 없습니다.");
+            throw new IllegalArgumentException("LectureApply가 존재하여 Lecture를 수정할 수 없습니다.");
         }
         if (dto.getPrice() != null) {
             lectureGroup.updatePrice(dto.getPrice());
@@ -569,8 +569,7 @@ public class LectureService {
                 .groupId(lectureGroup.getId())
                 .limitPeople(lectureGroup.getLimitPeople())
                 .address(lectureGroup.getAddress())
-//                .latitude(lectureGroup.getLatitude())
-//                .longitude(lectureGroup.getLongitude())
+                .price(lectureGroup.getPrice())
                 .startDate(lectureGroup.getStartDate())
                 .endDate(lectureGroup.getEndDate())
                 .build();
