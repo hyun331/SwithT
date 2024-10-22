@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweety.SwithT.member.domain.Member;
 import com.tweety.SwithT.member.repository.MemberRepository;
+import com.tweety.SwithT.scheduler.domain.ScheduleAlert;
 import com.tweety.SwithT.scheduler.domain.Scheduler;
 import com.tweety.SwithT.scheduler.dto.*;
 import com.tweety.SwithT.scheduler.repository.SchedulerAlertRepository;
@@ -31,12 +32,14 @@ public class SchedulerService {
     private final ObjectMapper objectMapper;
     private final MemberRepository memberRepository;
     private final SchedulerAlertRepository schedulerAlertRepository;
+    private final SchedulerAlertService schedulerAlertService;
 
-    public SchedulerService(SchedulerRepository schedulerRepository, ObjectMapper objectMapper, MemberRepository memberRepository, SchedulerAlertRepository schedulerAlertRepository) {
+    public SchedulerService(SchedulerRepository schedulerRepository, ObjectMapper objectMapper, MemberRepository memberRepository, SchedulerAlertRepository schedulerAlertRepository, SchedulerAlertService schedulerAlertService) {
         this.schedulerRepository = schedulerRepository;
         this.objectMapper = objectMapper;
         this.memberRepository = memberRepository;
         this.schedulerAlertRepository = schedulerAlertRepository;
+        this.schedulerAlertService = schedulerAlertService;
     }
 
     @KafkaListener(topics = "schedule-update", groupId = "member-group", containerFactory = "kafkaListenerContainerFactory")
@@ -135,6 +138,10 @@ public class SchedulerService {
             throw new IllegalArgumentException("접근 권한이 없습니다.");
         }
         scheduler.deleteSchedule();
+        ScheduleAlert scheduleAlert = schedulerAlertRepository.findBySchedulerId(schedulerId);
+        if(scheduleAlert!= null){
+            schedulerAlertService.cancelAlert(scheduleAlert.getId());
+        }
         schedulerRepository.save(scheduler);
     }
 
