@@ -169,13 +169,19 @@ public class LectureApplyService {
         if(!lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(lectureGroup, Status.WAITING, "N").isEmpty()){
             throw new IllegalArgumentException("결제 대기 중인 튜티가 존재합니다.");
         }
+        if(lectureApply.getLectureGroup().getPrice()==0){
+            lectureApply.updateStatus(Status.ADMIT);
+            updateFreeLectureApplyStatus(id);
+            redisStreamProducer.publishMessage(lectureApply.getMemberId().toString(),
+                    "강의 승인", lectureGroup.getLecture().getTitle()+" 강의가 승인되었습니다. 스케줄을 확인해보세요!", lectureApply.getId().toString());
+        }else{
+            lectureApply.updateStatus(Status.WAITING);
 
-        lectureApply.updateStatus(Status.WAITING);
+            //결제 요청 보내기
+            redisStreamProducer.publishMessage(lectureApply.getMemberId().toString(),
+                    "결제요청", lectureGroup.getLecture().getTitle()+"에서 결제 요청을 했습니다.", lectureApply.getId().toString());
 
-        //결제 요청 보내기
-        redisStreamProducer.publishMessage(lectureApply.getMemberId().toString(),
-                "결제요청", "수학천재가 되는 길에서 결제 요청을 했습니다.", lectureApply.getId().toString());
-
+        }
 
         return "튜터가 해당 수강신청을 승인했습니다.";
     }
@@ -372,6 +378,35 @@ public class LectureApplyService {
         }
     }
 
+    @Transactional
+    public void updateFreeLectureApplyStatus(Long id){
+        LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
+                ()-> new EntityNotFoundException("수강 정보 불러오기 실패"));
+
+        lectureApply.updateStatus(Status.ADMIT);
+        LectureGroup lectureGroup = lectureApply.getLectureGroup();
+        lectureGroup.decreaseRemaining();
+
+        Long memberId = lectureApply.getMemberId();
+        System.out.println(lectureApply.getLectureGroup().getLecture().getLectureType());
+        if(lectureApply.getLectureGroup().getLecture().getLectureType().toString().equals("LESSON")){
+            List<LectureChatRoom> lectureChatRooms = lectureChatRoomRepository.findByLectureGroupAndDelYn
+                    (lectureApply.getLectureGroup(), "N");
+            lectureApply.getLectureGroup().updateIsAvailable("N");
+            for(LectureChatRoom lectureChatRoom: lectureChatRooms){
+                List<LectureChatParticipants> lectureChatParticipantsList = lectureChatParticipantsRepository.findByLectureChatRoom(lectureChatRoom);
+                for(LectureChatParticipants lectureChatParticipants: lectureChatParticipantsList){
+                    if(!lectureChatParticipants.getMemberId().equals(memberId)){
+                        lectureChatParticipants.updateDelYn();
+                    }
+                }
+                lectureChatRoom.updateDelYn();
+            }
+        }
+
+        lectureApplyRepository.save(lectureApply);
+        updateSchedule(lectureApply.getLectureGroup(), memberId);
+    }
 
     public int getGroupRemainingFromApplyId(Long id){
         LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(

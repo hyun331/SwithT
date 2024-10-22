@@ -81,7 +81,7 @@ public class LectureApplyController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
-    @PutMapping("lecture-apply/{id}/status")
+    @PutMapping("/lecture-apply/{id}/status")
     public ResponseEntity<?>updateLectureApplyStatus(@PathVariable("id") Long lectureApplyId,
                                                      @RequestBody CommonResDto commonResDto){
         try {
