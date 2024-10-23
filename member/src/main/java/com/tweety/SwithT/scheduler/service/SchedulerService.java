@@ -277,4 +277,17 @@ public class SchedulerService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    @KafkaListener(topics = "schedule-cancel-update", groupId = "member-group", containerFactory = "kafkaListenerContainerFactory")
+    public void deleteScheduleByRefund(Long lectureGroupId){
+        List<Scheduler> schedulerList = schedulerRepository.findAllByLectureGroupId(lectureGroupId);
+
+        for(Scheduler scheduler: schedulerList){
+            scheduler.deleteSchedule();
+            ScheduleAlert scheduleAlert = schedulerAlertRepository.findBySchedulerId(scheduler.getId());
+            if(scheduleAlert!= null){
+                schedulerAlertService.cancelAlert(scheduleAlert.getId());
+            }
+        }
+    }
 }

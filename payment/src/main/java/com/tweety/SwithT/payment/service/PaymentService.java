@@ -14,7 +14,6 @@ import com.tweety.SwithT.payment.domain.Status;
 import com.tweety.SwithT.payment.dto.BalanceUpdateDto;
 import com.tweety.SwithT.payment.dto.LecturePayResDto;
 import com.tweety.SwithT.payment.dto.PaymentListDto;
-import com.tweety.SwithT.payment.dto.RefundReqDto;
 import com.tweety.SwithT.payment.repository.BalanceRepository;
 import com.tweety.SwithT.payment.repository.PaymentRepository;
 import feign.FeignException;
@@ -125,11 +124,10 @@ public class PaymentService {
                 .build();
 
         paymentRepository.save(payments);
-        Long memberId = lectureFeign.getTuteeId(lecturePayResDto.getId());
 
         Balance balance = Balance.builder()
                 .cost(lecturePrice)
-                .memberId(memberId)
+                .memberId(lecturePayResDto.getMemberId())
                 .status(Status.STANDBY)
                 .balancedTime(LocalDateTime.now())
                 .payments(payments)
@@ -227,12 +225,18 @@ public class PaymentService {
     }
 
     @Transactional
-    public void refund(Long applyId, String impUid, BigDecimal amount, String cancelReason) {
+    public void refund(Long id, String cancelReason) {
         Long memberId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
 
         // 결제 정보 조회
-        Payments payments = paymentRepository.findByImpUid(impUid).orElseThrow(
-                () -> new EntityNotFoundException("존재하지 않는 주문번호"));
+//        Payments payments = paymentRepository.findByImpUid(impUid).orElseThrow(
+//                () -> new EntityNotFoundException("존재하지 않는 주문번호"));
+
+        Payments payments = paymentRepository.findById(id).orElseThrow(
+                ()-> new EntityNotFoundException("유효한 결제 상태가 아닙니다."));
+
+        String impUid = payments.getImpUid();
+        BigDecimal amount = payments.getAmount();
 
         // 결제된 멤버가 현재 로그인한 멤버와 동일한지 확인
         if (!payments.getMemberId().equals(memberId)) {
@@ -256,19 +260,18 @@ public class PaymentService {
             IamportResponse<Payment> response = iamportClient.cancelPaymentByImpUid(cancelData);
             Payment cancelledPayment = response.getResponse();
 
+
             if (cancelledPayment != null && "cancelled".equals(cancelledPayment.getStatus())) {
                 payments.updateStatusToCancelled();
                 paymentRepository.save(payments);
 
                 // Feign Client를 통해 환불 상태 업데이트 요청
-                RefundReqDto refundRequest = new RefundReqDto();
-                refundRequest.setImpUid(impUid);
-                refundRequest.setAmount(amount);
-                refundRequest.setCancelReason(cancelReason);
-                lectureFeign.requestRefund(applyId, refundRequest);
+                lectureFeign.requestRefund(payments.getLectureGroupId());
             } else {
                 throw new RuntimeException("결제 취소 중 오류 발생: 결제 상태를 확인할 수 없습니다.");
             }
+            Balance balance = balanceRepository.findByPayments(payments);
+            balance.changeStatus(Status.CANCELED);
         } catch (IamportResponseException | IOException e) {
             throw new RuntimeException("결제 취소 중 오류 발생: " + e.getMessage());
         }

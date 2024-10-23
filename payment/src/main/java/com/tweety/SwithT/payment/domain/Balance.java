@@ -37,8 +37,8 @@ public class Balance {
 
     private Long memberId;
 
-    public Balance changeStatus(){
-        this.status = Status.ADMIT;
+    public Balance changeStatus(Status status){
+        this.status = status;
         return this;
     }
 }

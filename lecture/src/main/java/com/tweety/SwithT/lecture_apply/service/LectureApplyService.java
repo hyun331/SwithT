@@ -415,12 +415,12 @@ public class LectureApplyService {
         return lectureGroup.getRemaining();
     }
 
-    public Long getTuteeIdFromApplyId(Long id){
-        LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
-                ()-> new EntityNotFoundException("수강 정보 불러오기 실패"));
-
-        return lectureApply.getLectureGroup().getLecture().getMemberId();
-    }
+//    public Long getTuteeIdFromApplyId(Long id){
+//        LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
+//                ()-> new EntityNotFoundException("수강 정보 불러오기 실패"));
+//
+//        return lectureApply.getLectureGroup().getLecture().getMemberId();
+//    }
 
     public Page<SingleLectureTuteeListDto> singleLectureTuteeList(Long id, Pageable pageable) {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
@@ -459,7 +459,15 @@ public class LectureApplyService {
     }
 
     @Transactional
-    public void lectureRefund(){
+    public void lectureRefund(Long lectureGroupId){
+        LectureGroup lectureGroup = lectureGroupRepository.findById(lectureGroupId).orElseThrow(
+                ()-> new EntityNotFoundException("강의 정보를 불러오는 데 실패했습니다."));
 
+        lectureGroup.increseRemaining();
+        if(lectureGroup.getIsAvailable().equals("N")){
+            lectureGroup.updateIsAvailable("Y");
+        }
+
+        kafkaTemplate.send("schedule-cancel-update", lectureGroupId);
     }
 }
