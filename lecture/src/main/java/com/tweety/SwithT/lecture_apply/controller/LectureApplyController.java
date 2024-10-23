@@ -18,6 +18,7 @@ public class LectureApplyController {
 
     private final LectureApplyService lectureApplyService;
 
+
     //과외 신청
     @PreAuthorize("hasRole('TUTEE')")
     @PostMapping("/single-lecture-apply")
@@ -81,6 +82,28 @@ public class LectureApplyController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
+    //리뷰 상태 변경 코드 추가
+    @PutMapping("/lecture-apply/review/status")
+    public ResponseEntity<?> updateLectureReviewStatus(@RequestParam Long applyId){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "리뷰 작성 상태 변경","ReviewStatus 상태 :"+lectureApplyService.updateReviewStatus(applyId));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+//    @PutMapping("/lecture-apply/review/status")
+//    public ResponseEntity<?> updateLectureReviewStatus(@RequestBody String applyId) {
+//
+//        Long applyIdLong;
+//
+//        try {
+//            applyIdLong = Long.valueOf(applyId);  // String을 Long으로 변환
+//        } catch (NumberFormatException e) {
+//            return ResponseEntity.badRequest().body(new CommonResDto(HttpStatus.BAD_REQUEST, "잘못된 ID 형식입니다.", null));
+//        }
+//
+//        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "리뷰 작성 상태 변경", lectureApplyService.updateReviewStatus(applyIdLong));
+//        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+//    }
+
     @PutMapping("lecture-apply/{id}/status")
     public ResponseEntity<?>updateLectureApplyStatus(@PathVariable("id") Long lectureApplyId,
                                                      @RequestBody CommonResDto commonResDto){
@@ -106,4 +129,5 @@ public class LectureApplyController {
     public Long getTuteeId(@PathVariable Long id){
         return lectureApplyService.getTuteeIdFromApplyId(id);
     }
+
 }

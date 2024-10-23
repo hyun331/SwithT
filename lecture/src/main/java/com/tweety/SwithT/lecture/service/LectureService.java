@@ -590,7 +590,7 @@ public class LectureService {
         // 단체 채팅방
         List<LectureChatRoom> lectureChatRoomList = lectureChatRoomRepository.findByLectureGroupAndDelYn(lectureGroup,"N");
         // Todo 채팅방 id는 좀 더 생각 필요
-        dto.setChatRoomId(lectureChatRoomList.get(0).getId());
+        if(!lectureChatRoomList.isEmpty()) dto.setChatRoomId(lectureChatRoomList.get(0).getId());
         // 강의 그룹 시간 list
         List<GroupTimeResDto> groupTimeResDtos = new ArrayList<>();
         int totalDayCount=0;

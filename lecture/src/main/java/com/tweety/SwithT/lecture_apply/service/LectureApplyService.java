@@ -11,6 +11,7 @@ import com.tweety.SwithT.common.service.RedisStreamProducer;
 import com.tweety.SwithT.lecture.domain.GroupTime;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
+import com.tweety.SwithT.lecture.domain.ReviewStatus;
 import com.tweety.SwithT.lecture.dto.GroupTimeResDto;
 import com.tweety.SwithT.lecture.dto.TuteeMyLectureListResDto;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
@@ -158,6 +159,16 @@ public class LectureApplyService {
         return result;
     }
 
+    @Transactional
+    public ReviewStatus updateReviewStatus(Long applyId){
+
+        LectureApply lectureApply = lectureApplyRepository.findByIdAndDelYn(applyId, "N").orElseThrow(()->{
+            throw new EntityNotFoundException("id에 맞는 수강을 찾을 수 없습니다.");
+        });
+
+        lectureApply.updateReviewStatus(ReviewStatus.YES); // JPA가 알아서 체킹?
+        return lectureApply.getReviewStatus();
+    }
     //튜터 - 튜티의 신청 승인
     @Transactional
     public String singleLecturePaymentRequest(Long id) {
