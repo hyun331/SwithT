@@ -37,6 +37,8 @@ public class LectureGroup extends BaseTimeEntity {
     private Integer remaining;  // 남은 자리수
 
     private String address;
+    private String detailAddress;
+
 
 //    private String latitude;
 //
@@ -67,6 +69,7 @@ public class LectureGroup extends BaseTimeEntity {
     public void updateAddress(String address){
         this.address = address;
     }
+    public void updateDetailAddress(String detailAddress){this.detailAddress = detailAddress;}
     public void updateDate(LocalDate startDate, LocalDate endDate){
         this.startDate = startDate;
         this.endDate = endDate;
