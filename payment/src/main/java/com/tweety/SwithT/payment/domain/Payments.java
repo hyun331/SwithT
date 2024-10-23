@@ -70,6 +70,7 @@ public class Payments {
                 .amount(this.amount)
                 .paidAt(this.paidAt)
                 .receiptUrl(this.receiptUrl)
+                .lectureGroupId(this.lectureGroupId)
                 .build();
     }
 
