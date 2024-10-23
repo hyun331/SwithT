@@ -80,6 +80,10 @@ public class LectureGroup extends BaseTimeEntity {
     public void decreaseRemaining(){
         this.remaining--;
     }
+    // 자리 증가
+    public void increseRemaining(){
+        this.remaining++;
+    }
 
     // 남은 자리수가 0인 경우 신청 종료
     public boolean end(){

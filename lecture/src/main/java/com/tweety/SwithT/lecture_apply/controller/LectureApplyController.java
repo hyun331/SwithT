@@ -4,6 +4,7 @@ import com.tweety.SwithT.common.dto.CommonErrorDto;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.service.LectureApplyService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -81,7 +82,7 @@ public class LectureApplyController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
-    @PutMapping("lecture-apply/{id}/status")
+    @PutMapping("/lecture-apply/{id}/status")
     public ResponseEntity<?>updateLectureApplyStatus(@PathVariable("id") Long lectureApplyId,
                                                      @RequestBody CommonResDto commonResDto){
         try {
@@ -97,13 +98,26 @@ public class LectureApplyController {
 
     }
 
+    @PutMapping("/lectures/{id}/payment/refund")
+    public ResponseEntity<?> requestRefund(@PathVariable Long id){
+        System.out.println("환불 feign 넘어옴");
+        try {
+            lectureApplyService.lectureRefund(id);
+            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "환불 완료", null);
+            return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+        } catch (EntityNotFoundException e){
+            CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @GetMapping("/lecture-group/get/remaining/{id}")
     public int getRemaining(@PathVariable Long id){
         return lectureApplyService.getGroupRemainingFromApplyId(id);
     }
 
-    @GetMapping("/lecture-apply/tutee-info/{id}")
-    public Long getTuteeId(@PathVariable Long id){
-        return lectureApplyService.getTuteeIdFromApplyId(id);
-    }
+//    @GetMapping("/lecture-apply/tutee-info/{id}")
+//    public Long getTuteeId(@PathVariable Long id){
+//        return lectureApplyService.getTuteeIdFromApplyId(id);
+//    }
 }

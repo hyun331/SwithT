@@ -2,7 +2,6 @@ package com.tweety.SwithT.payment.service;
 
 import com.tweety.SwithT.common.configs.FeignConfig;
 import com.tweety.SwithT.common.dto.CommonResDto;
-import com.tweety.SwithT.payment.dto.RefundReqDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,12 +14,10 @@ public interface LectureFeign {
     @PutMapping(value = "/lecture-apply/{id}/status")
     CommonResDto updateLectureApplyStatus(@PathVariable("id") Long lectureApplyId, @RequestBody CommonResDto commonResDto);
 
-    @PostMapping(value = "/lectures/{id}/payment/refund")
-    CommonResDto requestRefund(@PathVariable("id") Long lectureApplyId, @RequestBody RefundReqDto refundReqDto);
+    @PutMapping(value = "/lectures/{id}/payment/refund")
+    void requestRefund(@PathVariable("id") Long lectureGroupId);
 
     @GetMapping(value = "/lecture-group/get/remaining/{id}")
-    int getRemaining(@PathVariable("id")Long lectureApplyId);
+    int getRemaining(@PathVariable("id")Long lectureGroupId);
 
-    @GetMapping(value = "/lecture-apply/tutee-info/{id}")
-    Long getTuteeId(@PathVariable("id")Long lectureApplyId);
 }
