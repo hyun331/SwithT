@@ -81,7 +81,7 @@ public class PaymentService {
             throw new IllegalArgumentException("결제가 완료되지 않았습니다.");
         }
 
-        int remaining = lectureFeign.getRemaining(lecturePayResDto.getId());
+        int remaining = lectureFeign.getRemaining(lecturePayResDto.getLectureGroupId());
         if(remaining <= 0){
             System.out.println("case 5");
             throw new IllegalArgumentException("제한 인원 초과입니다.");
@@ -121,6 +121,7 @@ public class PaymentService {
                 .failReason(payment.getFailReason())
                 .cancelReason(payment.getCancelReason())
                 .receiptUrl(payment.getReceiptUrl())
+                .lectureGroupId(lecturePayResDto.getLectureGroupId())
                 .build();
 
         paymentRepository.save(payments);
@@ -193,7 +194,7 @@ public class PaymentService {
             LocalDateTime balancedDate = balance.getBalancedTime().plusDays(7);
 
             if (today.isAfter(balancedDate)) {
-                balance.changeStatus();
+                balance.changeStatus(Status.ADMIT);
                 balanceRepository.save(balance);
 
                 // memberId 통해서 availableMoney 올려주는 이벤트 코드

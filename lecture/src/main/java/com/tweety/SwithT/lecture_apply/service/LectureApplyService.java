@@ -409,10 +409,10 @@ public class LectureApplyService {
     }
 
     public int getGroupRemainingFromApplyId(Long id){
-        LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
+        LectureGroup lectureGroup = lectureGroupRepository.findById(id).orElseThrow(
                 ()-> new EntityNotFoundException("수강 정보 불러오기 실패"));
 
-        return lectureApply.getLectureGroup().getRemaining();
+        return lectureGroup.getRemaining();
     }
 
     public Long getTuteeIdFromApplyId(Long id){
@@ -456,5 +456,10 @@ public class LectureApplyService {
         Page<SingleLectureTuteeListDto> result = new PageImpl<>(dtoList.subList(start, end), pageRequest, dtoList.size());
 //        return lectureApplyPage.map(a->a.fromEntityToSingleLectureTuteeListDto());
         return result;
+    }
+
+    @Transactional
+    public void lectureRefund(){
+
     }
 }

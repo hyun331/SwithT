@@ -19,7 +19,7 @@ public interface LectureFeign {
     CommonResDto requestRefund(@PathVariable("id") Long lectureApplyId, @RequestBody RefundReqDto refundReqDto);
 
     @GetMapping(value = "/lecture-group/get/remaining/{id}")
-    int getRemaining(@PathVariable("id")Long lectureApplyId);
+    int getRemaining(@PathVariable("id")Long lectureGroupId);
 
     @GetMapping(value = "/lecture-apply/tutee-info/{id}")
     Long getTuteeId(@PathVariable("id")Long lectureApplyId);
