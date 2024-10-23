@@ -39,6 +39,7 @@ public class LectureGroupReqDto {
                 .isAvailable("Y")
                 .limitPeople(this.limitPeople)
                 .address(this.address)
+                .remaining(this.limitPeople)
                 .detailAddress(this.detailAddress)
 //                .latitude(this.latitude)
 //                .longitude(this.longitude)

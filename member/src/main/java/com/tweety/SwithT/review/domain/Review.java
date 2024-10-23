@@ -44,6 +44,10 @@ public class Review extends BaseTimeEntity {
     @Column(nullable = true)
     private String profileImage;
 
+    @Column(nullable = false)
+    private Long lectureGroupId;
+
+
     @Column(nullable = true) // 동명이인 고려
     private String name;
 

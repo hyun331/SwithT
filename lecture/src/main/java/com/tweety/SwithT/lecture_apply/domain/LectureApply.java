@@ -3,6 +3,7 @@ package com.tweety.SwithT.lecture_apply.domain;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
+import com.tweety.SwithT.lecture.domain.ReviewStatus;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyListDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureTuteeListDto;
 import jakarta.persistence.*;
@@ -48,6 +49,15 @@ public class LectureApply extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private Status status = Status.STANDBY;
 
+    @Builder.Default // 김민성 리뷰 관리를 위해 추가
+    @Enumerated(EnumType.STRING)
+    private ReviewStatus reviewStatus = ReviewStatus.NO;
+
+    public void updateReviewStatus(ReviewStatus updateReviewStatus){
+
+        this.reviewStatus = updateReviewStatus;
+
+    }
 
     public SingleLectureApplyListDto fromEntityToSingleLectureApplyListDto(){
         return SingleLectureApplyListDto.builder()

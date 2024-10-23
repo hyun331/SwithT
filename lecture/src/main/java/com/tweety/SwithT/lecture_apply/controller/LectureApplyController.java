@@ -19,6 +19,7 @@ public class LectureApplyController {
 
     private final LectureApplyService lectureApplyService;
 
+
     //과외 신청
     @PreAuthorize("hasRole('TUTEE')")
     @PostMapping("/single-lecture-apply")
@@ -82,6 +83,13 @@ public class LectureApplyController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
+    //리뷰 상태 변경 코드 추가
+    @PutMapping("/lecture-apply/review/status")
+    public ResponseEntity<?> updateLectureReviewStatus(@RequestParam Long applyId){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "리뷰 작성 상태 변경","ReviewStatus 상태 :"+lectureApplyService.updateReviewStatus(applyId));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+  
     @PutMapping("/lecture-apply/{id}/status")
     public ResponseEntity<?>updateLectureApplyStatus(@PathVariable("id") Long lectureApplyId,
                                                      @RequestBody CommonResDto commonResDto){
@@ -116,8 +124,9 @@ public class LectureApplyController {
         return lectureApplyService.getGroupRemainingFromApplyId(id);
     }
 
-//    @GetMapping("/lecture-apply/tutee-info/{id}")
-//    public Long getTuteeId(@PathVariable Long id){
-//        return lectureApplyService.getTuteeIdFromApplyId(id);
-//    }
+    @GetMapping("/lecture-apply/tutee-info/{id}")
+    public Long getTuteeId(@PathVariable Long id){
+        return lectureApplyService.getTuteeIdFromApplyId(id);
+    }
+
 }
