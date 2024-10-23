@@ -34,6 +34,7 @@ public class LectureHomeResDto {
     private Integer price;
 
     private String address;
+    private String detailAddress;
 //    private String latitude;
 
 //    private String longitude;

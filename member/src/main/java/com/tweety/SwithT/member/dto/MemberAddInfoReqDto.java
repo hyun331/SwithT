@@ -40,6 +40,8 @@ public class MemberAddInfoReqDto {
     @Nullable
     private String address;
     @Nullable
+    private String detailAddress;
+    @Nullable
     private String profileImage;
     @Builder.Default
     @Column(precision = 2, scale = 1, nullable = true)

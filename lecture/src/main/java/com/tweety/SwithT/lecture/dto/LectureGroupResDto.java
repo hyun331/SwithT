@@ -16,6 +16,7 @@ public class LectureGroupResDto {
     private String title;
     private String image;
     private String address;
+    private String detailAddress;
     private List<LectureGroupTimeResDto> times;
     private String tutorName;
     private String category;
