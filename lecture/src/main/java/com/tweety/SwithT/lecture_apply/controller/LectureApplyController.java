@@ -4,6 +4,7 @@ import com.tweety.SwithT.common.dto.CommonErrorDto;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.service.LectureApplyService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -88,23 +89,8 @@ public class LectureApplyController {
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "리뷰 작성 상태 변경","ReviewStatus 상태 :"+lectureApplyService.updateReviewStatus(applyId));
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
-
-//    @PutMapping("/lecture-apply/review/status")
-//    public ResponseEntity<?> updateLectureReviewStatus(@RequestBody String applyId) {
-//
-//        Long applyIdLong;
-//
-//        try {
-//            applyIdLong = Long.valueOf(applyId);  // String을 Long으로 변환
-//        } catch (NumberFormatException e) {
-//            return ResponseEntity.badRequest().body(new CommonResDto(HttpStatus.BAD_REQUEST, "잘못된 ID 형식입니다.", null));
-//        }
-//
-//        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "리뷰 작성 상태 변경", lectureApplyService.updateReviewStatus(applyIdLong));
-//        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
-//    }
-
-    @PutMapping("lecture-apply/{id}/status")
+  
+    @PutMapping("/lecture-apply/{id}/status")
     public ResponseEntity<?>updateLectureApplyStatus(@PathVariable("id") Long lectureApplyId,
                                                      @RequestBody CommonResDto commonResDto){
         try {
@@ -118,6 +104,19 @@ public class LectureApplyController {
             return new ResponseEntity<>(commonErrorDto, HttpStatus.BAD_REQUEST);
         }
 
+    }
+
+    @PutMapping("/lectures/{id}/payment/refund")
+    public ResponseEntity<?> requestRefund(@PathVariable Long id){
+        System.out.println("환불 feign 넘어옴");
+        try {
+            lectureApplyService.lectureRefund(id);
+            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "환불 완료", null);
+            return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+        } catch (EntityNotFoundException e){
+            CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.BAD_REQUEST);
+        }
     }
 
     @GetMapping("/lecture-group/get/remaining/{id}")

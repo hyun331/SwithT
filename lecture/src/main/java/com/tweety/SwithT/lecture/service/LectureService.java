@@ -40,7 +40,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -419,6 +421,9 @@ public class LectureService {
         if (dto.getAddress() != null) {
             lectureGroup.updateAddress(dto.getAddress());
         }
+        if (dto.getDetailAddress() != null) {
+            lectureGroup.updateDetailAddress(dto.getDetailAddress());
+        }
         if (dto.getStartDate() != null && dto.getEndDate() != null) {
             lectureGroup.updateDate(dto.getStartDate(), dto.getEndDate());
         }
@@ -572,6 +577,7 @@ public class LectureService {
                 .groupId(lectureGroup.getId())
                 .limitPeople(lectureGroup.getLimitPeople())
                 .address(lectureGroup.getAddress())
+                .detailAddress(lectureGroup.getDetailAddress())
                 .price(lectureGroup.getPrice())
                 .startDate(lectureGroup.getStartDate())
                 .endDate(lectureGroup.getEndDate())
@@ -590,7 +596,7 @@ public class LectureService {
         // 단체 채팅방
         List<LectureChatRoom> lectureChatRoomList = lectureChatRoomRepository.findByLectureGroupAndDelYn(lectureGroup,"N");
         // Todo 채팅방 id는 좀 더 생각 필요
-        if(!lectureChatRoomList.isEmpty()) dto.setChatRoomId(lectureChatRoomList.get(0).getId());
+        if(!lectureChatRoomList.isEmpty())dto.setChatRoomId(lectureChatRoomList.get(0).getId());
         // 강의 그룹 시간 list
         List<GroupTimeResDto> groupTimeResDtos = new ArrayList<>();
         int totalDayCount=0;
@@ -598,27 +604,33 @@ public class LectureService {
         LocalDate today = LocalDate.now();
 
         for(GroupTime groupTime: lectureGroup.getGroupTimes()){
-            GroupTimeResDto groupTimeResDto = GroupTimeResDto.builder()
-                    .memberId(lecture.getMemberId())
-                    .groupTimeId(groupTime.getId())
-                    .lectureGroupId(lectureGroup.getId())
-                    .lectureType(lecture.getLectureType().toString())
-                    .lectureDay(groupTime.getLectureDay().name()) // MON, TUE, 등
-                    .startTime(groupTime.getStartTime().toString()) // HH:mm
-                    .endTime(groupTime.getEndTime().toString()) // HH:mm
-                    .startDate(lectureGroup.getStartDate().toString()) // 강의 시작 날짜
-                    .endDate(lectureGroup.getEndDate().toString()) // 강의 종료 날짜
-                    .schedulerTitle(lectureGroup.getLecture().getTitle()) // 강의 제목을 일정 제목으로 설정
-                    .alertYn('N') // 기본값 'N'
-                    .build();
-            groupTimeResDtos.add(groupTimeResDto);
+            if (groupTime.getDelYn().equals("N")) {
+                GroupTimeResDto groupTimeResDto = GroupTimeResDto.builder()
+                        .memberId(lecture.getMemberId())
+                        .groupTimeId(groupTime.getId())
+                        .lectureGroupId(lectureGroup.getId())
+                        .lectureType(lecture.getLectureType().toString())
+                        .lectureDay(groupTime.getLectureDay().name()) // MON, TUE, 등
+                        .startTime(groupTime.getStartTime().toString()) // HH:mm
+                        .endTime(groupTime.getEndTime().toString()) // HH:mm
+                        .startDate(lectureGroup.getStartDate().toString()) // 강의 시작 날짜
+                        .endDate(lectureGroup.getEndDate().toString()) // 강의 종료 날짜
+                        .schedulerTitle(lectureGroup.getLecture().getTitle()) // 강의 제목을 일정 제목으로 설정
+                        .alertYn('N') // 기본값 'N'
+                        .build();
+                groupTimeResDtos.add(groupTimeResDto);
 
-            // 요일 수업 개수 계산 (모든 GroupTime의 요일을 합산)
-            totalDayCount += countDaysBetweenDates(lectureGroup.getStartDate(), lectureGroup.getEndDate(), groupTime.getLectureDay());
+                // 요일 수업 개수 계산 (모든 GroupTime의 요일을 합산)
+                totalDayCount += countDaysBetweenDates(lectureGroup.getStartDate(), lectureGroup.getEndDate(), groupTime.getLectureDay());
 
-            // 현재 날짜까지의 수업 개수 계산
-            pastDayCount += countDaysBetweenDates(lectureGroup.getStartDate(), today, groupTime.getLectureDay());
+                // 현재 날짜까지의 수업 개수 계산
+                pastDayCount += countDaysBetweenDates(lectureGroup.getStartDate(), today, groupTime.getLectureDay());
+            }
+
         }
+        groupTimeResDtos.sort(Comparator.comparing((GroupTimeResDto g) -> DayOfWeek.valueOf(g.getLectureDay()).ordinal())
+                .thenComparing(g -> LocalTime.parse(g.getStartTime())));
+
         dto.setTotalDayCount(totalDayCount);
         dto.setPastDayCount(pastDayCount);
         dto.setLectureGroupTimes(groupTimeResDtos);
@@ -667,6 +679,7 @@ public class LectureService {
                 .title(lectureGroup.getLecture().getTitle())
                 .image(lectureGroup.getLecture().getImage())
                 .address(lectureGroup.getAddress())
+                .detailAddress(lectureGroup.getDetailAddress())
                 .times(timeResDtos)
                 .remaining(lectureGroup.getRemaining())
                 .tutorName(lectureGroup.getLecture().getMemberName())
@@ -702,6 +715,7 @@ public class LectureService {
                     .remaining(lectureGroup.getRemaining())
                     .price(lectureGroup.getPrice())
                     .address(lectureGroup.getAddress())
+                    .detailAddress(lectureGroup.getDetailAddress())
                     .startDate(lectureGroup.getStartDate())
                     .endDate(lectureGroup.getEndDate())
                     .build();

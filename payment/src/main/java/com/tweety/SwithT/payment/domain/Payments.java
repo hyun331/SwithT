@@ -61,6 +61,8 @@ public class Payments {
 
     private String receiptUrl; // 영수증 URL
 
+    private Long lectureGroupId; // 구매한 그룹 번호
+
     public PaymentListDto fromEntity(){
         return PaymentListDto.builder()
                 .id(this.id)
@@ -68,6 +70,7 @@ public class Payments {
                 .amount(this.amount)
                 .paidAt(this.paidAt)
                 .receiptUrl(this.receiptUrl)
+                .lectureGroupId(this.lectureGroupId)
                 .build();
     }
 
