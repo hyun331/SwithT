@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.dto.MemberNameResDto;
+import com.tweety.SwithT.common.dto.MemberProfileResDto;
 import com.tweety.SwithT.common.dto.MemberScoreResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.common.service.OpenSearchService;
@@ -16,6 +17,7 @@ import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
+import com.tweety.SwithT.lecture_apply.dto.SingleLectureTuteeListDto;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatRoom;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatRoomRepository;
@@ -483,7 +485,7 @@ public class LectureService {
         lectureRepository.save(lecture);
     }
 
-    @KafkaListener(topics = "lecture-status-update", groupId = "lecture-group", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "lecture-status-update", groupId = "lecture-status-update", containerFactory = "kafkaListenerContainerFactory")
     @Transactional
     public void lectureStatusUpdateFromKafka(String message) {
         try {
@@ -580,6 +582,10 @@ public class LectureService {
     public LectureHomeResDto LectureHomeInfoGet(Long lectureGroupId){
         // 강의 그룹 정보
         LectureGroup lectureGroup = lectureGroupRepository.findById(lectureGroupId).orElseThrow(()->new EntityNotFoundException("해당 그룹이 없습니다."));
+
+        List<LectureApply> lectureApplyList = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(lectureGroup, Status.ADMIT, "N");
+        Long loginMember = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+
         LectureHomeResDto dto = LectureHomeResDto.builder()
                 .groupId(lectureGroup.getId())
                 .limitPeople(lectureGroup.getLimitPeople())
@@ -591,6 +597,14 @@ public class LectureService {
                 .build();
         // 강의 그룹의 강의 id -> 강의 정보 불러오기
         Lecture lecture = lectureRepository.findById(lectureGroup.getLecture().getId()).orElseThrow(()->new EntityNotFoundException("해당 강의 및 과외가 없습니다."));
+
+        List<Long> memberList = lectureApplyList.stream()
+                .map(LectureApply::getMemberId)
+                .collect(Collectors.toList());
+        memberList.add(lecture.getMemberId());
+
+        if(!memberList.contains(loginMember)) throw new IllegalArgumentException("접근할 수 없는 강의 그룹입니다");
+
         dto.setLectureId(lecture.getId());
         dto.setTitle(lecture.getTitle());
         dto.setContents(lecture.getContents());
@@ -611,7 +625,7 @@ public class LectureService {
         LocalDate today = LocalDate.now();
 
         for(GroupTime groupTime: lectureGroup.getGroupTimes()){
-            if (groupTime.getDelYn().equals("N")) {
+            if (groupTime.getDelYn().equals("N") ) {
                 GroupTimeResDto groupTimeResDto = GroupTimeResDto.builder()
                         .memberId(lecture.getMemberId())
                         .groupTimeId(groupTime.getId())
