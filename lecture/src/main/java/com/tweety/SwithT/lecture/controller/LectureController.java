@@ -201,4 +201,16 @@ public class LectureController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
+    @GetMapping("/lecture-group/get-image-and-title/{id}")
+    public ResponseEntity<?> getImageAndThumbnailByGroupId(@PathVariable Long id){
+        LectureTitleAndImageResDto dto = lectureService.getTitleAndThumbnailByGroupId(id);
+        try {
+            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "제목과 썸네일", dto);
+            return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+        } catch (EntityNotFoundException e){
+            CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.NOT_FOUND.value(), e.getMessage());
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.NOT_FOUND);
+        }
+    }
+
 }

@@ -662,6 +662,17 @@ public class LectureService {
                 .build();
     }
 
+    public LectureTitleAndImageResDto getTitleAndThumbnailByGroupId(Long id){
+        LectureGroup lectureGroup = lectureGroupRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("강의 정보 가져오기에 실패했습니다."));
+        Lecture lecture = lectureGroup.getLecture();
+
+        return LectureTitleAndImageResDto.builder()
+                .title(lecture.getTitle())
+                .image(lecture.getImage())
+                .build();
+    }
+
     public LectureGroupResDto getLectureGroupInfo(Long id){
         LectureGroup lectureGroup = lectureGroupRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("강의 그룹 가져오기 실패"));

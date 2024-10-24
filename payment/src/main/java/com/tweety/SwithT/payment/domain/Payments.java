@@ -69,6 +69,7 @@ public class Payments {
                 .name(this.name)
                 .amount(this.amount)
                 .paidAt(this.paidAt)
+                .status(this.status)
                 .receiptUrl(this.receiptUrl)
                 .lectureGroupId(this.lectureGroupId)
                 .build();
