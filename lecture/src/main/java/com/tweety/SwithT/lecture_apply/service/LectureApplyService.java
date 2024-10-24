@@ -521,6 +521,7 @@ public class LectureApplyService {
                     .schedulerTitle(lectureGroup.getLecture().getTitle()) // 강의 제목을 일정 제목으로 설정
                     .alertYn('N') // 기본값 'N'
                     .build();
+
             groupTimesDto.add(groupTimeResDto);
         }
         try {

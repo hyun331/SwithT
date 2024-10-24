@@ -2,6 +2,7 @@ package com.tweety.SwithT.lecture_chat_room.domain;
 
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import com.tweety.SwithT.common.domain.MemberType;
+import com.tweety.SwithT.lecture_chat_room.dto.SendMessageDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,6 +35,15 @@ public class LectureChatLogs extends BaseTimeEntity {
 
     @Column(nullable = false)
     private String memberName;
+
+    public SendMessageDto fromEntityToSendMessageDto(){
+        return SendMessageDto.builder()
+                .chatRoomId(this.lectureChatRoom.getId())
+                .memberId(this.memberId)
+                .memberName(this.memberName)
+                .message(this.contents)
+                .build();
+    }
 
 
 }
