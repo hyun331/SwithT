@@ -338,7 +338,8 @@ public class LectureApplyService {
             lectureGroup.decreaseRemaining();
         }
 
-        Long memberId = lectureApply.getMemberId();
+        Long tuteeId = lectureApply.getMemberId();
+        Long tutorId = lectureApply.getLectureGroup().getLecture().getMemberId();
         System.out.println(lectureApply.getLectureGroup().getLecture().getLectureType());
         if(lectureApply.getLectureGroup().getLecture().getLectureType().toString().equals("LESSON")){
             List<LectureChatRoom> lectureChatRooms = lectureChatRoomRepository.findByLectureGroupAndDelYn
@@ -347,7 +348,7 @@ public class LectureApplyService {
             for(LectureChatRoom lectureChatRoom: lectureChatRooms){
                 List<LectureChatParticipants> lectureChatParticipantsList = lectureChatParticipantsRepository.findByLectureChatRoom(lectureChatRoom);
                 for(LectureChatParticipants lectureChatParticipants: lectureChatParticipantsList){
-                    if(!lectureChatParticipants.getMemberId().equals(memberId)){
+                    if(!lectureChatParticipants.getMemberId().equals(tuteeId)){
                         lectureChatParticipants.updateDelYn();
                     }
                 }
@@ -356,10 +357,12 @@ public class LectureApplyService {
         }
 
         lectureApplyRepository.save(lectureApply);
-        updateSchedule(lectureApply.getLectureGroup(), memberId);
+        updateSchedule(lectureApply, tuteeId);
+        updateSchedule(lectureApply, tutorId);
     }
 
-    public void updateSchedule(LectureGroup lectureGroup, Long memberId){
+    public void updateSchedule(LectureApply lectureApply, Long memberId){
+        LectureGroup lectureGroup = lectureApply.getLectureGroup();
         ObjectMapper objectMapper = new ObjectMapper();
 
         List<GroupTimeResDto> groupTimesDto = new ArrayList<>();
@@ -371,8 +374,8 @@ public class LectureApplyService {
                     .lectureDay(groupTime.getLectureDay().name()) // MON, TUE, 등
                     .startTime(groupTime.getStartTime().toString()) // HH:mm
                     .endTime(groupTime.getEndTime().toString()) // HH:mm
-                    .startDate(lectureGroup.getStartDate().toString()) // 강의 시작 날짜
-                    .endDate(lectureGroup.getEndDate().toString()) // 강의 종료 날짜
+                    .startDate(lectureApply.getStartDate().toString()) // 강의 시작 날짜
+                    .endDate(lectureApply.getEndDate().toString()) // 강의 종료 날짜
                     .schedulerTitle(lectureGroup.getLecture().getTitle()) // 강의 제목을 일정 제목으로 설정
                     .alertYn('N') // 기본값 'N'
                     .build();
@@ -416,7 +419,7 @@ public class LectureApplyService {
         }
 
         lectureApplyRepository.save(lectureApply);
-        updateSchedule(lectureApply.getLectureGroup(), memberId);
+        updateSchedule(lectureApply, memberId);
     }
 
     public int getGroupRemainingFromApplyId(Long id){
