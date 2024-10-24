@@ -1,35 +1,25 @@
 package com.tweety.SwithT.lecture_chat_room.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tweety.SwithT.common.auth.JwtTokenProvider;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.dto.MemberNameResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
 import com.tweety.SwithT.lecture.domain.LectureType;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
-import com.tweety.SwithT.lecture_apply.domain.LectureApply;
-import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyListDto;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatLogs;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatParticipants;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatRoom;
-import com.tweety.SwithT.lecture_chat_room.dto.*;
+import com.tweety.SwithT.lecture_chat_room.dto.ChatRoomCheckDto;
+import com.tweety.SwithT.lecture_chat_room.dto.ChatRoomResDto;
+import com.tweety.SwithT.lecture_chat_room.dto.MyChatRoomListResDto;
+import com.tweety.SwithT.lecture_chat_room.dto.SendMessageDto;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatLogsRepository;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatParticipantsRepository;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatRoomRepository;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -37,8 +27,6 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -112,7 +100,8 @@ public class LectureChatRoomService {
         LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(dto.getLectureGroupId(), "N").orElseThrow(()->{
             throw new EntityNotFoundException("강의그룹을 찾을 수 없습니다.");
         });
-        Long tutorId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+//        승인 보내는 시점에서 tutorId가 admin의 id로 들어가서 주석 처리
+//        Long tutorId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
 
         List<LectureChatRoom> lectureChatRoomList = chatRoomRepository.findByLectureGroupAndDelYn(lectureGroup, "N");
         for(LectureChatRoom chatRoom: lectureChatRoomList){
@@ -141,7 +130,7 @@ public class LectureChatRoomService {
         //튜터 참가자 추가
         LectureChatParticipants tutor = LectureChatParticipants.builder()
                 .lectureChatRoom(newChatRoom)
-                .memberId(tutorId)
+                .memberId(lectureGroup.getLecture().getMemberId())
                 .build();
 
         chatParticipantsRepository.save(tutor);

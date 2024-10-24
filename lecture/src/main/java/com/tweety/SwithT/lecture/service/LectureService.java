@@ -18,7 +18,9 @@ import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatRoom;
+import com.tweety.SwithT.lecture_chat_room.dto.ChatRoomCheckDto;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatRoomRepository;
+import com.tweety.SwithT.lecture_chat_room.service.LectureChatRoomService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -61,7 +63,7 @@ public class LectureService {
     private final S3Service s3Service;
     private final OpenSearchService openSearchService;
     private final RedisStreamProducer redisStreamProducer;
-
+    private final LectureChatRoomService lectureChatRoomService;
 
     // Create
     @Transactional
@@ -503,6 +505,14 @@ public class LectureService {
                     ()-> new EntityNotFoundException("상태 업데이트 중 문제가 발생했습니다."));
             if(lecture.getLectureType().equals(LectureType.LECTURE)){
                 updateLectureStatus(statusUpdateDto);
+                List<LectureGroup> lectureGroups = lecture.getLectureGroups();
+                for(LectureGroup lectureGroup: lectureGroups){
+                    ChatRoomCheckDto chatRoomCheckDto = ChatRoomCheckDto.builder()
+                            .lectureGroupId(lectureGroup.getId())
+                            .tuteeId(lecture.getMemberId())
+                            .build();
+                    lectureChatRoomService.tutorLessonChatCheckOrCreate(chatRoomCheckDto);
+                }
             }
             redisStreamProducer.publishMessage(
                     lecture.getMemberId().toString(), "강의 승인", lecture.getTitle() + " 강의가 승인되었습니다.", "메롱");
