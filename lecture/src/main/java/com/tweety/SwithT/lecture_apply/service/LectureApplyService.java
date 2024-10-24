@@ -445,9 +445,11 @@ public class LectureApplyService {
             throw new EntityNotFoundException("해당 강의 그룹이 없습니다");
         });
         Lecture lecture = lectureGroup.getLecture();
-        if(lecture.getMemberId() != memberId){  //소유자가 아닌 경우
-            throw new IllegalArgumentException("접근할 수 없는 강의 그룹입니다");
-        }
+//        if(lecture.getMemberId() != memberId){  //소유자가 아닌 경우
+//            throw new IllegalArgumentException("접근할 수 없는 강의 그룹입니다");
+//        }
+
+        // Todo : tutor 또는 tutee apply 된 사람들만 받기
         List<LectureApply> lectureApplyList = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(lectureGroup, Status.ADMIT, "N");
 //        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
 //        int start = (int) pageRequest.getOffset();
