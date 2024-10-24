@@ -113,8 +113,10 @@ public class LectureApplyService {
             throw new EntityNotFoundException("해당 과외가 존재하지 않습니다.");
         });
 
-        return SingleLectureApplyAfterResDto.builder().lectureTitle(lecture.getTitle()).build();
+        redisStreamProducer.publishMessage(lecture.getMemberId().toString(), "수강 신청",
+                lecture.getTitle() + " 강의에 새로운 수강 신청이 있습니다.", memberName + "수강생");
 
+        return SingleLectureApplyAfterResDto.builder().lectureTitle(lecture.getTitle()).build();
 
     }
 
