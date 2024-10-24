@@ -45,6 +45,9 @@ public class LectureApply extends BaseTimeEntity {
     @Column(nullable = true)
     private String location;
 
+    @Column(nullable = true)
+    private String detailAddress;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     private Status status = Status.STANDBY;
