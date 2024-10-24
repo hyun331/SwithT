@@ -166,7 +166,7 @@ public class LectureApplyService {
             throw new EntityNotFoundException("id에 맞는 수강을 찾을 수 없습니다.");
         });
 
-        lectureApply.updateReviewStatus(ReviewStatus.YES); // JPA가 알아서 체킹?
+        lectureApply.updateReviewStatus(ReviewStatus.Y); // JPA가 알아서 체킹?
         return lectureApply.getReviewStatus();
     }
     //튜터 - 튜티의 신청 승인

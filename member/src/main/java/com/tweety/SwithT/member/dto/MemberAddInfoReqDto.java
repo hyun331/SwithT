@@ -46,6 +46,7 @@ public class MemberAddInfoReqDto {
     @Builder.Default
     @Column(precision = 2, scale = 1, nullable = true)
     private BigDecimal avgScore = BigDecimal.valueOf(0.0);
+
     private Role role;
 
 }

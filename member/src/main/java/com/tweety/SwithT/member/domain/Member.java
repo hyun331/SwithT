@@ -78,7 +78,7 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = true)
     private String profileImage;
 
-    @Column(nullable = true)
+    @Column(nullable = true, length = 1000)
     private String introduce;
 
     @Column(nullable = true)
@@ -142,6 +142,7 @@ public class Member extends BaseTimeEntity {
         this.education = memberAddInfoReqDto.getEducation();
         this.introduce = memberAddInfoReqDto.getIntroduce();
         this.profileImage = memberAddInfoReqDto.getProfileImage(); // 어떻게 될지 모르겟는데 일단 해봐
+        this.role = memberAddInfoReqDto.getRole();
         
         return this;
     }
