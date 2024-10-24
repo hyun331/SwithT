@@ -8,6 +8,7 @@ import com.tweety.SwithT.common.dto.MemberNameResDto;
 import com.tweety.SwithT.common.dto.MemberScoreResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.common.service.OpenSearchService;
+import com.tweety.SwithT.common.service.RedisStreamProducer;
 import com.tweety.SwithT.common.service.S3Service;
 import com.tweety.SwithT.lecture.domain.*;
 import com.tweety.SwithT.lecture.dto.*;
@@ -59,7 +60,7 @@ public class LectureService {
     private final MemberFeign memberFeign;
     private final S3Service s3Service;
     private final OpenSearchService openSearchService;
-
+    private final RedisStreamProducer redisStreamProducer;
 
 
     // Create
@@ -498,8 +499,14 @@ public class LectureService {
             // JSON 메시지를 LectureStatusUpdateDto로 변환
             LectureStatusUpdateDto statusUpdateDto = objectMapper.readValue(message, LectureStatusUpdateDto.class);
 
+            Lecture lecture = lectureRepository.findById(statusUpdateDto.getLectureId()).orElseThrow(
+                    ()-> new EntityNotFoundException("상태 업데이트 중 문제가 발생했습니다."));
+            if(lecture.getLectureType().equals(LectureType.LECTURE)){
+                updateLectureStatus(statusUpdateDto);
+            }
+            redisStreamProducer.publishMessage(
+                    lecture.getMemberId().toString(), "강의 승인", lecture.getTitle() + " 강의가 승인되었습니다.", "메롱");
             // 상태 업데이트
-            updateLectureStatus(statusUpdateDto);
 //            System.out.println("Kafka 메시지 처리 완료: " + statusUpdateDto);
         } catch (JsonProcessingException e) {
             System.err.println("Kafka 메시지 변환 중 오류 발생: " + e.getMessage());
