@@ -77,7 +77,8 @@ public class BoardService {
     public BoardDetailResDto boardDetail(Long boardId){
         Board board = boardRepository.findById(boardId).orElseThrow(()->new EntityNotFoundException("해당 게시글이 없습니다."));
         // Todo : comments도 한번에 보여주기
-        return BoardDetailResDto.fromEntity(board);
+        Long loginMemberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+        return BoardDetailResDto.fromEntity(board,loginMemberId);
     }
     @Transactional
     public BoardUpdateResDto updateBoard(Long boardId, BoardUpdateReqDto dto)  {
