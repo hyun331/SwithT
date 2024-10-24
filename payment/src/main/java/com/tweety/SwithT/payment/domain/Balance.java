@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 
@@ -27,17 +26,16 @@ public class Balance {
     private Long cost;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @ColumnDefault("Standby")
+    @Column(nullable = false, columnDefinition = "enum('ADMIT', 'CANCELED', 'STANDBY') default 'STANDBY'")
     private Status status;
 
     @OneToOne
     @JoinColumn(name = "payment_id", nullable = false)
     private Payments payments;
-
+    
     private Long memberId;
 
-    public Balance changeStatus(Status status){
+    public Balance changeStatus(Status status) {
         this.status = status;
         return this;
     }

@@ -42,7 +42,7 @@ public class SchedulerService {
         this.schedulerAlertService = schedulerAlertService;
     }
 
-    @KafkaListener(topics = "schedule-update", groupId = "member-group", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "schedule-update", groupId = "member-group-schedule-update", containerFactory = "kafkaListenerContainerFactory")
     public void updateScheduleFromKafka(String message) {
         try {
 //            System.out.println("수신된 Kafka 메시지: " + message);
@@ -278,7 +278,7 @@ public class SchedulerService {
     }
 
     @Transactional
-    @KafkaListener(topics = "schedule-cancel-update", groupId = "member-group", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "schedule-cancel-update", groupId = "member-group-schedule-cancel-update", containerFactory = "kafkaListenerContainerFactory")
     public void deleteScheduleByRefund(Long lectureGroupId){
         List<Scheduler> schedulerList = schedulerRepository.findAllByLectureGroupId(lectureGroupId);
 
