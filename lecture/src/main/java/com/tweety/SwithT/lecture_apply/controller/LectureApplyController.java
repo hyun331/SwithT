@@ -124,9 +124,4 @@ public class LectureApplyController {
         return lectureApplyService.getGroupRemainingFromApplyId(id);
     }
 
-    @GetMapping("/lecture-apply/tutee-info/{id}")
-    public Long getTuteeId(@PathVariable Long id){
-        return lectureApplyService.getTuteeIdFromApplyId(id);
-    }
-
 }

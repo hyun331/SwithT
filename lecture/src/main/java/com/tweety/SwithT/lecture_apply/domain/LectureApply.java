@@ -51,7 +51,7 @@ public class LectureApply extends BaseTimeEntity {
 
     @Builder.Default // 김민성 리뷰 관리를 위해 추가
     @Enumerated(EnumType.STRING)
-    private ReviewStatus reviewStatus = ReviewStatus.NO;
+    private ReviewStatus reviewStatus = ReviewStatus.N;
 
     public void updateReviewStatus(ReviewStatus updateReviewStatus){
 
