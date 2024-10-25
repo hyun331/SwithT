@@ -340,27 +340,46 @@ public class LectureApplyService {
             lectureGroup.decreaseRemaining();
         }
 
-        Long tuteeId = lectureApply.getMemberId();
+        Long paidTuteeId = lectureApply.getMemberId();
+//        System.out.println("결제한 튜티: " + paidTuteeId);
         Long tutorId = lectureApply.getLectureGroup().getLecture().getMemberId();
-        System.out.println(lectureApply.getLectureGroup().getLecture().getLectureType());
         if(lectureApply.getLectureGroup().getLecture().getLectureType().toString().equals("LESSON")){
-            List<LectureChatRoom> lectureChatRooms = lectureChatRoomRepository.findByLectureGroupAndDelYn
-                    (lectureApply.getLectureGroup(), "N");
             lectureApply.getLectureGroup().updateIsAvailable("N");
-            for(LectureChatRoom lectureChatRoom: lectureChatRooms){
-                List<LectureChatParticipants> lectureChatParticipantsList = lectureChatParticipantsRepository.findByLectureChatRoom(lectureChatRoom);
-                for(LectureChatParticipants lectureChatParticipants: lectureChatParticipantsList){
-                    if(!lectureChatParticipants.getMemberId().equals(tuteeId)){
-                        lectureChatParticipants.updateDelYn();
+            List<LectureChatRoom> chatRooms = lectureChatRoomRepository.findByLectureGroupAndDelYn
+                    (lectureApply.getLectureGroup(), "N");
+            for(LectureChatRoom chatRoom: chatRooms){
+//                System.out.println("검토할 채팅방: " + chatRoom.getId());
+                List<LectureChatParticipants> participants = lectureChatParticipantsRepository.findByLectureChatRoom(chatRoom);
+                boolean isPaidChatRoom = false;
+                for(LectureChatParticipants participant: participants){
+//                    System.out.println("검토할 참여자: " + participant.getMemberId());
+                    if(participant.getMemberId().equals(paidTuteeId)){
+                        isPaidChatRoom = true;
+                        break;
                     }
                 }
-                lectureChatRoom.updateDelYn();
+                if(isPaidChatRoom){
+                    continue;
+                }
+
+                for(LectureChatParticipants participant : participants){
+                    participant.updateDelYn();
+                }
+                chatRoom.updateDelYn();
             }
         }
 
         lectureApplyRepository.save(lectureApply);
-        updateSchedule(lectureApply, tuteeId);
+        updateSchedule(lectureApply, paidTuteeId);
         updateSchedule(lectureApply, tutorId);
+    }
+
+    @Transactional
+    public void updateLectureStatus(Long lectureGroupId, Long memberId){
+        LectureGroup lectureGroup = lectureGroupRepository.findById(lectureGroupId).orElseThrow(
+                ()-> new EntityNotFoundException("강의 그룹 정보를 불러오는 데 실패했습니다."));
+
+        updateSchedule(lectureGroup, memberId);
     }
 
     public void updateSchedule(LectureApply lectureApply, Long memberId){
@@ -394,6 +413,36 @@ public class LectureApplyService {
         }
     }
 
+    public void updateSchedule(LectureGroup lectureGroup, Long memberId){
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        List<GroupTimeResDto> groupTimesDto = new ArrayList<>();
+
+        for(GroupTime groupTime: lectureGroup.getGroupTimes()){
+            GroupTimeResDto groupTimeResDto = GroupTimeResDto.builder()
+                    .memberId(memberId)
+                    .lectureGroupId(lectureGroup.getId())
+                    .lectureDay(groupTime.getLectureDay().name()) // MON, TUE, 등
+                    .startTime(groupTime.getStartTime().toString()) // HH:mm
+                    .endTime(groupTime.getEndTime().toString()) // HH:mm
+                    .startDate(lectureGroup.getStartDate().toString()) // 강의 시작 날짜
+                    .endDate(lectureGroup.getEndDate().toString()) // 강의 종료 날짜
+                    .schedulerTitle(lectureGroup.getLecture().getTitle()) // 강의 제목을 일정 제목으로 설정
+                    .alertYn('N') // 기본값 'N'
+                    .build();
+            groupTimesDto.add(groupTimeResDto);
+        }
+        try {
+            String message = objectMapper.writeValueAsString(groupTimesDto);
+
+            kafkaTemplate.send("schedule-update", message);  // JSON 문자열 전송
+
+            System.out.println("Kafka 메시지 전송됨: " + message);
+        } catch (JsonProcessingException e) {
+            System.err.println("Kafka 메시지 변환 및 전송 실패: " + e.getMessage());
+        }
+    }
+
     @Transactional
     public void updateFreeLectureApplyStatus(Long id){
         LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
@@ -403,25 +452,38 @@ public class LectureApplyService {
         LectureGroup lectureGroup = lectureApply.getLectureGroup();
         lectureGroup.decreaseRemaining();
 
-        Long memberId = lectureApply.getMemberId();
+        Long tuteeId = lectureApply.getMemberId();
+        Long tutorId = lectureApply.getLectureGroup().getLecture().getMemberId();
         System.out.println(lectureApply.getLectureGroup().getLecture().getLectureType());
         if(lectureApply.getLectureGroup().getLecture().getLectureType().toString().equals("LESSON")){
-            List<LectureChatRoom> lectureChatRooms = lectureChatRoomRepository.findByLectureGroupAndDelYn
-                    (lectureApply.getLectureGroup(), "N");
             lectureApply.getLectureGroup().updateIsAvailable("N");
-            for(LectureChatRoom lectureChatRoom: lectureChatRooms){
-                List<LectureChatParticipants> lectureChatParticipantsList = lectureChatParticipantsRepository.findByLectureChatRoom(lectureChatRoom);
-                for(LectureChatParticipants lectureChatParticipants: lectureChatParticipantsList){
-                    if(!lectureChatParticipants.getMemberId().equals(memberId)){
-                        lectureChatParticipants.updateDelYn();
+            List<LectureChatRoom> chatRooms = lectureChatRoomRepository.findByLectureGroupAndDelYn
+                    (lectureApply.getLectureGroup(), "N");
+            for(LectureChatRoom chatRoom: chatRooms){
+//                System.out.println("검토할 채팅방: " + chatRoom.getId());
+                List<LectureChatParticipants> participants = lectureChatParticipantsRepository.findByLectureChatRoom(chatRoom);
+                boolean isPaidChatRoom = false;
+                for(LectureChatParticipants participant: participants){
+//                    System.out.println("검토할 참여자: " + participant.getMemberId());
+                    if(participant.getMemberId().equals(tuteeId)){
+                        isPaidChatRoom = true;
+                        break;
                     }
                 }
-                lectureChatRoom.updateDelYn();
+                if(isPaidChatRoom){
+                    continue;
+                }
+
+                for(LectureChatParticipants participant : participants){
+                    participant.updateDelYn();
+                }
+                chatRoom.updateDelYn();
             }
         }
 
         lectureApplyRepository.save(lectureApply);
-        updateSchedule(lectureApply, memberId);
+        updateSchedule(lectureApply, tuteeId);
+        updateSchedule(lectureApply, tutorId);
     }
 
     public int getGroupRemainingFromApplyId(Long id){

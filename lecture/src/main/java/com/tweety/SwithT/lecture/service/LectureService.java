@@ -514,6 +514,7 @@ public class LectureService {
                     lectureChatRoomService.tutorLessonChatCheckOrCreate(chatRoomCheckDto);
                 }
             }
+            updateLectureStatus(statusUpdateDto);
             redisStreamProducer.publishMessage(
                     lecture.getMemberId().toString(), "강의 승인", lecture.getTitle() + " 강의가 승인되었습니다.", "메롱");
             // 상태 업데이트
