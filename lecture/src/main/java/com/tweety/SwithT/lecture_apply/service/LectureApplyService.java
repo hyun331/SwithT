@@ -380,6 +380,22 @@ public class LectureApplyService {
                 ()-> new EntityNotFoundException("강의 그룹 정보를 불러오는 데 실패했습니다."));
 
         updateSchedule(lectureGroup, memberId);
+
+        CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
+        ObjectMapper objectMapper = new ObjectMapper();
+        MemberNameResDto memberNameResDto = objectMapper.convertValue(commonResDto.getResult(), MemberNameResDto.class);
+        String memberName = memberNameResDto.getName();
+
+        LectureApply lectureApply = LectureApply.builder()
+                .lectureGroup(lectureGroup)
+                .status(Status.ADMIT)
+                .memberName(memberName)
+                .location(lectureGroup.getAddress())
+                .startDate(lectureGroup.getStartDate())
+                .endDate(lectureGroup.getEndDate())
+                .build();
+
+        lectureApplyRepository.save(lectureApply);
     }
 
     public void updateSchedule(LectureApply lectureApply, Long memberId){
