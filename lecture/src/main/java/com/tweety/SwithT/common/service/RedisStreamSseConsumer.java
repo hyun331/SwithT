@@ -69,7 +69,17 @@ public class RedisStreamSseConsumer implements StreamListener<String, MapRecord<
 
 
             } catch (IOException e) {
+                System.out.println("IOException "+ e.getMessage());
+
                 emitter.completeWithError(e);
+                clients.remove(memberId);
+                List<MapRecord<String, Object, Object>> records = redisTemplate.opsForStream().read(
+                        Consumer.from("sse-group", memberId),
+                        StreamReadOptions.empty().count(1),
+                        StreamOffset.create("sse-notifications", ReadOffset.lastConsumed())
+                );
+            }catch (IllegalStateException e2) {
+                System.out.println("illegalStateException "+ e2.getMessage());
                 clients.remove(memberId);
                 List<MapRecord<String, Object, Object>> records = redisTemplate.opsForStream().read(
                         Consumer.from("sse-group", memberId),
@@ -94,7 +104,6 @@ public class RedisStreamSseConsumer implements StreamListener<String, MapRecord<
 
     public void addClient(String memberId, SseEmitter emitter) {
         clients.put(memberId, emitter);
-
         //로그인 후 pending 메세지 처리
         processPendingMessage(memberId, emitter);
     }
@@ -103,6 +112,7 @@ public class RedisStreamSseConsumer implements StreamListener<String, MapRecord<
         clients.remove(memberId);
     }
 
+    //로그인 전 pending 처리된 메세지 가져오기
     public void processPendingMessage(String memberId, SseEmitter emitter){
         System.out.println("processPendingMessage : pending 메세지 처리");
 
@@ -135,13 +145,8 @@ public class RedisStreamSseConsumer implements StreamListener<String, MapRecord<
                     }catch (Exception e){
                         System.out.println(e.getMessage());
                     }
-
-
                     // 메시지 처리 후 ACK 수행
-//                    acknowledgeMessage(convertedRecord);
                     redisTemplate.opsForStream().acknowledge("sse-notifications", "sse-group", record.getId());
-
-
                 } catch (Exception e) {
                     System.err.println(e.getMessage());
                 }
@@ -150,6 +155,7 @@ public class RedisStreamSseConsumer implements StreamListener<String, MapRecord<
             System.out.println("pending 메세지 없음: " + memberId);
         }
     }
+
 
 //    private MapRecord<String, String, String> convertRecord(MapRecord<String, Object, Object> record) {
 //        Map<String, String> valueMap = new HashMap<>();
@@ -163,11 +169,11 @@ public class RedisStreamSseConsumer implements StreamListener<String, MapRecord<
 
 
     // 메시지 ACK 처리 메서드
-    private void acknowledgeMessage(MapRecord<String, String, String> record) {
-        String streamName = record.getStream();
-        String groupName = "sse-group";  // 그룹 이름 고정 (필요 시 동적 설정 가능)
-
-        redisTemplate.opsForStream().acknowledge(streamName, groupName, record.getId());
-        System.out.println("ACK message id : " + record.getId().getValue());
-    }
+//    private void acknowledgeMessage(MapRecord<String, String, String> record) {
+//        String streamName = record.getStream();
+//        String groupName = "sse-group";  // 그룹 이름 고정 (필요 시 동적 설정 가능)
+//
+//        redisTemplate.opsForStream().acknowledge(streamName, groupName, record.getId());
+//        System.out.println("ACK message id : " + record.getId().getValue());
+//    }
 }
