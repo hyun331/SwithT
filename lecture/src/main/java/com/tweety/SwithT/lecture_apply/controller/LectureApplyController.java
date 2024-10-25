@@ -106,6 +106,22 @@ public class LectureApplyController {
 
     }
 
+    @PostMapping("/lecture/after-paid")
+    public ResponseEntity<?>updateLectureStatus(@RequestParam Long lectureGroupId,
+                                                @RequestParam Long memberId){
+        try{
+            System.out.println("강의 feign 넘어옴");
+            System.out.println("그룹 번호: " + lectureGroupId);
+            System.out.println("멤버 번호: " + memberId);
+            lectureApplyService.updateLectureStatus(lectureGroupId, memberId);
+            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "결제 완료", null);
+            return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+        } catch (EntityNotFoundException e){
+            CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @PutMapping("/lectures/{id}/payment/refund")
     public ResponseEntity<?> requestRefund(@PathVariable Long id){
         System.out.println("환불 feign 넘어옴");

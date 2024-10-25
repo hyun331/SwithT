@@ -142,24 +142,38 @@ public class PaymentService {
         // 결제 상태 확인
         String status = isPaymentComplete(lecturePayResDto);
         System.out.println("status:" + status);
-        // 결제 상태에 따른 응답 처리
+
         boolean isPaid = "paid".equalsIgnoreCase(status); // 상태가 'paid'인 경우 결제 성공으로 처리
         HttpStatus responseStatus = isPaid ? HttpStatus.OK : HttpStatus.BAD_REQUEST;
         String responseMessage = isPaid ? "결제가 성공적으로 완료되었습니다." : "결제에 실패했습니다.";
 
-        CommonResDto returnResDto = new CommonResDto(
-                responseStatus, responseMessage, status);
+        CommonResDto returnResDto = new CommonResDto(responseStatus, responseMessage, status);
 
         if (isPaid) {
-            // 결제가 성공적으로 완료되었을 경우 Feign Client를 사용해 lectureApply 상태 업데이트
             try {
-                // 결제 완료 시 상태를 "PAID"로 업데이트
-                lectureFeign.updateLectureApplyStatus(lecturePayResDto.getId(), returnResDto);
+//                resDto에 id가 없으면 강의
+                if (lecturePayResDto.getId() == null) {
+                    lectureFeign.updateLectureStatus(lecturePayResDto.getLectureGroupId(), lecturePayResDto.getMemberId());
+                } else {
+//                    있으면 과외
+                    lectureFeign.updateLectureApplyStatus(lecturePayResDto.getId(), returnResDto);
+                }
             } catch (FeignException e) {
                 System.out.println("case 5");
-                // Feign 호출 실패 시 예외 처리
-                throw new ResponseStatusException(
-                        HttpStatus.INTERNAL_SERVER_ERROR, "Feign 통신 중 오류 발생: " + e.getMessage());
+
+                // Feign 호출 실패 시 예외 처리 및 결제 취소 로직
+                try {
+                    IamportClient iamportClient = iamportApiProperty.getIamportClient();
+                    iamportClient.cancelPaymentByImpUid(new CancelData(
+                            lecturePayResDto.getImpUid(), true)); // 결제 취소 요청
+                    System.out.println("결제가 성공했으나, 통신 오류로 취소되었습니다.");
+                } catch (IamportResponseException | IOException cancelException) {
+                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                            "결제 취소 실패: " + cancelException.getMessage());
+                }
+
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Feign 통신 중 오류 발생: " + e.getMessage());
             }
         }
 

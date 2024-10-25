@@ -3,6 +3,7 @@ package com.tweety.SwithT.payment.service;
 import com.tweety.SwithT.common.configs.FeignConfig;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @FeignClient(name="lecture-service", configuration = FeignConfig.class)
@@ -20,4 +21,7 @@ public interface LectureFeign {
     @GetMapping(value = "/lecture-group/get/remaining/{id}")
     int getRemaining(@PathVariable("id")Long lectureGroupId);
 
+    @PostMapping(value = "/lecture/after-paid")
+    ResponseEntity<?> updateLectureStatus(@RequestParam("lectureGroupId") Long lectureGroupId,
+                                          @RequestParam("memberId") Long memberId);
 }
