@@ -137,12 +137,19 @@ public class SchedulerService {
         if(!scheduler.getMember().equals(member)){
             throw new IllegalArgumentException("접근 권한이 없습니다.");
         }
-        scheduler.deleteSchedule();
-        ScheduleAlert scheduleAlert = schedulerAlertRepository.findBySchedulerId(schedulerId);
-        if(scheduleAlert!= null){
-            schedulerAlertService.cancelAlert(scheduleAlert.getId());
+
+        if(scheduler.getLectureGroupId() != null){
+            throw new IllegalStateException("수업 일정은 삭제할 수 없습니다.");
+        } else if(scheduler.getLectureAssignmentId() != null){
+            throw new IllegalStateException("과제 일정은 삭제할 수 없습니다.");
+        } else{
+            scheduler.deleteSchedule();
+            ScheduleAlert scheduleAlert = schedulerAlertRepository.findBySchedulerId(schedulerId);
+            if(scheduleAlert!= null){
+                schedulerAlertService.cancelAlert(scheduleAlert.getId());
+            }
+            schedulerRepository.save(scheduler);
         }
-        schedulerRepository.save(scheduler);
     }
 
     // 과제 생성 관련 kafka 리스터 추가
