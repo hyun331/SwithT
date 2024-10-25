@@ -548,4 +548,23 @@ public class LectureApplyService {
 
         kafkaTemplate.send("schedule-cancel-update", lectureGroupId);
     }
+
+    @Transactional
+    public void lectureCancelBeforePayment(Long lectureApplyId){
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+
+        LectureApply lectureApply = lectureApplyRepository.findById(lectureApplyId).orElseThrow(
+                ()-> new EntityNotFoundException("승인 번호 불러오기에 실패했습니다."));
+
+        if(!lectureApply.getMemberId().equals(memberId)){
+            throw new IllegalArgumentException("접근 권한이 없습니다.");
+        }
+
+        Long tutorId = lectureApply.getLectureGroup().getLecture().getMemberId();
+
+        redisStreamProducer.publishMessage(tutorId.toString(), "수강 취소",
+                lectureApply.getMemberName() + "  수강생이 신청을 취소했습니다.", lectureApply.getId().toString());
+
+        lectureApply.updateStatus(Status.CANCEL);
+    }
 }

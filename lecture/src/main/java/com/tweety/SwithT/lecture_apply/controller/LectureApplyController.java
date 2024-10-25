@@ -140,4 +140,19 @@ public class LectureApplyController {
         return lectureApplyService.getGroupRemainingFromApplyId(id);
     }
 
+    @PutMapping("/lecture-apply/cancel/{id}")
+    public ResponseEntity<?> applyCancelBeforePay(@PathVariable Long id){
+        try {
+            lectureApplyService.lectureCancelBeforePayment(id);
+            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 신청이 취소되었습니다.", null);
+            return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+        } catch (IllegalArgumentException e){
+            CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.FORBIDDEN.value(), e.getMessage());
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.FORBIDDEN);
+        } catch (EntityNotFoundException e){
+            CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.NOT_FOUND.value(), e.getMessage());
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.NOT_FOUND);
+        }
+    }
+
 }
