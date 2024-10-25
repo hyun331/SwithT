@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -44,7 +45,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -254,6 +257,7 @@ public class LectureApplyService {
                             .lectureType(lectureApply.getLectureGroup().getLecture().getLectureType())
                             .createdTime(lectureApply.getCreatedTime())
                             .lectureImage(lectureApply.getLectureGroup().getLecture().getImage())
+                            .reviewStatus(lectureApply.getReviewStatus()) //김민성 추가
                     .build());
         }
 
@@ -317,6 +321,7 @@ public class LectureApplyService {
         }
     }
 
+
     public LectureGroupPayResDto getLectureGroupByApplyId(Long id){
         LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("수강 번호 불러오기 실패"));
@@ -367,6 +372,10 @@ public class LectureApplyService {
                 }
                 chatRoom.updateDelYn();
             }
+            LectureGroup lectureGroup = lectureApply.getLectureGroup();
+            lectureGroup.updateDate(lectureApply.getStartDate(),lectureApply.getEndDate());
+            lectureGroup.updateAddress(lectureApply.getLocation());
+            lectureGroup.updateDetailAddress(lectureApply.getDetailAddress());
         }
 
         lectureApplyRepository.save(lectureApply);
@@ -506,10 +515,13 @@ public class LectureApplyService {
         LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{
             throw new EntityNotFoundException("해당 강의 그룹이 없습니다");
         });
+
         Lecture lecture = lectureGroup.getLecture();
-        if(lecture.getMemberId() != memberId){  //소유자가 아닌 경우
-            throw new IllegalArgumentException("접근할 수 없는 강의 그룹입니다");
-        }
+        // lecture apply admit이고 lectureGroupID
+//        if(lecture.getMemberId() != memberId){  //소유자가 아닌 경우
+//            throw new IllegalArgumentException("접근할 수 없는 강의 그룹입니다");
+//        }
+
         List<LectureApply> lectureApplyList = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(lectureGroup, Status.ADMIT, "N");
 //        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
 //        int start = (int) pageRequest.getOffset();
