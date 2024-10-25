@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.dto.MemberNameResDto;
+import com.tweety.SwithT.common.dto.MemberProfileResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.common.service.RedisStreamProducer;
 import com.tweety.SwithT.lecture.domain.GroupTime;
@@ -147,6 +148,12 @@ public class LectureApplyService {
                     dto.setChatRoomId(roomId);
                 }
             }
+
+            //튜티 프로필 이미지
+            CommonResDto commonResDto = memberFeign.getMemberProfileById(dto.getMemberId());
+            ObjectMapper objectMapper = new ObjectMapper();
+            MemberProfileResDto memberProfileResDto = objectMapper.convertValue(commonResDto.getResult(), MemberProfileResDto.class);
+            dto.setTuteeProfileImage(memberProfileResDto.getImage());
         }
         return result;
     }
@@ -199,11 +206,17 @@ public class LectureApplyService {
                 if (status != null && !status.isEmpty()) {
                     predicates.add(criteriaBuilder.equal(root.get("status"), status));
                 }
-                Predicate[] predicateArr = new Predicate[predicates.size()];
-                for(int i=0; i<predicateArr.length; i++){
-                    predicateArr[i] = predicates.get(i);
-                }
-                return criteriaBuilder.and(predicateArr);
+//                Predicate[] predicateArr = new Predicate[predicates.size()];
+//                for(int i=0; i<predicateArr.length; i++){
+//                    predicateArr[i] = predicates.get(i);
+//                }
+
+                query.where(predicates.toArray(new Predicate[0]));
+                query.orderBy(criteriaBuilder.desc(root.get("createdTime")));
+//                return criteriaBuilder.and(predicateArr);
+                return query.getRestriction();
+
+
             }
         };
         Page<LectureApply> lectureApplyPage = lectureApplyRepository.findAll(specification, pageable);
@@ -214,10 +227,14 @@ public class LectureApplyService {
                             .startDate(lectureApply.getStartDate())
                             .endDate(lectureApply.getEndDate())
                             .tutorName(lectureApply.getLectureGroup().getLecture().getMemberName())
+                            .tutorId(lectureApply.getLectureGroup().getLecture().getMemberId())
                             .price(lectureApply.getLectureGroup().getPrice())
                             .applyId(lectureApply.getId())
                             .lectureGroupId(lectureApply.getLectureGroup().getId())
                             .status(lectureApply.getStatus())
+                            .lectureType(lectureApply.getLectureGroup().getLecture().getLectureType())
+                            .createdTime(lectureApply.getCreatedTime())
+                            .lectureImage(lectureApply.getLectureGroup().getLecture().getImage())
                     .build());
         }
 

@@ -33,6 +33,8 @@ public class ReviewReqDto {
         return Review.builder()
                 .tutorId(tutorId)
                 .writerId(writerId)
+                .profileImage(writerId.getProfileImage())
+                .name(writerId.getName())
                 .star(this.star)
                 .title(this.title)
                 .contents(this.contents)

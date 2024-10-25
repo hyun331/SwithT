@@ -9,10 +9,7 @@ import com.tweety.SwithT.common.dto.MemberScoreResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.common.service.OpenSearchService;
 import com.tweety.SwithT.common.service.S3Service;
-import com.tweety.SwithT.lecture.domain.GroupTime;
-import com.tweety.SwithT.lecture.domain.Lecture;
-import com.tweety.SwithT.lecture.domain.LectureGroup;
-import com.tweety.SwithT.lecture.domain.LectureType;
+import com.tweety.SwithT.lecture.domain.*;
 import com.tweety.SwithT.lecture.dto.*;
 import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
@@ -41,6 +38,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -113,55 +112,47 @@ public class LectureService {
         String keyword = searchDto.getSearchTitle(); // 검색 제목
 
         try {
-            // OpenSearch에서 검색 수행
-            List<LectureDetailResDto> searchResults = openSearchService.searchLectures(keyword, pageable, searchDto);
+            if(!searchDto.getCategory().isEmpty()){
+                // OpenSearch에서 검색 수행
+                List<LectureDetailResDto> searchResults = openSearchService.searchLecturesByCategory(searchDto, pageable);
 //            System.out.println(searchResults.get(0));
-            // 검색 결과를 LectureListResDto로 변환하여 페이지 객체로 반환
-            List<LectureListResDto> lectureList = searchResults.stream()
+                // 검색 결과를 LectureListResDto로 변환하여 페이지 객체로 반환
+                List<LectureListResDto> lectureList = searchResults.stream()
 //                    여기서 필요한 데이터 조립
-                    .map(detail -> LectureListResDto.builder()
-                            .id(detail.getId())
-                            .title(detail.getTitle())
-                            .memberName(detail.getMemberName())
-                            .memberId(detail.getMemberId())
-                            .image(detail.getImage())
-                            .category(detail.getCategory())
-                            .isContainsFree(isContainsFreeGroup(detail.getId()))
-                            .build())
-                    .collect(Collectors.toList());
+                        .map(detail -> LectureListResDto.builder()
+                                .id(detail.getId())
+                                .title(detail.getTitle())
+                                .memberName(detail.getMemberName())
+                                .memberId(detail.getMemberId())
+                                .image(detail.getImage())
+                                .category(detail.getCategory())
+                                .isContainsFree(isContainsFreeGroup(detail.getId()))
+                                .build())
+                        .collect(Collectors.toList());
 
-            // PageImpl로 페이지네이션 적용하여 반환
-            return new PageImpl<>(lectureList, pageable, searchResults.size());
-
-        } catch (IOException | InterruptedException e) {
-            // 예외 발생 시 로그 출력 및 빈 페이지 반환
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    public Page<LectureListResDto> showLectureListByCategory(LectureSearchDto searchDto, Pageable pageable) {
-
-        try {
-            // OpenSearch에서 검색 수행
-            List<LectureDetailResDto> searchResults = openSearchService.searchLecturesByCategory(searchDto.getCategory(), pageable);
+                // PageImpl로 페이지네이션 적용하여 반환
+                return new PageImpl<>(lectureList, pageable, searchResults.size());
+            } else{
+                List<LectureDetailResDto> searchResults = openSearchService.searchLectures(keyword, pageable, searchDto);
+                // OpenSearch에서 검색 수행
 //            System.out.println(searchResults.get(0));
-            // 검색 결과를 LectureListResDto로 변환하여 페이지 객체로 반환
-            List<LectureListResDto> lectureList = searchResults.stream()
+                // 검색 결과를 LectureListResDto로 변환하여 페이지 객체로 반환
+                List<LectureListResDto> lectureList = searchResults.stream()
 //                    여기서 필요한 데이터 조립
-                    .map(detail -> LectureListResDto.builder()
-                            .id(detail.getId())
-                            .title(detail.getTitle())
-                            .memberName(detail.getMemberName())
-                            .memberId(detail.getMemberId())
-                            .image(detail.getImage())
-                            .category(detail.getCategory())
-                            .isContainsFree(isContainsFreeGroup(detail.getId()))
-                            .build())
-                    .collect(Collectors.toList());
+                        .map(detail -> LectureListResDto.builder()
+                                .id(detail.getId())
+                                .title(detail.getTitle())
+                                .memberName(detail.getMemberName())
+                                .memberId(detail.getMemberId())
+                                .image(detail.getImage())
+                                .category(detail.getCategory())
+                                .isContainsFree(isContainsFreeGroup(detail.getId()))
+                                .build())
+                        .collect(Collectors.toList());
 
-            // PageImpl로 페이지네이션 적용하여 반환
-            return new PageImpl<>(lectureList, pageable, searchResults.size());
-
+                // PageImpl로 페이지네이션 적용하여 반환
+                return new PageImpl<>(lectureList, pageable, searchResults.size());
+            }
         } catch (IOException | InterruptedException e) {
             // 예외 발생 시 로그 출력 및 빈 페이지 반환
             throw new IllegalArgumentException(e);
@@ -177,6 +168,11 @@ public class LectureService {
             }
         }
         return false;
+    }
+
+    // 검색어 추천 메서드
+    public List<String> getSuggestions(String keyword) throws IOException, InterruptedException {
+        return openSearchService.getSuggestions(keyword);
     }
 
     public Page<LectureListResDto> showLectureList(LectureSearchDto searchDto, Pageable pageable) {
@@ -297,7 +293,7 @@ public class LectureService {
             List<GroupTime> groupTimeList = groupTimeRepository.findByLectureGroupId(a.getId());
             StringBuilder groupTitle = new StringBuilder();
             for(GroupTime groupTime : groupTimeList){
-                groupTitle.append(groupTime.getLectureDay()+" "+groupTime.getStartTime()+"-"+groupTime.getEndTime()+"  /  ");
+                groupTitle.append(changeLectureDayKorean(groupTime.getLectureDay())+" "+groupTime.getStartTime()+"~"+groupTime.getEndTime()+"  /  ");
             }
 
             if (groupTitle.length() > 0) {
@@ -305,20 +301,33 @@ public class LectureService {
             }
 
             String memberName = null;
+            LocalDate startDate = null;
+            LocalDate endDate = null;
             if(isAvailable.equals("N") && a.getLimitPeople()==1){
                 //진행중인 과외인 경우
                 if(!lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(a, Status.ADMIT, "N").isEmpty()){
                     LectureApply lectureApply = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(a, Status.ADMIT, "N").get(0);
                     memberName = lectureApply.getMemberName();
+                    startDate = a.getStartDate();
+                    endDate = a.getEndDate();
                 }
-
-
             }
+            int limitPeople = 0;
+            if(a.getLecture().getLectureType() == LectureType.LECTURE){
+                limitPeople = a.getLimitPeople();
+                startDate = a.getStartDate();
+                endDate = a.getEndDate();
+            }
+
 
             return LectureGroupListResDto.builder()
                     .title(groupTitle.toString())
                     .lectureGroupId(a.getId())
                     .memberName(memberName)
+                    .price(a.getPrice())
+                    .limitPeople(limitPeople)
+                    .startDate(startDate)
+                    .endDate(endDate)
                     .build();
         });
 
@@ -563,6 +572,7 @@ public class LectureService {
 //                .latitude(lectureGroup.getLatitude())
 //                .longitude(lectureGroup.getLongitude())
                 .startDate(lectureGroup.getStartDate())
+                .endDate(lectureGroup.getEndDate())
                 .build();
         // 강의 그룹의 강의 id -> 강의 정보 불러오기
         Lecture lecture = lectureRepository.findById(lectureGroup.getLecture().getId()).orElseThrow(()->new EntityNotFoundException("해당 강의 및 과외가 없습니다."));
@@ -581,6 +591,10 @@ public class LectureService {
         dto.setChatRoomId(lectureChatRoomList.get(0).getId());
         // 강의 그룹 시간 list
         List<GroupTimeResDto> groupTimeResDtos = new ArrayList<>();
+        int totalDayCount=0;
+        int pastDayCount=0;
+        LocalDate today = LocalDate.now();
+
         for(GroupTime groupTime: lectureGroup.getGroupTimes()){
             GroupTimeResDto groupTimeResDto = GroupTimeResDto.builder()
                     .memberId(lecture.getMemberId())
@@ -596,11 +610,34 @@ public class LectureService {
                     .alertYn('N') // 기본값 'N'
                     .build();
             groupTimeResDtos.add(groupTimeResDto);
+
+            // 요일 수업 개수 계산 (모든 GroupTime의 요일을 합산)
+            totalDayCount += countDaysBetweenDates(lectureGroup.getStartDate(), lectureGroup.getEndDate(), groupTime.getLectureDay());
+
+            // 현재 날짜까지의 수업 개수 계산
+            pastDayCount += countDaysBetweenDates(lectureGroup.getStartDate(), today, groupTime.getLectureDay());
         }
+        dto.setTotalDayCount(totalDayCount);
+        dto.setPastDayCount(pastDayCount);
         dto.setLectureGroupTimes(groupTimeResDtos);
         return dto;
     }
+    public int countDaysBetweenDates(LocalDate startDate, LocalDate endDate, LectureDay lectureDay) {
+        DayOfWeek targetDayOfWeek = DayOfWeek.valueOf(lectureDay.name());
 
+        int count = 0;
+        LocalDate date = startDate;
+
+        // 시작일부터 종료일까지 날짜 순회
+        while (!date.isAfter(endDate)) {
+            if (date.getDayOfWeek() == targetDayOfWeek) {
+                count++;
+            }
+            date = date.plusDays(1);
+        }
+
+        return count;
+    }
 
     public LectureTitleAndImageResDto getTitleAndThumbnail(Long id){
         Lecture lecture = lectureRepository.findById(id)
@@ -671,6 +708,18 @@ public class LectureService {
         }
 
         return lectureGroupsResDtos;
+    }
+
+    public String changeLectureDayKorean(LectureDay lectureDay){
+        return switch (lectureDay) {
+            case MONDAY -> "월";
+            case TUESDAY -> "화";
+            case WEDNESDAY -> "수";
+            case THURSDAY -> "목";
+            case FRIDAY -> "금";
+            case SATURDAY -> "토";
+            case SUNDAY -> "일";
+        };
     }
 
 }
