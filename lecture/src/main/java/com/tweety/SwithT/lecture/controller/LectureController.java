@@ -135,16 +135,16 @@ public class LectureController {
     }
 
     // 강의 그룹 수정
-    @PostMapping("/update/lecture-group/{id}")
-    public ResponseEntity<?> lectureGroupUpdate(@PathVariable Long id, @RequestBody LectureGroupReqDto dto) {
+    @PutMapping("/update/lecture-group/{id}")
+    public ResponseEntity<?> lectureGroupUpdate(@PathVariable("id") Long id, @RequestBody LectureGroupReqDto dto) {
         lectureService.lectureGroupUpdate(id, dto);
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 그룹 업데이트", id);
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
     // 강의 그룹 삭제
-    @PostMapping("/delete/lecture-group/{id}")
-    public ResponseEntity<?> lectureGroupDelete(@PathVariable Long id) {
+    @PutMapping("/delete/lecture-group/{id}")
+    public ResponseEntity<?> lectureGroupDelete(@PathVariable("id") Long id) {
         lectureService.lectureGroupDelete(id);
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 그룹 삭제", id);
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
@@ -199,6 +199,18 @@ public class LectureController {
     public ResponseEntity<?> getLectureGroupInfo(@PathVariable Long id){
         CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "해당 강의의 강의 그룹들 정보", lectureService.getLectureGroupsInfo(id));
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+    @GetMapping("/lecture-group/get-image-and-title/{id}")
+    public ResponseEntity<?> getImageAndThumbnailByGroupId(@PathVariable Long id){
+        LectureTitleAndImageResDto dto = lectureService.getTitleAndThumbnailByGroupId(id);
+        try {
+            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "제목과 썸네일", dto);
+            return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+        } catch (EntityNotFoundException e){
+            CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.NOT_FOUND.value(), e.getMessage());
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.NOT_FOUND);
+        }
     }
 
 }

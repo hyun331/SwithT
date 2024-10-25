@@ -20,6 +20,7 @@ public class LectureGroupReqDto {
 
     private Integer limitPeople;
     private String address;
+    private String detailAddress;
 
 //    private String latitude;
 
@@ -38,6 +39,8 @@ public class LectureGroupReqDto {
                 .isAvailable("Y")
                 .limitPeople(this.limitPeople)
                 .address(this.address)
+                .remaining(this.limitPeople)
+                .detailAddress(this.detailAddress)
 //                .latitude(this.latitude)
 //                .longitude(this.longitude)
                 .startDate(this.startDate)

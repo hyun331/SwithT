@@ -32,7 +32,7 @@ public class Lecture extends BaseTimeEntity {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 3000)
     private String contents;
 
     private String image;
@@ -47,6 +47,9 @@ public class Lecture extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private LectureType lectureType;
 
+    @Column(nullable = false)
+    private Long searchCount;
+
     public LectureDetailResDto fromEntityToLectureResDto(){
         return LectureDetailResDto.builder()
                 .id(this.id)
@@ -58,6 +61,7 @@ public class Lecture extends BaseTimeEntity {
                 .memberId(this.memberId)
                 .memberName(this.memberName)
                 .lectureType(this.lectureType)
+                .searchCount(this.searchCount)
                 .build();
     }
 
@@ -125,4 +129,7 @@ public class Lecture extends BaseTimeEntity {
         this.category = category;
     }
 
+    public void increaseCount(){
+        this.searchCount++;
+    }
 }

@@ -4,19 +4,25 @@ import com.tweety.SwithT.common.dto.CommonErrorDto;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.service.LectureApplyService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequiredArgsConstructor
 public class LectureApplyController {
 
     private final LectureApplyService lectureApplyService;
+
 
     //과외 신청
     @PreAuthorize("hasRole('TUTEE')")
@@ -99,7 +105,14 @@ public class LectureApplyController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
-    @PutMapping("lecture-apply/{id}/status")
+    //리뷰 상태 변경 코드 추가
+    @PutMapping("/lecture-apply/review/status")
+    public ResponseEntity<?> updateLectureReviewStatus(@RequestParam Long applyId){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "리뷰 작성 상태 변경","ReviewStatus 상태 :"+lectureApplyService.updateReviewStatus(applyId));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+  
+    @PutMapping("/lecture-apply/{id}/status")
     public ResponseEntity<?>updateLectureApplyStatus(@PathVariable("id") Long lectureApplyId,
                                                      @RequestBody CommonResDto commonResDto){
         try {
@@ -115,13 +128,38 @@ public class LectureApplyController {
 
     }
 
+    @PostMapping("/lecture/after-paid")
+    public ResponseEntity<?>updateLectureStatus(@RequestParam Long lectureGroupId,
+                                                @RequestParam Long memberId){
+        try{
+            System.out.println("강의 feign 넘어옴");
+            System.out.println("그룹 번호: " + lectureGroupId);
+            System.out.println("멤버 번호: " + memberId);
+            lectureApplyService.updateLectureStatus(lectureGroupId, memberId);
+            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "결제 완료", null);
+            return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+        } catch (EntityNotFoundException e){
+            CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PutMapping("/lectures/{id}/payment/refund")
+    public ResponseEntity<?> requestRefund(@PathVariable Long id){
+        System.out.println("환불 feign 넘어옴");
+        try {
+            lectureApplyService.lectureRefund(id);
+            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "환불 완료", null);
+            return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+        } catch (EntityNotFoundException e){
+            CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @GetMapping("/lecture-group/get/remaining/{id}")
     public int getRemaining(@PathVariable Long id){
         return lectureApplyService.getGroupRemainingFromApplyId(id);
     }
 
-    @GetMapping("/lecture-apply/tutee-info/{id}")
-    public Long getTuteeId(@PathVariable Long id){
-        return lectureApplyService.getTuteeIdFromApplyId(id);
-    }
 }

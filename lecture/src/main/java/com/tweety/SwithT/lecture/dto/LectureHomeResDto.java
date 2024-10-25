@@ -31,8 +31,10 @@ public class LectureHomeResDto {
     // 강의 그룹 정보
     private Long groupId;
     private Integer limitPeople;
+    private Integer price;
 
     private String address;
+    private String detailAddress;
 //    private String latitude;
 
 //    private String longitude;

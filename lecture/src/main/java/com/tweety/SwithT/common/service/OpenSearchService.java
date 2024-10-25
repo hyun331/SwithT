@@ -220,7 +220,6 @@ public class OpenSearchService {
             "multi_match": {
                 "query": "%s",
                 "fields": ["title", "contents", "memberName"],
-                "type": "phrase_prefix",
                 "analyzer": "ngram_analyzer"
             }
         }
@@ -419,38 +418,41 @@ public class OpenSearchService {
         // 검색된 횟수를 기준으로 정렬하고 상위 10개의 검색어만 반환하는 쿼리
         String requestBody = String.format("""
         {
-                 "query": {
-                     "bool": {
-                         "should": [
-                             {
-                                 "wildcard": {
-                                     "title": {
-                                         "value": "*%s*"
-                                     }
-                                 }
-                             },
-                             {
-                                 "wildcard": {
-                                     "contents": {
-                                         "value": "*%s*"
-                                     }
-                                 }
-                             },
-                             {
-                                 "wildcard": {
-                                     "memberName": {
-                                         "value": "*%s*"
-                                     }
-                                 }
-                             }
-                         ]
-                     }
-                 },
-                 "sort": [
-                     { "search_count": { "order": "desc" } }
-                 ],
-                 "size": 10
-             }
+                "query": {
+                    "bool": {
+                        "should": [
+                            {
+                                "match": {
+                                    "title": {
+                                        "query": "%s",
+                                        "operator": "and"
+                                    }
+                                }
+                            },
+                            {
+                                "match": {
+                                    "contents": {
+                                        "query": "%s",
+                                        "operator": "and"
+                                    }
+                                }
+                            },
+                            {
+                                "match": {
+                                    "memberName": {
+                                        "query": "%s",
+                                        "operator": "and"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                "sort": [
+                    { "search_count": { "order": "desc" } }
+                ],
+                "size": 10
+        }
         """, keyword, keyword, keyword);
 
         HttpRequest request = HttpRequest.newBuilder()
