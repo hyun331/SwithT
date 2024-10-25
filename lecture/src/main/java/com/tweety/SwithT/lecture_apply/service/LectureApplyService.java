@@ -196,6 +196,7 @@ public class LectureApplyService {
             //결제 요청 보내기
             redisStreamProducer.publishMessage(lectureApply.getMemberId().toString(),
                     "결제요청", lectureGroup.getLecture().getTitle()+"에서 결제 요청을 했습니다.", lectureApply.getId().toString());
+            System.out.println("결제 요청 : "+ lectureApply.getId());
 
         }
 
