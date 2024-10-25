@@ -45,9 +45,12 @@ public class RedisStreamSseConsumer implements StreamListener<String, MapRecord<
                 ObjectMapper objectMapper = new ObjectMapper();
                 String jsonMessage = objectMapper.writeValueAsString(structuredMessage);
 
-                emitter.send(SseEmitter.event()
-                        .name("notification")
-                        .data(jsonMessage));
+
+                    emitter.send(SseEmitter.event()
+                            .name("notification")
+                            .data(jsonMessage));
+
+
 
                 String groupName = null;
                 String streamName = null;
@@ -68,6 +71,11 @@ public class RedisStreamSseConsumer implements StreamListener<String, MapRecord<
             } catch (IOException e) {
                 emitter.completeWithError(e);
                 clients.remove(memberId);
+                List<MapRecord<String, Object, Object>> records = redisTemplate.opsForStream().read(
+                        Consumer.from("sse-group", memberId),
+                        StreamReadOptions.empty().count(1),
+                        StreamOffset.create("sse-notifications", ReadOffset.lastConsumed())
+                );
             }
         } else {
             System.out.println(memberId+" emitter 없음. pending 처리될 record id : "+record.getId().getValue());
