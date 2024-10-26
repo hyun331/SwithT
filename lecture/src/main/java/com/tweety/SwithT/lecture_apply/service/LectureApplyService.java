@@ -24,6 +24,7 @@ import com.tweety.SwithT.lecture_chat_room.domain.LectureChatParticipants;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatRoom;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatParticipantsRepository;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatRoomRepository;
+import com.tweety.SwithT.lecture_chat_room.service.LectureChatRoomService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -41,10 +42,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -62,6 +65,7 @@ public class LectureApplyService {
     private final MemberFeign memberFeign;
     private final RedisStreamProducer redisStreamProducer;
     private final KafkaTemplate kafkaTemplate;
+    private final LectureChatRoomService lectureChatRoomService;
 
     @Qualifier("5")
     private final RedisTemplate<String,Object> redisTemplate;
@@ -197,6 +201,23 @@ public class LectureApplyService {
         }
 
         return "튜터가 해당 수강신청을 승인했습니다.";
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    public void updatePendingLecuturesStatus(){
+        List<LectureApply> lectureApplyList = lectureApplyRepository.findByStatusAndDelYn(Status.WAITING, "N");
+
+        for(LectureApply lectureApply: lectureApplyList){
+//            상태 값이 변한 시점이니까 updateTime 가져옴
+            LocalDateTime payRequestTime = lectureApply.getUpdatedTime();
+//            현재 기준으로
+            LocalDateTime nowTime = LocalDateTime.now();
+//            하루가 지난 결제 요청은 자동 취소
+            if (payRequestTime != null && !payRequestTime.isAfter(nowTime.minusDays(1))) {
+                lectureApply.updateStatus(Status.CANCEL);
+                lectureApplyRepository.save(lectureApply);
+            }
+        }
     }
 
     //튜터 - 튜티의 신청 거절
@@ -367,6 +388,8 @@ public class LectureApplyService {
                 }
                 chatRoom.updateDelYn();
             }
+        } else{
+
         }
 
         lectureApplyRepository.save(lectureApply);
@@ -395,7 +418,10 @@ public class LectureApplyService {
                 .endDate(lectureGroup.getEndDate())
                 .build();
 
+//        강의 승인 entity 생성
         lectureApplyRepository.save(lectureApply);
+//        강의 그룹 채팅방 들어가기
+        lectureChatRoomService.tuteeLectureChatRoomEnterAfterPay(lectureGroupId, memberId);
     }
 
     public void updateSchedule(LectureApply lectureApply, Long memberId){

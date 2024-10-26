@@ -161,6 +161,23 @@ public class LectureChatRoomService {
                 .build();
     }
 
+//    강의 결제 후 채팅방 자동 참여(강의의 경우 그룹 당 채팅방 1개 제한)
+    @Transactional
+    public void tuteeLectureChatRoomEnterAfterPay(Long lectureGroupId, Long memberId){
+        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(lectureGroupId, "N").orElseThrow(
+                ()-> new EntityNotFoundException("강의 그룹 가져오기에 실패했습니다."));
+
+        List<LectureChatRoom> chatRooms = chatRoomRepository.findByLectureGroupAndDelYn(lectureGroup, "N");
+
+        for(LectureChatRoom lectureChatRoom: chatRooms){
+            LectureChatParticipants lectureChatParticipants = LectureChatParticipants.builder()
+                    .lectureChatRoom(lectureChatRoom)
+                    .memberId(memberId)
+                    .build();
+            chatParticipantsRepository.save(lectureChatParticipants);
+        }
+    }
+
     //채팅방 입장
     public void chatRoomEntered(String roomId) {
         System.out.println(roomId + "방에 입장했습니다.");
