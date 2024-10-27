@@ -2,6 +2,7 @@ package com.tweety.SwithT.withdrawal.domain;
 
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import com.tweety.SwithT.member.domain.Member;
+import com.tweety.SwithT.withdrawal.dto.WithdrawalResDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,5 +29,14 @@ public class WithdrawalRequest extends BaseTimeEntity {
     private LocalDateTime requestTime;
     @Column(nullable = false)
     private Long amount;
+
+    public WithdrawalResDto fromEntity() {
+        return WithdrawalResDto.builder()
+                .requestAmount(this.amount)
+                .requestTime(this.requestTime)
+                .description("정산금 출금")
+                .build();
+
+    }
 
 }

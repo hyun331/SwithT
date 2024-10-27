@@ -117,6 +117,7 @@ public class Member extends BaseTimeEntity {
                 .introduce(this.introduce)
                 .role(this.role)
                 .avgScore(this.avgScore)
+                .availableMoney(this.availableMoney)
                 .build();
     }
 

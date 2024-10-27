@@ -29,5 +29,7 @@ public class MemberInfoResDto {
     private String education;
     private String introduce;
     private BigDecimal avgScore;
+    private Long availableMoney;
     private Role role;
+
 }
