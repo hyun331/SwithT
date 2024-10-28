@@ -11,7 +11,7 @@ COPY build.gradle .
 COPY settings.gradle .
 
 RUN chmod 777 gradlew
-RUN apk update && apk add findutils
+RUN apt-get update && apt-get install -y findutils
 RUN ./gradlew bootJar
 
 # 두번째 스테이지
