@@ -1,36 +1,29 @@
-server:
-  port: 0
 spring:
-  application:
-    name: payment-service
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://localhost:3306/switht_payment
-    username: root
-    password: 1234
+    url: jdbc:mariadb://${DB_HOST}:3306/switht_payment
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    tomcat:
+      max-active: 5
   jpa:
     database: mysql
     database-platform: org.hibernate.dialect.MariaDBDialect
     generate-ddl: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show_sql: true
     open-in-view: false
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_SERVER}
 
 jwt:
-  expiration: 30
-  secretKey: my_token_secret
+  expiration: 300
+  secretKey: ${JWT_SECRET}
   expirationRt: 14400
-  secretKeyRt: hackerton_secret
+  secretKeyRt: ${JWT_SECRET_RT}
 
 imp:
-  code: imp00575764
-  key: 3703707833671424
-  secret: Guer6P3tAcUQRDGf34DZCVYDHjkuNAfaH6k0wr39NXLDkn2pfOgwzcd7FHP6NYeh1dYmcnKevqL8EfMG
-
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
+  code: ${IMP_CODE}
+  key: ${IMP_KEY}
+  secret: ${IMP_SECRET}

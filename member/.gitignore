@@ -1,5 +1,4 @@
-# yml 추가
-*.yml
+src/main/resources/application-local.yml
 
 HELP.md
 .gradle
