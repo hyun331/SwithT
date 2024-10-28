@@ -14,7 +14,7 @@ RUN chmod 777 gradlew
 RUN ./gradlew bootJar
 
 # 두번째 스테이지
-FROM openjdk:11
+FROM openjdk:17
 WORKDIR /app
 # stage1에 있는 jar를 stage2의 app.jar라는 이름으로 copy
 COPY --from=stage1 /app/build/libs/*.jar app.jar
