@@ -10,6 +10,7 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry corsRegistry) {
         corsRegistry.addMapping("/**")
                 .allowedOrigins("https://www.switht.co.kr",
+                        "https://server.switht.co.kr",
                         "https://server.switht.co.kr/member-service/login/oauth2/code/google",
                         "https://server.switht.co.kr/member-service/login/oauth2/code/kakao",
                         "https://server.switht.co.kr/member-service/oauth2/authorization/google",
