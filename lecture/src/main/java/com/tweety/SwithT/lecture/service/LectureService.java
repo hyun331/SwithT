@@ -299,7 +299,7 @@ public class LectureService {
 
         Page<LectureGroup> lectureGroups = lectureGroupRepository.findAll(specification, pageable);
         Page<LectureGroupListResDto> lectureGroupResDtos = lectureGroups.map((a)->{
-            List<GroupTime> groupTimeList = groupTimeRepository.findByLectureGroupId(a.getId());
+            List<GroupTime> groupTimeList = groupTimeRepository.findByLectureGroupIdAndDelYn(a.getId(), "N");
             StringBuilder groupTitle = new StringBuilder();
             for(GroupTime groupTime : groupTimeList){
                 groupTitle.append(changeLectureDayKorean(groupTime.getLectureDay())+" "+groupTime.getStartTime()+"~"+groupTime.getEndTime()+"  /  ");
@@ -433,7 +433,7 @@ public class LectureService {
             lectureGroup.updateDate(dto.getStartDate(), dto.getEndDate());
         }
         if (dto.getGroupTimeReqDtos() != null){
-            for (GroupTime groupTime : groupTimeRepository.findByLectureGroupId(lectureGroupId)){
+            for (GroupTime groupTime : groupTimeRepository.findByLectureGroupIdAndDelYn(lectureGroupId, "N")){
                 groupTime.updateDelYn();
             }
             for (GroupTimeReqDto timeDto : dto.getGroupTimeReqDtos()){

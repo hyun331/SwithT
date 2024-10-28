@@ -99,11 +99,6 @@ public class LectureApplyController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
-    @GetMapping("/lecture/group/{id}")
-    public ResponseEntity<?> getLectureApplyPayInfo(@PathVariable Long id){
-        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 그룹 정보",lectureApplyService.getLectureGroupByApplyId(id));
-        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
-    }
 
     //리뷰 상태 변경 코드 추가
     @PutMapping("/lecture-apply/review/status")
