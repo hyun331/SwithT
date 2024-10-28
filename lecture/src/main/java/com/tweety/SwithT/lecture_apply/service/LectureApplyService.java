@@ -24,6 +24,7 @@ import com.tweety.SwithT.lecture_chat_room.domain.LectureChatParticipants;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatRoom;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatParticipantsRepository;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatRoomRepository;
+import com.tweety.SwithT.lecture_chat_room.service.LectureChatRoomService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -42,11 +43,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,6 +68,7 @@ public class LectureApplyService {
     private final MemberFeign memberFeign;
     private final RedisStreamProducer redisStreamProducer;
     private final KafkaTemplate kafkaTemplate;
+    private final LectureChatRoomService lectureChatRoomService;
 
     @Qualifier("5")
     private final RedisTemplate<String,Object> redisTemplate;
@@ -200,6 +204,23 @@ public class LectureApplyService {
         }
 
         return "튜터가 해당 수강신청을 승인했습니다.";
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    public void updatePendingLecuturesStatus(){
+        List<LectureApply> lectureApplyList = lectureApplyRepository.findByStatusAndDelYn(Status.WAITING, "N");
+
+        for(LectureApply lectureApply: lectureApplyList){
+//            상태 값이 변한 시점이니까 updateTime 가져옴
+            LocalDateTime payRequestTime = lectureApply.getUpdatedTime();
+//            현재 기준으로
+            LocalDateTime nowTime = LocalDateTime.now();
+//            하루가 지난 결제 요청은 자동 취소
+            if (payRequestTime != null && !payRequestTime.isAfter(nowTime.minusDays(1))) {
+                lectureApply.updateStatus(Status.CANCEL);
+                lectureApplyRepository.save(lectureApply);
+            }
+        }
     }
 
     //튜터 - 튜티의 신청 거절
@@ -434,19 +455,7 @@ public class LectureApplyService {
 ////        }
 //    }
 
-    public LectureGroupPayResDto getLectureGroupByApplyId(Long id){
-        LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException("수강 번호 불러오기 실패"));
-        LectureGroup lectureGroup = lectureApply.getLectureGroup();
-
-        return LectureGroupPayResDto.builder()
-                .groupId(lectureGroup.getId())
-                .lectureName(lectureGroup.getLecture().getTitle())
-                .price(lectureGroup.getPrice())
-                .build();
-    }
-
-    @Transactional
+ @Transactional
     public void updateLectureApplyStatus(Long id, String message){
         LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
                    ()-> new EntityNotFoundException("수강 정보 불러오기 실패"));
@@ -484,10 +493,8 @@ public class LectureApplyService {
                 }
                 chatRoom.updateDelYn();
             }
-            LectureGroup lectureGroup = lectureApply.getLectureGroup();
-            lectureGroup.updateDate(lectureApply.getStartDate(),lectureApply.getEndDate());
-            lectureGroup.updateAddress(lectureApply.getLocation());
-            lectureGroup.updateDetailAddress(lectureApply.getDetailAddress());
+        } else{
+            
         }
 
         lectureApplyRepository.save(lectureApply);
@@ -501,6 +508,25 @@ public class LectureApplyService {
                 ()-> new EntityNotFoundException("강의 그룹 정보를 불러오는 데 실패했습니다."));
 
         updateSchedule(lectureGroup, memberId);
+
+        CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
+        ObjectMapper objectMapper = new ObjectMapper();
+        MemberNameResDto memberNameResDto = objectMapper.convertValue(commonResDto.getResult(), MemberNameResDto.class);
+        String memberName = memberNameResDto.getName();
+
+        LectureApply lectureApply = LectureApply.builder()
+                .lectureGroup(lectureGroup)
+                .status(Status.ADMIT)
+                .memberName(memberName)
+                .location(lectureGroup.getAddress())
+                .startDate(lectureGroup.getStartDate())
+                .endDate(lectureGroup.getEndDate())
+                .build();
+
+//        강의 승인 entity 생성
+        lectureApplyRepository.save(lectureApply);
+//        강의 그룹 채팅방 들어가기
+        lectureChatRoomService.tuteeLectureChatRoomEnterAfterPay(lectureGroupId, memberId);
     }
 
     public void updateSchedule(LectureApply lectureApply, Long memberId){
@@ -672,4 +698,24 @@ public class LectureApplyService {
 
         kafkaTemplate.send("schedule-cancel-update", lectureGroupId);
     }
+
+    @Transactional
+    public void lectureCancelBeforePayment(Long lectureApplyId){
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+
+        LectureApply lectureApply = lectureApplyRepository.findById(lectureApplyId).orElseThrow(
+                ()-> new EntityNotFoundException("승인 번호 불러오기에 실패했습니다."));
+
+        if(!lectureApply.getMemberId().equals(memberId)){
+            throw new IllegalArgumentException("접근 권한이 없습니다.");
+        }
+
+        Long tutorId = lectureApply.getLectureGroup().getLecture().getMemberId();
+
+        redisStreamProducer.publishMessage(tutorId.toString(), "수강 취소",
+                lectureApply.getMemberName() + "  수강생이 신청을 취소했습니다.", lectureApply.getId().toString());
+
+        lectureApply.updateStatus(Status.CANCEL);
+    }
 }
+

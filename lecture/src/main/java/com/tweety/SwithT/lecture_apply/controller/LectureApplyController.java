@@ -136,7 +136,7 @@ public class LectureApplyController {
             System.out.println("그룹 번호: " + lectureGroupId);
             System.out.println("멤버 번호: " + memberId);
             lectureApplyService.updateLectureStatus(lectureGroupId, memberId);
-            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "결제 완료", null);
+            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "신청 완료", null);
             return new ResponseEntity<>(commonResDto, HttpStatus.OK);
         } catch (EntityNotFoundException e){
             CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.BAD_REQUEST.value(), e.getMessage());
@@ -160,6 +160,21 @@ public class LectureApplyController {
     @GetMapping("/lecture-group/get/remaining/{id}")
     public int getRemaining(@PathVariable Long id){
         return lectureApplyService.getGroupRemainingFromApplyId(id);
+    }
+
+    @PutMapping("/lecture-apply/cancel/{id}")
+    public ResponseEntity<?> applyCancelBeforePay(@PathVariable Long id){
+        try {
+            lectureApplyService.lectureCancelBeforePayment(id);
+            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 신청이 취소되었습니다.", null);
+            return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+        } catch (IllegalArgumentException e){
+            CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.FORBIDDEN.value(), e.getMessage());
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.FORBIDDEN);
+        } catch (EntityNotFoundException e){
+            CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.NOT_FOUND.value(), e.getMessage());
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.NOT_FOUND);
+        }
     }
 
 }
