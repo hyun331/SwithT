@@ -526,16 +526,16 @@ public class LectureService {
         }
     }
 
-    public List<GroupTimeResDto> getGroupTimes(Long lectureId){
+    public List<GroupTimeResDto> getGroupTimes(Long lectureId) {
         Lecture lecture = lectureRepository.findById(lectureId).orElseThrow(
-                ()-> new EntityNotFoundException("강의 정보 불러오기 실패"));
+                () -> new EntityNotFoundException("강의 정보 불러오기 실패"));
         List<LectureGroup> lectureGroups = lecture.getLectureGroups();
 
         List<GroupTimeResDto> groupTimesDto = new ArrayList<>();
 
         for (LectureGroup lectureGroup : lectureGroups) {
             for (GroupTime groupTime : lectureGroup.getGroupTimes()) {
-                GroupTimeResDto groupTimeResDto = GroupTimeResDto.builder()
+                GroupTimeResDto.GroupTimeResDtoBuilder groupTimeResDtoBuilder = GroupTimeResDto.builder()
                         .memberId(lecture.getMemberId())
                         .groupTimeId(groupTime.getId())
                         .lectureGroupId(lectureGroup.getId())
@@ -543,14 +543,20 @@ public class LectureService {
                         .lectureDay(groupTime.getLectureDay().name())
                         .startTime(groupTime.getStartTime().toString())
                         .endTime(groupTime.getEndTime().toString())
-                        // startDate가 null일 때 null 처리를 위한 조건 추가
-                        .startDate(lectureGroup.getStartDate() != null ? lectureGroup.getStartDate().toString() : "No start date")
-                        .endDate(lectureGroup.getEndDate() != null ? lectureGroup.getEndDate().toString() : "No end date")
                         .schedulerTitle(lectureGroup.getLecture().getTitle())
-                        .alertYn('N')
-                        .build();
+                        .alertYn('N');
 
-                groupTimesDto.add(groupTimeResDto);
+                // startDate가 null일 경우 처리
+                if (lectureGroup.getStartDate() != null) {
+                    groupTimeResDtoBuilder.startDate(lectureGroup.getStartDate().toString());
+                }
+
+                // endDate가 null일 경우 처리
+                if (lectureGroup.getEndDate() != null) {
+                    groupTimeResDtoBuilder.endDate(lectureGroup.getEndDate().toString());
+                }
+
+                groupTimesDto.add(groupTimeResDtoBuilder.build());
             }
         }
 
@@ -590,31 +596,37 @@ public class LectureService {
         return lectureInfos;
     }
 
-    public LectureHomeResDto LectureHomeInfoGet(Long lectureGroupId){
+    public LectureHomeResDto LectureHomeInfoGet(Long lectureGroupId) {
         // 강의 그룹 정보
-        LectureGroup lectureGroup = lectureGroupRepository.findById(lectureGroupId).orElseThrow(()->new EntityNotFoundException("해당 그룹이 없습니다."));
+        LectureGroup lectureGroup = lectureGroupRepository.findById(lectureGroupId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 그룹이 없습니다."));
 
         List<LectureApply> lectureApplyList = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(lectureGroup, Status.ADMIT, "N");
         Long loginMember = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
 
+        // LectureHomeResDto에서 startDate와 endDate는 LocalDate로 처리
         LectureHomeResDto dto = LectureHomeResDto.builder()
                 .groupId(lectureGroup.getId())
                 .limitPeople(lectureGroup.getLimitPeople())
-                .address(lectureGroup.getAddress())
-                .detailAddress(lectureGroup.getDetailAddress())
+                .address(lectureGroup.getAddress() != null ? lectureGroup.getAddress() : "")
+                .detailAddress(lectureGroup.getDetailAddress() != null ? lectureGroup.getDetailAddress() : "")
                 .price(lectureGroup.getPrice())
-                .startDate(lectureGroup.getStartDate())
-                .endDate(lectureGroup.getEndDate())
+                .startDate(lectureGroup.getStartDate())  // LocalDate로 그대로 전달
+                .endDate(lectureGroup.getEndDate())      // LocalDate로 그대로 전달
                 .build();
+
         // 강의 그룹의 강의 id -> 강의 정보 불러오기
-        Lecture lecture = lectureRepository.findById(lectureGroup.getLecture().getId()).orElseThrow(()->new EntityNotFoundException("해당 강의 및 과외가 없습니다."));
+        Lecture lecture = lectureRepository.findById(lectureGroup.getLecture().getId())
+                .orElseThrow(() -> new EntityNotFoundException("해당 강의 및 과외가 없습니다."));
 
         List<Long> memberList = lectureApplyList.stream()
                 .map(LectureApply::getMemberId)
                 .collect(Collectors.toList());
         memberList.add(lecture.getMemberId());
 
-        if(!memberList.contains(loginMember)) throw new IllegalArgumentException("접근할 수 없는 강의 그룹입니다");
+        if (!memberList.contains(loginMember)) {
+            throw new IllegalArgumentException("접근할 수 없는 강의 그룹입니다");
+        }
 
         dto.setLectureId(lecture.getId());
         dto.setTitle(lecture.getTitle());
@@ -626,27 +638,27 @@ public class LectureService {
         dto.setLectureType(lecture.getLectureType());
 
         // 단체 채팅방
-        List<LectureChatRoom> lectureChatRoomList = lectureChatRoomRepository.findByLectureGroupAndDelYn(lectureGroup,"N");
-        // Todo 채팅방 id는 좀 더 생각 필요
-        if(!lectureChatRoomList.isEmpty())dto.setChatRoomId(lectureChatRoomList.get(0).getId());
+        List<LectureChatRoom> lectureChatRoomList = lectureChatRoomRepository.findByLectureGroupAndDelYn(lectureGroup, "N");
+        if (!lectureChatRoomList.isEmpty()) dto.setChatRoomId(lectureChatRoomList.get(0).getId());
+
         // 강의 그룹 시간 list
         List<GroupTimeResDto> groupTimeResDtos = new ArrayList<>();
-        int totalDayCount=0;
-        int pastDayCount=0;
+        int totalDayCount = 0;
+        int pastDayCount = 0;
         LocalDate today = LocalDate.now();
 
-        for(GroupTime groupTime: lectureGroup.getGroupTimes()){
-            if (groupTime.getDelYn().equals("N") ) {
+        for (GroupTime groupTime : lectureGroup.getGroupTimes()) {
+            if (groupTime.getDelYn().equals("N")) {
                 GroupTimeResDto groupTimeResDto = GroupTimeResDto.builder()
                         .memberId(lecture.getMemberId())
                         .groupTimeId(groupTime.getId())
                         .lectureGroupId(lectureGroup.getId())
                         .lectureType(lecture.getLectureType().toString())
-                        .lectureDay(groupTime.getLectureDay().name()) // MON, TUE, 등
-                        .startTime(groupTime.getStartTime().toString()) // HH:mm
-                        .endTime(groupTime.getEndTime().toString()) // HH:mm
-                        .startDate(lectureGroup.getStartDate().toString()) // 강의 시작 날짜
-                        .endDate(lectureGroup.getEndDate().toString()) // 강의 종료 날짜
+                        .lectureDay(groupTime.getLectureDay().name()) // 요일 그대로 사용
+                        .startTime(groupTime.getStartTime() != null ? groupTime.getStartTime().toString() : "")
+                        .endTime(groupTime.getEndTime() != null ? groupTime.getEndTime().toString() : "")
+                        .startDate(lectureGroup.getStartDate() != null ? lectureGroup.getStartDate().toString() : "")
+                        .endDate(lectureGroup.getEndDate() != null ? lectureGroup.getEndDate().toString() : "")
                         .schedulerTitle(lectureGroup.getLecture().getTitle()) // 강의 제목을 일정 제목으로 설정
                         .alertYn('N') // 기본값 'N'
                         .build();
@@ -658,30 +670,33 @@ public class LectureService {
                 // 현재 날짜까지의 수업 개수 계산
                 pastDayCount += countDaysBetweenDates(lectureGroup.getStartDate(), today, groupTime.getLectureDay());
             }
-
         }
+
         groupTimeResDtos.sort(Comparator.comparing((GroupTimeResDto g) -> DayOfWeek.valueOf(g.getLectureDay()).ordinal())
                 .thenComparing(g -> LocalTime.parse(g.getStartTime())));
 
         dto.setTotalDayCount(totalDayCount);
         dto.setPastDayCount(pastDayCount);
         dto.setLectureGroupTimes(groupTimeResDtos);
+
         return dto;
     }
     public int countDaysBetweenDates(LocalDate startDate, LocalDate endDate, LectureDay lectureDay) {
         DayOfWeek targetDayOfWeek = DayOfWeek.valueOf(lectureDay.name());
 
         int count = 0;
-        LocalDate date = startDate;
+        if(startDate !=null && endDate !=null) {
 
-        // 시작일부터 종료일까지 날짜 순회
-        while (!date.isAfter(endDate)) {
-            if (date.getDayOfWeek() == targetDayOfWeek) {
-                count++;
+            LocalDate date = startDate;
+
+            // 시작일부터 종료일까지 날짜 순회
+            while (!date.isAfter(endDate)) {
+                if (date.getDayOfWeek() == targetDayOfWeek) {
+                    count++;
+                }
+                date = date.plusDays(1);
             }
-            date = date.plusDays(1);
         }
-
         return count;
     }
 
