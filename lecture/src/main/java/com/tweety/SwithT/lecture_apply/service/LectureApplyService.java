@@ -35,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -46,8 +47,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -275,6 +278,7 @@ public class LectureApplyService {
                             .lectureType(lectureApply.getLectureGroup().getLecture().getLectureType())
                             .createdTime(lectureApply.getCreatedTime())
                             .lectureImage(lectureApply.getLectureGroup().getLecture().getImage())
+                            .reviewStatus(lectureApply.getReviewStatus()) //김민성 추가
                     .build());
         }
 
@@ -286,11 +290,8 @@ public class LectureApplyService {
 
     }
 
-    // 강의 신청
-    @Transactional
-    public LectureApplyAfterResDto tuteeLectureApply(Long lectureGroupId, Long memberId, String memberName) throws InterruptedException {
-        synchronized (lock) {
-            LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(lectureGroupId, "N")
+    public String lectureAddQueue(Long lectureGroupId, Long memberId, String memberName) throws InterruptedException {
+        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(lectureGroupId, "N")
                     .orElseThrow(() -> new EntityNotFoundException("해당 강의는 존재하지 않습니다."));
 
             if (lectureGroup.getIsAvailable().equals("N")) {
@@ -302,55 +303,159 @@ public class LectureApplyService {
                 throw new RuntimeException("이미 신청한 강의입니다.");
             }
 
+            // 대기열에 추가
             final long now = System.currentTimeMillis();
             redisTemplate.opsForZSet().add(lectureGroupId.toString(), memberId, now);
-            log.info("대기열에 추가 - {}번 유저 ({}초)", memberId, now);
+            Long memberRank = redisTemplate.opsForZSet().rank(lectureGroupId.toString(), memberId);
+            System.out.println("대기열에 추가" + memberRank);
+            log.info("대기열에 추가 - {}번 유저 ({}초) / {}위", memberId, now, memberRank);
 
-            Set<Object> queue = redisTemplate.opsForZSet().range(lectureGroupId.toString(), 0, 0); // 앞에 있는 사람
+//
+//        while (memberRank != 0) { // Null발생
+//
+//            String rank = String.valueOf(memberRank);
+//            // 메시지 발행
+//            redisStreamProducer.publishWaitingMessage(memberId.toString(), "WAITING", lectureGroupId.toString() + "번 강의 대기열 조회", rank);
+//
+//            // 3초 대기
+//            Thread.sleep(3000);
+//
+//            // 순번 업데이트
+//            memberRank = redisTemplate.opsForZSet().rank(lectureGroupId.toString(), memberId.toString());
+//            System.out.println("순번 업데이트" + memberRank);
+//        }
+//
+//        // 대기열 순번이 0일 때 마지막 메시지 발행
+//        redisStreamProducer.publishWaitingMessage(memberId.toString(), "WAITING-SUCCESS", lectureGroupId.toString() + "번 강의 신청 완료", "0");
 
-            if (queue != null && !queue.isEmpty()) {
-                // 앞에 있는 유저부터 큐에서 제거
-                Object frontUser = queue.iterator().next();
-//                System.out.println("queue에서 가장 앞에 있는 유저: " + frontUser);
-                redisTemplate.opsForZSet().remove(lectureGroupId.toString(), frontUser);
+        return "강의 신청 완료";
+    }
 
-                // 남은 자리수 감소 및 처리
-                if (lectureGroup.getRemaining() > 0) {
-                    lectureGroup.decreaseRemaining();
-                    lectureGroupRepository.saveAndFlush(lectureGroup);
 
-                    Long user = (frontUser instanceof Integer) ? ((Integer) frontUser).longValue() : (Long) frontUser;
+    public Long lectureGetOrder( Long lectureGroupId, Long memberId) throws InterruptedException {
 
-                    // 대기열 상태 저장
-                    lectureApplyRepository.save(LectureApply.builder()
-                            .lectureGroup(lectureGroup)
-                            .memberId(user)
-                            .memberName(memberName)
-                            .status(Status.STANDBY)
-                            .build());
+        String queueKey = lectureGroupId.toString();
+        Set<Object> queue = redisTemplate.opsForZSet().range(queueKey, 0, -1);  // 대기열 내부에 있는 유저 정보 갖고옴
 
-                    log.info("현재 대기열 상태 업데이트 완료.");
-                } else {
-                    throw new RuntimeException("남은 자리가 없습니다.");
-                }
-            }
-            return LectureApplyAfterResDto.builder().lectureGroupId(lectureGroup.getId()).build();
+        Long memberRank = redisTemplate.opsForZSet().rank(queueKey, memberId);
+
+        for (Object people : queue) {
+            Long rank = redisTemplate.opsForZSet().rank(queueKey, people);
+            log.info("'{}'번 유저의 현재 대기열은 {}명 남았습니다.", people, rank);
+        }
+
+        if (memberRank != null) {
+            return memberRank;
+        } else {
+            return -1L; // 요청한 멤버가 대기열에 없으면 -1 반환
         }
     }
 
-    public LectureGroupPayResDto getLectureGroupByApplyId(Long id){
-        LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException("수강 번호 불러오기 실패"));
-        LectureGroup lectureGroup = lectureApply.getLectureGroup();
 
-        return LectureGroupPayResDto.builder()
-                .groupId(lectureGroup.getId())
-                .lectureName(lectureGroup.getLecture().getTitle())
-                .price(lectureGroup.getPrice())
-                .build();
+    public Long lectureDeleteQueue(Long lectureGroupId, Long memberId){
+        // Zset에서 해당 memberId를 삭제
+        redisTemplate.opsForZSet().remove(lectureGroupId.toString(), memberId);
+        System.out.println("Removed memberId: " + memberId + " from Zset: " + lectureGroupId);
+        return memberId;
     }
 
-    @Transactional
+//    @Scheduled(fixedRate = 10000)
+//    public void waitingScheduler() {
+//
+//        // Redis에 저장된 Zset들의 키 리스트 (필요하다면 따로 관리하는 로직 추가)
+//        Set<String> keys = redisTemplate.keys("*"); // 모든 키 가져오기
+//
+//        if (keys.size() != 0) {
+//            System.out.println("keys: " + keys);
+//            for (String key : keys) {
+//                // Zset인 경우에만 처리
+//                if (redisTemplate.type(key).code().equals("zset")) {
+//
+//                    // Zset에서 첫 번째 요소(0번째 인덱스)를 가져옴
+//                    Set<ZSetOperations.TypedTuple<Object>> firstElement = redisTemplate.opsForZSet().rangeWithScores(key, 0, 0);
+//
+//                    if (firstElement != null && !firstElement.isEmpty()) {
+//                        ZSetOperations.TypedTuple<Object> user = firstElement.iterator().next();
+//                        String memberId = String.valueOf(user.getValue()); // 유저 ID 추출
+//
+//                        // 해당 유저에게 메시지 발송
+//                        redisStreamProducer.publishWaitingMessage(
+//                                user.getValue()+"번 유저",
+//                                "WAITING-SUCCESS",
+//                                key + "번 강의 신청 완료",
+//                                "0"
+//                        );
+//                        System.out.println("Message sent to memberId: " + memberId + " for lectureGroup: " + key);
+//
+//                        // Zset에서 첫 번째 요소(0번째 인덱스) 삭제
+//                        redisTemplate.opsForZSet().removeRange(key, 0, 0);
+//                        System.out.println("Removed first element from Zset: " + key);
+//                    }
+//                }
+//            }
+//        } else {
+//            System.out.println("waitingScheduler...");
+//        }
+//    }
+
+
+//    // 강의 신청
+//    @Transactional
+//    public LectureApplyAfterResDto tuteeLectureApply(Long lectureGroupId, Long memberId, String memberName) throws InterruptedException {
+////        synchronized (lock) {
+//            LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(lectureGroupId, "N")
+//                    .orElseThrow(() -> new EntityNotFoundException("해당 강의는 존재하지 않습니다."));
+//
+//            if (lectureGroup.getIsAvailable().equals("N")) {
+//                throw new RuntimeException("해당 강의는 신청할 수 없습니다.");
+//            }
+//
+//            List<LectureApply> lectureApplyList = lectureApplyRepository.findByMemberIdAndLectureGroup(memberId, lectureGroup);
+//            if (!lectureApplyList.isEmpty()) {
+//                throw new RuntimeException("이미 신청한 강의입니다.");
+//            }
+//
+//            // 대기열에 추가
+//            final long now = System.currentTimeMillis();
+//            redisTemplate.opsForZSet().add(lectureGroupId.toString(), memberId, now);
+//            log.info("대기열에 추가 - {}번 유저 ({}초)", memberId, now);
+//
+//
+////            // 맨 앞 유저부터 대기열에서 제거
+////            Set<Object> queue = redisTemplate.opsForZSet().range(lectureGroupId.toString(), 0, 0); // 앞에 있는 사람
+////
+////            if (queue != null && !queue.isEmpty()) {
+////                // 앞에 있는 유저부터 큐에서 제거
+////                Object frontUser = queue.iterator().next();
+//////                System.out.println("queue에서 가장 앞에 있는 유저: " + frontUser);
+////                redisTemplate.opsForZSet().remove(lectureGroupId.toString(), frontUser);
+//////                redisStreamProducer.publishWaitingMessage();
+////
+////                // 남은 자리수 감소 및 처리
+////                if (lectureGroup.getRemaining() > 0) {
+////                    lectureGroup.decreaseRemaining();
+////                    lectureGroupRepository.saveAndFlush(lectureGroup);
+////
+////                    Long user = (frontUser instanceof Integer) ? ((Integer) frontUser).longValue() : (Long) frontUser;
+////
+////                    // 대기열 상태 저장
+////                    lectureApplyRepository.save(LectureApply.builder()
+////                            .lectureGroup(lectureGroup)
+////                            .memberId(user)
+////                            .memberName(memberName)
+////                            .status(Status.STANDBY)
+////                            .build());
+////
+////                    log.info("현재 대기열 상태 업데이트 완료.");
+////                } else {
+////                    throw new RuntimeException("남은 자리가 없습니다.");
+////                }
+////            }
+//            return LectureApplyAfterResDto.builder().lectureGroupId(lectureGroup.getId()).build();
+////        }
+//    }
+
+ @Transactional
     public void updateLectureApplyStatus(Long id, String message){
         LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
                    ()-> new EntityNotFoundException("수강 정보 불러오기 실패"));
@@ -389,7 +494,7 @@ public class LectureApplyService {
                 chatRoom.updateDelYn();
             }
         } else{
-
+            
         }
 
         lectureApplyRepository.save(lectureApply);
@@ -548,10 +653,13 @@ public class LectureApplyService {
         LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{
             throw new EntityNotFoundException("해당 강의 그룹이 없습니다");
         });
+
         Lecture lecture = lectureGroup.getLecture();
-        if(lecture.getMemberId() != memberId){  //소유자가 아닌 경우
-            throw new IllegalArgumentException("접근할 수 없는 강의 그룹입니다");
-        }
+        // lecture apply admit이고 lectureGroupID
+//        if(lecture.getMemberId() != memberId){  //소유자가 아닌 경우
+//            throw new IllegalArgumentException("접근할 수 없는 강의 그룹입니다");
+//        }
+
         List<LectureApply> lectureApplyList = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(lectureGroup, Status.ADMIT, "N");
 //        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
 //        int start = (int) pageRequest.getOffset();
@@ -610,3 +718,4 @@ public class LectureApplyService {
         lectureApply.updateStatus(Status.CANCEL);
     }
 }
+

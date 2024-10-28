@@ -6,12 +6,16 @@ import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.service.LectureApplyService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequiredArgsConstructor
@@ -71,10 +75,28 @@ public class LectureApplyController {
 
     // 강의 신청
 //    @PreAuthorize("hasRole('TUTEE')")
-    @PostMapping("/lecture-apply")
-    public ResponseEntity<?> tuteeLectureApply( @RequestParam Long lectureGroupId, @RequestParam Long memberId, @RequestParam String memberName) throws InterruptedException {
-        CommonResDto commonResDto = new CommonResDto(HttpStatus.CREATED, "튜티의 강의 신청 완료", lectureApplyService.tuteeLectureApply(lectureGroupId, memberId, memberName));
-        return new ResponseEntity<>(commonResDto, HttpStatus.CREATED);
+//    @PostMapping("/lecture-apply")
+//    public ResponseEntity<?> tuteeLectureApply( @RequestParam Long lectureGroupId, @RequestParam Long memberId, @RequestParam String memberName) throws InterruptedException {
+//        CommonResDto commonResDto = new CommonResDto(HttpStatus.CREATED, "튜티의 강의 신청 완료", lectureApplyService.tuteeLectureApply(lectureGroupId, memberId, memberName));
+//        return new ResponseEntity<>(commonResDto, HttpStatus.CREATED);
+//    }
+
+    @PostMapping("/lecture-add-queue")
+    public ResponseEntity<?> lectureAddQueue(@RequestParam Long lectureGroupId, @RequestParam Long memberId, @RequestParam String memberName) throws InterruptedException {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "대기열 추가 완료", lectureApplyService.lectureAddQueue(lectureGroupId, memberId, memberName));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+    @GetMapping("/lecture-get-order")
+    public ResponseEntity<?> lectureGetOrder(@RequestParam Long lectureGroupId, @RequestParam Long memberId) throws InterruptedException {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "대기열 조회 완료", lectureApplyService.lectureGetOrder(lectureGroupId, memberId));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+    @PostMapping("/lecture-delete-queue")
+    public ResponseEntity<?> lectureDeleteQueue(@RequestParam Long lectureGroupId, @RequestParam Long memberId) throws InterruptedException {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "대기열 제거 완료", lectureApplyService.lectureDeleteQueue(lectureGroupId, memberId));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
     @GetMapping("/lecture/group/{id}")
