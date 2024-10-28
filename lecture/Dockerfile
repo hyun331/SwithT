@@ -11,6 +11,7 @@ COPY build.gradle .
 COPY settings.gradle .
 
 RUN chmod +x gradlew
+RUN apt-get update && apt-get install -y findutils
 RUN ./gradlew bootJar
 
 # 두번째 스테이지
