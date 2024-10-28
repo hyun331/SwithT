@@ -64,8 +64,8 @@ spec:
                 secretKeyRef:
                   key: AWS_ACCESS_KEY
                   name: tweety-secrets
-            - name: AWS_SECRET_KEY
+            - name: AWS_SECRET
               valueFrom:
                 secretKeyRef:
-                  key: AWS_SECRET_KEY
+                  key: AWS_SECRET
                   name: tweety-secrets
