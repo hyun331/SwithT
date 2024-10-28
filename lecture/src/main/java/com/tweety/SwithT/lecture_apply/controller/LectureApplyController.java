@@ -114,7 +114,7 @@ public class LectureApplyController {
             System.out.println("그룹 번호: " + lectureGroupId);
             System.out.println("멤버 번호: " + memberId);
             lectureApplyService.updateLectureStatus(lectureGroupId, memberId);
-            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "결제 완료", null);
+            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "신청 완료", null);
             return new ResponseEntity<>(commonResDto, HttpStatus.OK);
         } catch (EntityNotFoundException e){
             CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.BAD_REQUEST.value(), e.getMessage());
