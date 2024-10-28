@@ -40,7 +40,6 @@ public class SecurityConfigs {
                 .httpBasic(httpBasic -> httpBasic.disable()) // 기본 인증 비활성화
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("**").permitAll()
-                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

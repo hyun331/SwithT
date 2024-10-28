@@ -28,7 +28,6 @@ public class SecurityConfigs {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/ws/**", "/list-of-lecture", "/lecture-detail/{id}", "/lecture/search", "/lectures/latest", "/lectures/free", "/lecture/search/category", "/lecture/lecture-group-info/{id}", "/lecture/recommend")
                         .permitAll()
-                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
