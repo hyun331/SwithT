@@ -58,7 +58,7 @@ jobs:
       - name: eks kubectl apply
         run: |
           kubectl apply -f ./lecture/k8s/lecture_depl.yml
-          kubectl rollout restart deployment lecture-deployment -n lecture
+          kubectl rollout restart deployment lecture-deployment -n tweety
 
       - name: build and push docker payment image to ecr
         env:
