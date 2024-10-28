@@ -75,4 +75,12 @@ public class LectureChatRoomController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
+    //채팅 내역 가져오기
+    @GetMapping("/room/chat/log/{roomId}")
+    public ResponseEntity<?> getChatRoomLog(@PathVariable Long roomId, Pageable pageable){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "채팅 내역", lectureChatRoomService.getChatRoomLog(roomId, pageable));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+
+    }
+
 }

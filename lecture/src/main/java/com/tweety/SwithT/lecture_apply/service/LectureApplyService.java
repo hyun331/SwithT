@@ -200,6 +200,7 @@ public class LectureApplyService {
             //결제 요청 보내기
             redisStreamProducer.publishMessage(lectureApply.getMemberId().toString(),
                     "결제요청", lectureGroup.getLecture().getTitle()+"에서 결제 요청을 했습니다.", lectureApply.getId().toString());
+            System.out.println("결제 요청 : "+ lectureApply.getId());
 
         }
 
@@ -547,6 +548,7 @@ public class LectureApplyService {
                     .schedulerTitle(lectureGroup.getLecture().getTitle()) // 강의 제목을 일정 제목으로 설정
                     .alertYn('N') // 기본값 'N'
                     .build();
+
             groupTimesDto.add(groupTimeResDto);
         }
         try {

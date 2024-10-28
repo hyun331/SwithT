@@ -32,6 +32,8 @@ public class SseController {
 
         emitter.onCompletion(()->redisStreamSseConsumer.removeClient(memberId));   //할거 다하면 emitters에서 제거
         emitter.onTimeout(()->redisStreamSseConsumer.removeClient(memberId));      //시간 지나면 emitters에서 제거
+        emitter.onError((e) ->redisStreamSseConsumer.removeClient(memberId));
+
 
         try{
             emitter.send(SseEmitter.event().name("connect").data("connected!!!!"));
