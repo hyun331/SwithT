@@ -49,6 +49,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             // Access Token을 쿠키에 저장 (HttpOnly로 설정하여 보안 강화)
             Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
             accessTokenCookie.setHttpOnly(false);  // JavaScript로 접근 못하도록 설정
+            accessTokenCookie.setDomain(".switht.co.kr");
             accessTokenCookie.setPath("/");
             accessTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
             response.addCookie(accessTokenCookie);
@@ -57,23 +58,27 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
             refreshTokenCookie.setHttpOnly(false); // 이게 true로 설정되어있으면 쿠키값 못 가져옴.
             refreshTokenCookie.setPath("/");
+            refreshTokenCookie.setDomain(".switht.co.kr");
             refreshTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
             response.addCookie(refreshTokenCookie);
 
             // memberId도 쿠키에 저장
             Cookie memberCookie = new Cookie("memberId", String.valueOf(memberId));
             memberCookie.setHttpOnly(false);
-//            memberCookie.setSecure(true);  // HTTPS 환경에서만 전송
+            memberCookie.setSecure(true);  // HTTPS 환경에서만 전송
             memberCookie.setPath("/");
+            memberCookie.setDomain(".switht.co.kr");
             memberCookie.setMaxAge(60 * 60 );  // 1시간 유지
             response.addCookie(memberCookie);
 
             // phoneNumber 필드가 null인지 확인
             if (existingMember.getPhoneNumber() == null) {
+                System.out.println("로그인이 되긴 되는거니?"+ existingMember.getEmail());
                 // 첫 번째 로그인 -> 추가 정보 입력 페이지로 리디렉션
                 String redirectUrl = REDIRECT_URL; // 추가정보 입력 페이지 URL
                 response.sendRedirect(redirectUrl);
             } else {
+                System.out.println("두번쨰 로그인" + existingMember.getEmail());
                 // 두 번째 이후 로그인 -> 메인 페이지로 리디렉션
                 String redirectUrl = REDIRECT_URL_EXIST; // 메인 페이지 URL
                 response.sendRedirect(redirectUrl);
