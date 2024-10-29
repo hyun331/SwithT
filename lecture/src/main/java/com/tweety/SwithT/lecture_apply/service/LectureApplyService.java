@@ -35,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -47,10 +46,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -648,6 +645,18 @@ public class LectureApplyService {
 //
 //        return lectureApply.getLectureGroup().getLecture().getMemberId();
 //    }
+
+    public LectureGroupPayResDto getLectureGroupByApplyId(Long id){
+        LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException("수강 번호 불러오기 실패"));
+        LectureGroup lectureGroup = lectureApply.getLectureGroup();
+
+        return LectureGroupPayResDto.builder()
+                .groupId(lectureGroup.getId())
+                .lectureName(lectureGroup.getLecture().getTitle())
+                .price(lectureGroup.getPrice())
+                .build();
+    }
 
     public Page<SingleLectureTuteeListDto> singleLectureTuteeList(Long id, Pageable pageable) {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
