@@ -1,5 +1,6 @@
 package com.tweety.SwithT.lecture.controller;
 
+import com.tweety.SwithT.board.domain.Board;
 import com.tweety.SwithT.common.dto.CommonErrorDto;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.lecture.domain.Lecture;
@@ -121,8 +122,10 @@ public class LectureController {
 
     // 강의 수정
     @PostMapping("/update/{id}")
-    public ResponseEntity<?> lectureUpdate(@PathVariable Long id, @RequestBody LectureUpdateReqDto dto) {
-        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 업데이트", lectureService.lectureUpdate(id, dto));
+    public ResponseEntity<?> lectureUpdate(@PathVariable Long id,
+                                           @RequestPart(value = "data") LectureUpdateReqDto dto,
+                                           @RequestPart(value = "file", required = false) MultipartFile imgFile) {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 업데이트", lectureService.lectureUpdate(id, dto, imgFile));
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
@@ -211,6 +214,24 @@ public class LectureController {
             CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.NOT_FOUND.value(), e.getMessage());
             return new ResponseEntity<>(commonErrorDto, HttpStatus.NOT_FOUND);
         }
+    }
+
+    // 강의 아이디를 통해 각 강의 그룹의 게시글 가져오기
+    @GetMapping("/lecture/board/{lectureId}")
+    public Page<Board> getPostsByLectureId(
+            @PathVariable Long lectureId,
+            @RequestParam(defaultValue = "0") int page // 페이지 번호 (기본값은 0)
+    ) {
+        return lectureService.getPostsByLectureId(lectureId, page);
+    }
+
+    // 강의 아이디를 통해 각 강의 그룹의 게시글 가져오기
+    @GetMapping("/lecture/lectureAssignment/{lectureId}")
+    public Page<Board> getAssignmentsByLectureId(
+            @PathVariable Long lectureId,
+            @RequestParam(defaultValue = "0") int page // 페이지 번호 (기본값은 0)
+    ) {
+        return lectureService.getLectureAssignmentsByLectureId(lectureId, page);
     }
 
 }

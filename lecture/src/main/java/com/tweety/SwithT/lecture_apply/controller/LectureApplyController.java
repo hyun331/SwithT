@@ -6,16 +6,12 @@ import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplySavedDto;
 import com.tweety.SwithT.lecture_apply.service.LectureApplyService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
 
 @RestController
 @RequiredArgsConstructor
@@ -99,11 +95,11 @@ public class LectureApplyController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
-    @GetMapping("/lecture/group/{id}")
-    public ResponseEntity<?> getLectureApplyPayInfo(@PathVariable Long id){
-        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 그룹 정보",lectureApplyService.getLectureGroupByApplyId(id));
-        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
-    }
+//    @GetMapping("/lecture/group/{id}")
+//    public ResponseEntity<?> getLectureApplyPayInfo(@PathVariable Long id){
+//        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 그룹 정보",lectureApplyService.getLectureGroupByApplyId(id));
+//        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+//    }
 
     //리뷰 상태 변경 코드 추가
     @PutMapping("/lecture-apply/review/status")

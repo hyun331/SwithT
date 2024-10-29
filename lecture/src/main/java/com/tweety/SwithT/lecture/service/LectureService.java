@@ -2,10 +2,10 @@ package com.tweety.SwithT.lecture.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tweety.SwithT.board.domain.Board;
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.dto.MemberNameResDto;
-import com.tweety.SwithT.common.dto.MemberProfileResDto;
 import com.tweety.SwithT.common.dto.MemberScoreResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.common.service.OpenSearchService;
@@ -17,7 +17,6 @@ import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
-import com.tweety.SwithT.lecture_apply.dto.SingleLectureTuteeListDto;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatRoom;
 import com.tweety.SwithT.lecture_chat_room.dto.ChatRoomCheckDto;
@@ -345,22 +344,24 @@ public class LectureService {
 
     // 강의 수정
     @Transactional
-    public LectureDetailResDto lectureUpdate(Long id, LectureUpdateReqDto dto){
+    public LectureDetailResDto lectureUpdate(Long id, LectureUpdateReqDto dto, MultipartFile image){
         Lecture lecture = lectureRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Lecture is not found"));
 
-        if (dto.getTitle() != null) {
-            lecture.updateTitle(dto.getTitle());
-        }
-        if (dto.getContents() != null) {
-            lecture.updateContents(dto.getContents());
-        }
-        if (dto.getImage() != null) {
-            lecture.updateImage(dto.getImage());
-        }
-        if (dto.getCategory() != null) {
-            lecture.updateCategory(dto.getCategory());
-        }
+//        if (dto.getTitle() != null) {
+//            lecture.updateTitle(dto.getTitle());
+//        }
+//        if (dto.getContents() != null) {
+//            lecture.updateContents(dto.getContents());
+//        }
+//        if (dto.getImage() != null) {
+//            lecture.updateImage(dto.getImage());
+//        }
+//        if (dto.getCategory() != null) {
+//            lecture.updateCategory(dto.getCategory());
+//        }
+        String imageUrl = s3Service.uploadFile(image, "lecture");
+        lecture.updateLecture(dto, imageUrl);
 
         // OpenSearch에 데이터 동기화
         try {
@@ -795,5 +796,19 @@ public class LectureService {
             case SUNDAY -> "일";
         };
     }
+
+    // 강의 아이디를 통해 각 강의 그룹의 게시글 갖고오기
+    public Page<Board> getPostsByLectureId(Long lectureId, int page) {
+        Pageable pageable = PageRequest.of(page, 5); // 각 페이지에 5개씩 표시
+        return lectureGroupRepository.findBoardsByLectureId(lectureId, pageable);
+    }
+
+    // 강의 아이디를 통해 각 강의 그룹의 과제 갖고오기
+    public Page<Board> getLectureAssignmentsByLectureId(Long lectureId, int page) {
+        Pageable pageable = PageRequest.of(page, 5); // 각 페이지에 5개씩 표시
+        return lectureGroupRepository.findLectureAssignmentsByLectureId(lectureId, pageable);
+    }
+
+
 
 }

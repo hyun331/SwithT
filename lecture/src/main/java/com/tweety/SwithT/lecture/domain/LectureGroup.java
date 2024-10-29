@@ -1,8 +1,10 @@
 package com.tweety.SwithT.lecture.domain;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.tweety.SwithT.board.domain.Board;
 import com.tweety.SwithT.common.domain.BaseTimeEntity;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
+import com.tweety.SwithT.lecture_assignment.domain.LectureAssignment;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -57,6 +59,12 @@ public class LectureGroup extends BaseTimeEntity {
     @OneToMany(mappedBy = "lectureGroup", cascade = CascadeType.PERSIST)
     @Builder.Default
     private List<LectureApply> lectureApplies = new ArrayList<>();
+
+    @OneToMany(mappedBy = "lectureGroup", cascade = CascadeType.PERSIST)
+    private List<Board> boards = new ArrayList<>();
+
+    @OneToMany(mappedBy = "lectureGroup", cascade = CascadeType.PERSIST)
+    private List<LectureAssignment> lectureAssignments = new ArrayList<>();
 
 
     // update - dto로 수정하기
