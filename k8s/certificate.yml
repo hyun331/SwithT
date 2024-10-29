@@ -18,7 +18,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: switht-co.kr-tls
-  namespace: switht
+  namespace: tweety
 spec:
   secretName: switht-co.kr-tls
   duration: 2160h
