@@ -59,7 +59,9 @@ public class MemberService {
 
     public Member addInfoUpdate(MemberAddInfoReqDto memberAddInfoReqDto){
 
-        Member member = memberRepository.findById(Long.valueOf(memberAddInfoReqDto.getId()))
+        String id = tokenCheck();
+
+        Member member = memberRepository.findById(Long.valueOf(id))
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 회원 입니다."));
 
         return member.addInfoUpdate(memberAddInfoReqDto);

@@ -60,11 +60,12 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             refreshTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
             response.addCookie(refreshTokenCookie);
 
-            // memberId도 쿠키에 저장
             Cookie memberCookie = new Cookie("memberId", String.valueOf(memberId));
-            memberCookie.setHttpOnly(false);
+            memberCookie.setHttpOnly(false); // JavaScript에서 접근 가능
             memberCookie.setPath("/");
-            memberCookie.setMaxAge(60 * 60 );  // 1시간 유지
+            memberCookie.setDomain(".switht.co.kr");  // 상위 도메인으로 설정하여 모든 서브도메인에서 접근 가능하게 설정
+            memberCookie.setMaxAge(60 * 60); // 1시간 유지
+            memberCookie.setSecure(request.isSecure()); // HTTPS 환경에서만 true
             response.addCookie(memberCookie);
 
             // phoneNumber 필드가 null인지 확인
