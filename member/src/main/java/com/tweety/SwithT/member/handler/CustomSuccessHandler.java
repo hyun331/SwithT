@@ -62,7 +62,9 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
             // memberId도 쿠키에 저장
             Cookie memberCookie = new Cookie("memberId", String.valueOf(memberId));
-            refreshTokenCookie.setHttpOnly(false);
+            memberCookie.setDomain("www.switht.co.kr");
+            memberCookie.setHttpOnly(false);
+            memberCookie.setSecure(true);
             memberCookie.setPath("/");
             memberCookie.setMaxAge(60 * 60 );  // 1시간 유지
             response.addCookie(memberCookie);

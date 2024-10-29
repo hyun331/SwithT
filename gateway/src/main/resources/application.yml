@@ -10,7 +10,7 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOrigins: 'http://localhost:8081'
+            allowedOrigins: 'https://www.switht.co.kr' #김민성 수정
             allow-credentials: true
             allowedHeaders: '*'
             allowedMethods:
