@@ -19,7 +19,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final JwtTokenProvider jwtTokenProvider;
     private final MemberRepository memberRepository;
     private final String REDIRECT_URL = "https://www.switht.co.kr/member/explain";
-    private final String REDIRECT_URL_EXIST = "https://www.switht.co.kr/loginSuccess";//테스트를 위해서 임시로 뒀음.
+    private final String REDIRECT_URL_EXIST = "https://www.switht.co.kr/";//테스트를 위해서 임시로 뒀음.
 
     public CustomSuccessHandler(JwtTokenProvider jwtTokenProvider, MemberRepository memberRepository) {
         this.jwtTokenProvider = jwtTokenProvider;
@@ -65,6 +65,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             memberCookie.setPath("/");
             memberCookie.setDomain(".switht.co.kr");  // 상위 도메인으로 설정하여 모든 서브도메인에서 접근 가능하게 설정
             memberCookie.setMaxAge(60 * 60); // 1시간 유지
+            memberCookie.setSecure(request.isSecure()); // HTTPS 환경에서만 true
             response.addCookie(memberCookie);
 
             // phoneNumber 필드가 null인지 확인
