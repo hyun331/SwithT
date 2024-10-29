@@ -48,8 +48,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
             // Access Token을 쿠키에 저장 (HttpOnly로 설정하여 보안 강화)
             Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
-            accessTokenCookie.setHttpOnly(false);  // JavaScript로 접근 못하도록 설정
-            accessTokenCookie.setDomain(".server.switht.co.kr");
+            accessTokenCookie.setHttpOnly(false);  //
             accessTokenCookie.setPath("/");
             accessTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
             response.addCookie(accessTokenCookie);
@@ -58,16 +57,13 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
             refreshTokenCookie.setHttpOnly(false); // 이게 true로 설정되어있으면 쿠키값 못 가져옴.
             refreshTokenCookie.setPath("/");
-            refreshTokenCookie.setDomain(".server.switht.co.kr");
             refreshTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
             response.addCookie(refreshTokenCookie);
 
             // memberId도 쿠키에 저장
             Cookie memberCookie = new Cookie("memberId", String.valueOf(memberId));
-            memberCookie.setHttpOnly(false);
-            memberCookie.setSecure(true);  // HTTPS 환경에서만 전송
+            refreshTokenCookie.setHttpOnly(false);
             memberCookie.setPath("/");
-            memberCookie.setDomain(".server.switht.co.kr");
             memberCookie.setMaxAge(60 * 60 );  // 1시간 유지
             response.addCookie(memberCookie);
 
