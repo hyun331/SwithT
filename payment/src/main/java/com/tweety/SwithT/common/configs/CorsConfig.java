@@ -9,7 +9,7 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry corsRegistry) {
         corsRegistry.addMapping("/**")
-                .allowedOrigins("https://www.switht.co.kr")
+                .allowedOrigins("https://www.switht.co.kr", "https://server.switht.co.kr")
                 .allowedMethods("*")    //get, post, ...
                 .allowedHeaders("*")
                 .allowCredentials(true);
