@@ -18,8 +18,8 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private final JwtTokenProvider jwtTokenProvider;
     private final MemberRepository memberRepository;
-    private final String REDIRECT_URL = "http://localhost:8081/member/explain"; //테스트를 위해서 임시로 뒀음.
-    private final String REDIRECT_URL_EXIST = "http://localhost:8081/loginSuccess"; //테스트를 위해서 임시로 뒀음.
+    private final String REDIRECT_URL = "https://www.switht.co.kr/member/explain";
+    private final String REDIRECT_URL_EXIST = "https://www.switht.co.kr/loginSuccess";
 
     public CustomSuccessHandler(JwtTokenProvider jwtTokenProvider, MemberRepository memberRepository) {
         this.jwtTokenProvider = jwtTokenProvider;
