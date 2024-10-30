@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@FeignClient(name="lecture-service", configuration = FeignConfig.class)
+@FeignClient(name="lecture-service", url = "http://lecture-service",configuration = FeignConfig.class)
 public interface LectureFeign {
 
 //    @GetMapping(value = "/lecture/group/{id}")

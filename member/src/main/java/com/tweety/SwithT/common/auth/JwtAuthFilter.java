@@ -33,14 +33,15 @@ public class JwtAuthFilter extends GenericFilter {
 
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         String bearerToken = request.getHeader("Authorization");
-
+        System.out.println("bearerToken : " + bearerToken+"\n");
         String path = request.getRequestURI();
 
         try {
             if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
                 String token = bearerToken.substring(7);
                 Claims claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
-
+                log.info("JWT Claims: {}", claims);
+                log.info("token : {}", token);
                 // 토큰에서 권한 정보 추출 및 설정
                 List<GrantedAuthority> authorities = new ArrayList<>();
                 authorities.add(new SimpleGrantedAuthority("ROLE_" + claims.get("role")));

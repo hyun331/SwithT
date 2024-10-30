@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface GroupTimeRepository extends JpaRepository<GroupTime, Long> {
     List<GroupTime> findByLectureGroupId(Long id);
+
+    List<GroupTime> findByLectureGroupIdAndDelYn(Long id, String delYn);
 }

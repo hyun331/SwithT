@@ -6,8 +6,11 @@ import com.tweety.SwithT.common.auth.JwtTokenProvider;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.dto.MemberNameResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
+import com.tweety.SwithT.lecture.domain.GroupTime;
+import com.tweety.SwithT.lecture.domain.LectureDay;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
 import com.tweety.SwithT.lecture.domain.LectureType;
+import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyListDto;
@@ -62,6 +65,7 @@ public class LectureChatRoomService {
     private final SimpMessagingTemplate template;
     private final MemberFeign memberFeign;
     private final LectureChatLogsRepository lectureChatLogsRepository;
+    private final GroupTimeRepository groupTimeRepository;
 
     //튜티가 채팅하기 눌렀을 때 채팅방 가져오거나 없으면 생성하기
     @Transactional
@@ -256,6 +260,7 @@ public class LectureChatRoomService {
             lectureChatParticipantsList.add(selectedChatRoom);
         }
 
+        //특정 채팅방으로 입장한 경우 list에 추가해주기
         if(!lectureChatParticipantsList.isEmpty()){
             for(LectureChatParticipants participants: chatParticipantsRepository.findByMemberIdAndDelYn(memberId, "N")){
                 if(lectureChatParticipantsList.get(0).getLectureChatRoom().getId() != participants.getLectureChatRoom().getId()){
@@ -267,11 +272,11 @@ public class LectureChatRoomService {
         }
         List<MyChatRoomListResDto> myChatRoomListResDtoList = lectureChatParticipantsList.stream().map(a-> {
             //과외인 경우 상대 이름을 채팅 목록에 표시해주기
-            String memberName = null;
-            if(a.getLectureChatRoom().getLectureGroup().getLecture().getLectureType() == LectureType.LESSON){
+            String memberName = "";
+            if(a.getLectureChatRoom().getLectureGroup().getLecture().getLectureType() == LectureType.LESSON) {
                 List<LectureChatParticipants> chatParticipantsList = chatParticipantsRepository.findByLectureChatRoom(a.getLectureChatRoom());
-                for(LectureChatParticipants participants : chatParticipantsList){
-                    if(participants.getMemberId() != memberId){
+                for (LectureChatParticipants participants : chatParticipantsList) {
+                    if (participants.getMemberId() != memberId) {
                         CommonResDto commonResDto = memberFeign.getMemberNameById(participants.getMemberId());
                         ObjectMapper objectMapper = new ObjectMapper();
                         MemberNameResDto memberNameResDto = objectMapper.convertValue(commonResDto.getResult(), MemberNameResDto.class);
@@ -279,6 +284,19 @@ public class LectureChatRoomService {
                         break;
                     }
                 }
+            }else{
+                //강의인 경우 시간대 보여주기
+                LectureGroup lectureGroup = a.getLectureChatRoom().getLectureGroup();
+                List<GroupTime> groupTimeList = groupTimeRepository.findByLectureGroupIdAndDelYn(lectureGroup.getId(), "N");
+                StringBuilder groupTitle = new StringBuilder();
+                for(GroupTime groupTime : groupTimeList){
+                    groupTitle.append(changeLectureDayKorean(groupTime.getLectureDay())).append(" ").append(groupTime.getStartTime()).append("~").append(groupTime.getEndTime()).append("  /  ");
+                }
+
+                if (!groupTitle.isEmpty()) {
+                    groupTitle.setLength(groupTitle.length() - 5);
+                }
+                memberName = groupTitle.toString();
             }
             return a.fromEntityToMyChatRoomListResDto(memberName);
         }).toList();
@@ -287,6 +305,7 @@ public class LectureChatRoomService {
         return myChatRoomListResDtoList;
     }
 
+    //채팅 내역 가져오기
     public Page<SendMessageDto> getChatRoomLog(Long roomId, Pageable pageable) {
         LectureChatRoom lectureChatRoom = chatRoomRepository.findByIdAndDelYn(roomId, "N").orElseThrow(()->{
             throw new EntityNotFoundException("채팅방을 찾을 수 없습니다.");
@@ -307,5 +326,17 @@ public class LectureChatRoomService {
         Page<LectureChatLogs> reversedPage = new PageImpl<>(reversedList, pageable, lectureChatLogsPage.getTotalElements());
 
         return reversedPage.map(LectureChatLogs::fromEntityToSendMessageDto);
+    }
+
+    public String changeLectureDayKorean(LectureDay lectureDay){
+        return switch (lectureDay) {
+            case MONDAY -> "월";
+            case TUESDAY -> "화";
+            case WEDNESDAY -> "수";
+            case THURSDAY -> "목";
+            case FRIDAY -> "금";
+            case SATURDAY -> "토";
+            case SUNDAY -> "일";
+        };
     }
 }

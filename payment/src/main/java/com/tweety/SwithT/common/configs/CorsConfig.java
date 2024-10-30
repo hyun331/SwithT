@@ -1,4 +1,4 @@
-package com.tweety.SwithT.common.config;
+package com.tweety.SwithT.common.configs;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

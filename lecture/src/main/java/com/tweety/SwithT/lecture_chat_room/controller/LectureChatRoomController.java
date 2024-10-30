@@ -6,7 +6,6 @@ import com.tweety.SwithT.lecture_chat_room.dto.ChatRoomConnectDto;
 import com.tweety.SwithT.lecture_chat_room.dto.SendMessageDto;
 //import com.tweety.SwithT.lecture_chat_room.service.LectureChatRoomService;
 import com.tweety.SwithT.lecture_chat_room.service.LectureChatRoomService;
-import jakarta.ws.rs.Path;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
