@@ -214,12 +214,8 @@ public class LectureChatRoomService {
                 .memberId(memberId)
                 .memberName(memberName)
                 .build();
-        try{
-            kafkaTemplate.send("chat-topic", roomId, sendMessageDto);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
 
+        System.out.println("db 저장 먼저한 뒤 kafka send");
         LectureChatRoom lectureChatRoom = chatRoomRepository.findById(Long.parseLong(roomId)).orElseThrow(()->{
             throw new EntityNotFoundException("채팅방이 존재하지 않습니다.");
         });
@@ -230,6 +226,14 @@ public class LectureChatRoomService {
                 .contents(message)
                 .build();
         lectureChatLogsRepository.save(chatLogs);
+
+        try{
+            kafkaTemplate.send("chat-topic", roomId, sendMessageDto);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+
     }
 
     @KafkaListener(topics = "chat-topic", groupId = "lecture-group", containerFactory = "kafkaListenerContainerFactory")
