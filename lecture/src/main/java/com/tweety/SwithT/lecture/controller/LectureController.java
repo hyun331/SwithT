@@ -121,8 +121,10 @@ public class LectureController {
 
     // 강의 수정
     @PostMapping("/update/{id}")
-    public ResponseEntity<?> lectureUpdate(@PathVariable Long id, @RequestBody LectureUpdateReqDto dto) {
-        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 업데이트", lectureService.lectureUpdate(id, dto));
+    public ResponseEntity<?> lectureUpdate(@PathVariable Long id,
+                                           @RequestPart(value = "data") LectureUpdateReqDto dto,
+                                           @RequestPart(value = "file", required = false) MultipartFile imgFile) {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 업데이트", lectureService.lectureUpdate(id, dto, imgFile));
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
@@ -211,6 +213,20 @@ public class LectureController {
             CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.NOT_FOUND.value(), e.getMessage());
             return new ResponseEntity<>(commonErrorDto, HttpStatus.NOT_FOUND);
         }
+    }
+
+    // 강의 아이디를 통해 각 강의 그룹의 게시글 5개 가져오기
+    @GetMapping("/lecture/board-list/{lectureId}")
+    public ResponseEntity<?> getPostsByLectureId(@PathVariable Long lectureId) {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의별 게시글 리스트", lectureService.getPostsByLectureId(lectureId));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+    // 강의 아이디를 통해 각 강의 그룹의 과제 5개 가져오기
+    @GetMapping("/lecture/assignment-list/{lectureId}")
+    public ResponseEntity<?> getAssignmentsByLectureId(@PathVariable Long lectureId) {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의별 과외 리스트", lectureService.getLectureAssignmentsByLectureId(lectureId));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
 }
