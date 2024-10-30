@@ -61,6 +61,7 @@ public class MemberController {
     @PostMapping("/member/AddInfoUpdate")
     public ResponseEntity<CommonResDto> addInfoUpdate(@RequestBody MemberAddInfoReqDto memberAddInfoReqDto) {
 
+        System.out.println("!!!!!!!!!소셜 로그인하고 쿠키값을 가져오는지 테스트 !!!!!!!!!!!!!!!!!!!!!!!!"+ memberAddInfoReqDto.getId());
         Member member = memberService.addInfoUpdate(memberAddInfoReqDto);
         // AccesToken
         String jwtToken =
