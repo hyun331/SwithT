@@ -24,9 +24,10 @@ public class InitialDataLoader implements CommandLineRunner {
     @Override
     public void run(String... args) {
         // Example: Create multiple topics during startup
-        createTopic("chat-topic", 1, (short) 1);
+//        createTopic("chat-topic", 1, (short) 1);
         // Add more topics as needed
-        // createTopic("another-topic", 2, (short) 1);
+         createTopic("chat-topic", 1, (short) 1);
+        System.out.println("채팅방 미리 생성");
     }
 
     private void createTopic(String topicName, int partitions, short replicationFactor) {
