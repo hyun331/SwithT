@@ -1,5 +1,7 @@
 package com.tweety.SwithT.payment.domain;
 
+import com.tweety.SwithT.common.domain.BaseTimeEntity;
+import com.tweety.SwithT.payment.dto.BalanceResDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,7 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Balance {
+public class Balance extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,5 +40,14 @@ public class Balance {
     public Balance changeStatus(Status status) {
         this.status = status;
         return this;
+    }
+
+    public BalanceResDto fromEntity(){
+        String paymentName = this.payments.getName();
+        return BalanceResDto.builder()
+                .incomeAmount(this.cost)
+                .createdTime(this.balancedTime)
+                .description(paymentName)
+                .build();
     }
 }

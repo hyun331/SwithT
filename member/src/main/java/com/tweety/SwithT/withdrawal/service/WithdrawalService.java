@@ -7,13 +7,23 @@ import com.tweety.SwithT.withdrawal.domain.WithdrawalRequest;
 import com.tweety.SwithT.withdrawal.dto.WithdrawalReqDto;
 import com.tweety.SwithT.withdrawal.dto.WithdrawalResDto;
 import com.tweety.SwithT.withdrawal.repository.WithdrawalRepository;
+import com.twilio.rest.api.v2010.account.Balance;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.With;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,18 +42,20 @@ public class WithdrawalService {
         this.memberService = memberService;
     }
 
-    public List<WithdrawalResDto> getRequestList(){
+    public Page<WithdrawalResDto> getRequestList(Pageable pageable){
 
-        Member tutorId = memberRepository
+        Member tutor = memberRepository
                 .findById(Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName()))
-                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 회원 정보 입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 회원 정보입니다."));
 
-        List<WithdrawalRequest> withdrawalRequests = withdrawalRepository.findByMember(tutorId);
+        // Pageable에 requestTime으로 정렬 추가
+        Pageable sortedByRequestTime = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("requestTime").descending());
 
-        return withdrawalRequests
-                .stream()
-                .map(WithdrawalRequest::fromEntity)
-                .collect(Collectors.toList());
+        // Pageable을 사용하여 requestTime 기준으로 정렬된 WithdrawalRequest 리스트 가져오기
+        Page<WithdrawalRequest> withdrawalRequests = withdrawalRepository.findByMember(tutor, sortedByRequestTime);
+
+        // Page<WithdrawalRequest>를 Page<WithdrawalResDto>로 변환하여 반환
+        return withdrawalRequests.map(WithdrawalRequest::fromEntity);
     }
 
     public void WithdrwalRequest(WithdrawalReqDto dto) {
@@ -62,6 +74,41 @@ public class WithdrawalService {
         WithdrawalRequest withdrawalRequest = dto.toEntity(member);
         withdrawalRepository.save(withdrawalRequest);
 
+    }
+    public Map<String, Object> getChartList(int months) {
+        String id = SecurityContextHolder.getContext().getAuthentication().getName();
+        Member member = memberRepository.findById(Long.valueOf(id))
+                .orElseThrow(() -> new SecurityException("인증되지 않은 사용자입니다."));
+
+        // 현재 날짜와 months 기간 전 날짜 구하기
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startDate = now.minusMonths(months);
+
+        // memberId를 기준으로 해당 기간 내의 WithdrawalRequest 리스트 가져오기 (삭제되지 않은 항목만)
+        List<WithdrawalRequest> withdrawalRequestList = withdrawalRepository.findByMemberIdAndDelYnAndRequestTimeBetween(
+                member.getId(), "N", startDate, now
+        );
+
+        // requestTime을 "yyyy/MM" 형식으로 변환하여 그룹화
+        Map<String, Long> withdrawalByMonth = withdrawalRequestList.stream()
+                .collect(Collectors.groupingBy(
+                        withdrawal -> withdrawal.getRequestTime().format(DateTimeFormatter.ofPattern("yyyy/MM")),
+                        Collectors.summingLong(WithdrawalRequest::getAmount)
+                ));
+
+        // labels (연도/월)
+        List<String> labels = withdrawalByMonth.keySet().stream().sorted().collect(Collectors.toList());
+
+        // dataset (각 달의 합산 금액)
+        List<Long> dataset = labels.stream()
+                .map(withdrawalByMonth::get)
+                .collect(Collectors.toList());
+
+        // Chart.js에서 사용할 데이터 구조로 변환
+        return Map.of(
+                "labels", labels,
+                "data",dataset
+        );
     }
 
 }
