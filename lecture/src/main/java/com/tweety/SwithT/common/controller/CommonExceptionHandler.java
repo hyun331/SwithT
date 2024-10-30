@@ -44,6 +44,8 @@ public class CommonExceptionHandler {
     @ExceptionHandler(SecurityException.class)
     public ResponseEntity<CommonErrorDto> SecurityExceptionHandler(SecurityException e){
         e.printStackTrace();
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        System.out.println("멤버 서버에서 요청 보내면 lecture서버에서 여기로 옵니다!!!!");
         CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.FORBIDDEN.value(), e.getMessage());
         return new ResponseEntity<>(commonErrorDto, HttpStatus.FORBIDDEN);
     }
