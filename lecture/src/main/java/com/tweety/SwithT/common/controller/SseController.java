@@ -39,9 +39,7 @@ public class SseController {
 
 
         try{
-            System.out.println("connection 전");
             emitter.send(SseEmitter.event().name("connect").data("connected!!!!"));
-            System.out.println("connection 완료");
 
         }catch(IOException e){
             emitter.completeWithError(e);
