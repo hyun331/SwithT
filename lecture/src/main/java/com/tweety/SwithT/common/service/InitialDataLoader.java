@@ -18,7 +18,7 @@ public class InitialDataLoader implements CommandLineRunner {
     @Autowired
     private LectureChatRoomRepository lectureChatRoomRepository;
 
-    @Value("${kafka.bootstrap-servers}")
+    @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
     @Override
