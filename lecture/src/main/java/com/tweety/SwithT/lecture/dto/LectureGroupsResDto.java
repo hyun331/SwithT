@@ -16,6 +16,7 @@ public class LectureGroupsResDto {
     private Long lectureGroupId;
     private List<GroupTimesResDto> groupTimes;
     private String isAvailable;
+    private int limitPeople;
     private int remaining;
     private int price;
     private String address;

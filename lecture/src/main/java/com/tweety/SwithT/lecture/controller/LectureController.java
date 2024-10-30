@@ -1,6 +1,5 @@
 package com.tweety.SwithT.lecture.controller;
 
-import com.tweety.SwithT.board.domain.Board;
 import com.tweety.SwithT.common.dto.CommonErrorDto;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.lecture.domain.Lecture;
@@ -216,22 +215,18 @@ public class LectureController {
         }
     }
 
-    // 강의 아이디를 통해 각 강의 그룹의 게시글 가져오기
-    @GetMapping("/lecture/board/{lectureId}")
-    public Page<Board> getPostsByLectureId(
-            @PathVariable Long lectureId,
-            @RequestParam(defaultValue = "0") int page // 페이지 번호 (기본값은 0)
-    ) {
-        return lectureService.getPostsByLectureId(lectureId, page);
+    // 강의 아이디를 통해 각 강의 그룹의 게시글 5개 가져오기
+    @GetMapping("/lecture/board-list/{lectureId}")
+    public ResponseEntity<?> getPostsByLectureId(@PathVariable Long lectureId) {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의별 게시글 리스트", lectureService.getPostsByLectureId(lectureId));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
-    // 강의 아이디를 통해 각 강의 그룹의 게시글 가져오기
-    @GetMapping("/lecture/lectureAssignment/{lectureId}")
-    public Page<Board> getAssignmentsByLectureId(
-            @PathVariable Long lectureId,
-            @RequestParam(defaultValue = "0") int page // 페이지 번호 (기본값은 0)
-    ) {
-        return lectureService.getLectureAssignmentsByLectureId(lectureId, page);
+    // 강의 아이디를 통해 각 강의 그룹의 과제 5개 가져오기
+    @GetMapping("/lecture/assignment-list/{lectureId}")
+    public ResponseEntity<?> getAssignmentsByLectureId(@PathVariable Long lectureId) {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의별 과외 리스트", lectureService.getLectureAssignmentsByLectureId(lectureId));
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
 }

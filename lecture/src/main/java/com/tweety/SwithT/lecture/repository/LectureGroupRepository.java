@@ -2,6 +2,7 @@ package com.tweety.SwithT.lecture.repository;
 
 import com.tweety.SwithT.board.domain.Board;
 import com.tweety.SwithT.lecture.domain.LectureGroup;
+import com.tweety.SwithT.lecture_assignment.domain.LectureAssignment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -26,13 +27,13 @@ public interface LectureGroupRepository extends JpaRepository<LectureGroup, Long
 
     Optional<LectureGroup> findByIdAndDelYn(Long lectureGroupId, String delYn);
 
-    // lectureId로 board 리스트 가져오기
+    // lectureId로 상위 5개 board 리스트 가져오기
     @Query("SELECT p FROM Board p WHERE p.lectureGroup.lecture.id = :lectureId AND p.delYn = 'N' ORDER BY p.createdTime DESC")
-    Page<Board> findBoardsByLectureId(@Param("lectureId") Long lectureId, Pageable pageable);
+    List<Board> findTop5BoardsByLectureId(@Param("lectureId") Long lectureId);
 
-    // lectureId로 assignment 리스트 가져오기
-    @Query("SELECT p FROM LectureAssignment p WHERE p.lectureGroup.lecture.id = :lectureId AND p.delYn = 'N' ORDER BY p.createdTime DESC")
-    Page<Board> findLectureAssignmentsByLectureId(@Param("lectureId") Long lectureId, Pageable pageable);
+    // lectureId로 상위 5개 assignment 리스트 가져오기 (endDate가 가장 임박한 순서로 정렬)
+    @Query("SELECT p FROM LectureAssignment p WHERE p.lectureGroup.lecture.id = :lectureId AND p.delYn = 'N' ORDER BY p.endDate ASC")
+    List<LectureAssignment> findTop5AssignmentsByLectureId(@Param("lectureId") Long lectureId);
 
 
 }
