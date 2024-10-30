@@ -215,7 +215,6 @@ public class LectureChatRoomService {
                 .memberName(memberName)
                 .build();
 
-        System.out.println("db 저장 먼저한 뒤 kafka send");
         LectureChatRoom lectureChatRoom = chatRoomRepository.findById(Long.parseLong(roomId)).orElseThrow(()->{
             throw new EntityNotFoundException("채팅방이 존재하지 않습니다.");
         });
@@ -226,9 +225,14 @@ public class LectureChatRoomService {
                 .contents(message)
                 .build();
         lectureChatLogsRepository.save(chatLogs);
+        System.out.println("db 저장 먼저한 뒤 kafka send");
+
 
         try{
+            System.out.println("kafka send전!!!");
             kafkaTemplate.send("chat-topic", roomId, sendMessageDto);
+            System.out.println("kafka send후!!!");
+
         }catch (Exception e){
             e.printStackTrace();
         }
