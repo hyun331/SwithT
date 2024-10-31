@@ -11,6 +11,7 @@ import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.payment.domain.Balance;
 import com.tweety.SwithT.payment.domain.Payments;
 import com.tweety.SwithT.payment.domain.Status;
+import com.tweety.SwithT.payment.dto.BalanceResDto;
 import com.tweety.SwithT.payment.dto.BalanceUpdateDto;
 import com.tweety.SwithT.payment.dto.LecturePayResDto;
 import com.tweety.SwithT.payment.dto.PaymentListDto;
@@ -23,9 +24,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -35,8 +38,11 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class PaymentService {
@@ -159,7 +165,7 @@ public class PaymentService {
                     lectureFeign.updateLectureApplyStatus(lecturePayResDto.getId(), returnResDto);
                 }
             } catch (FeignException e) {
-                System.out.println("case 5");
+                System.out.println("case 6");
 
                 // Feign 호출 실패 시 예외 처리 및 결제 취소 로직
                 try {
@@ -304,4 +310,65 @@ public class PaymentService {
 
         return dtos;
     }
+    public Long expectedBalance(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // 로그인한 멤버의 ID를 가져옴
+        Long loginMemberId = Long.valueOf(authentication.getName());
+        List<Balance> balances =  balanceRepository.findByMemberIdAndStatus(loginMemberId, Status.STANDBY);
+        // balances 리스트에서 cost 필드를 모두 합산
+        return balances.stream()
+                .mapToLong(Balance::getCost) // Balance 객체에서 cost 값을 추출
+                .sum(); // 모든 cost 값의 합을 구함
+    }
+
+    public Page<BalanceResDto> getBalanceList(Pageable pageable){
+// SecurityContextHolder에 저장된 Authentication 객체를 확인
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // 로그인한 멤버의 ID를 가져옴
+        Long loginMemberId = Long.valueOf(authentication.getName());
+        Pageable sortedByDate = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("balancedTime").descending());
+        // 로그인한 멤버의 balance 리스트 가져오기
+        Page<Balance> balances = balanceRepository.findByMemberIdAndDelYn(loginMemberId, "N",sortedByDate);
+        // Page<Balance>를 Page<BalanceResDto>로 변환
+        return balances.map(Balance::fromEntity);
+    }
+
+    public Map<String, Object> getBalanceChartData(int months) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // 로그인한 멤버의 ID를 가져옴
+        Long loginMemberId = Long.valueOf(authentication.getName());
+
+        // 현재 날짜와 months 기간 전 날짜 구하기
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startDate = now.minusMonths(months);
+
+        // memberId를 기준으로 Balance 리스트 가져오기 (삭제되지 않고, 기간 내의 데이터만)
+        List<Balance> balances = balanceRepository.findByMemberIdAndDelYnAndBalancedTimeBetween(
+                loginMemberId, "N", startDate, now);
+
+        // balancedTime을 "yyyy/MM" 형식으로 변환하여 그룹화
+        Map<String, Long> balanceByMonth = balances.stream()
+                .collect(Collectors.groupingBy(
+                        balance -> balance.getBalancedTime().format(DateTimeFormatter.ofPattern("yyyy/MM")),
+                        Collectors.summingLong(Balance::getCost)
+                ));
+
+        // labels (연도/월)
+        List<String> labels = balanceByMonth.keySet().stream().sorted().collect(Collectors.toList());
+
+        // dataset (각 달의 합산 금액)
+        List<Long> dataset = labels.stream()
+                .map(balanceByMonth::get)
+                .collect(Collectors.toList());
+
+        // Chart.js에서 사용할 데이터 구조로 변환
+        return Map.of(
+                "labels", labels,
+                "data", dataset
+        );
+    }
+
 }

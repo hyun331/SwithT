@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -19,6 +21,7 @@ public class BoardDetailResDto {
     private String contents;
     private Type type;
     private boolean isAuthor;
+    private LocalDateTime createdTime;
 
 
     public static BoardDetailResDto fromEntity(Board board, Long memberId){

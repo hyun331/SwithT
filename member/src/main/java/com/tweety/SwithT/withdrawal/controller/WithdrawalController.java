@@ -5,12 +5,12 @@ import com.tweety.SwithT.withdrawal.dto.WithdrawalReqDto;
 import com.tweety.SwithT.withdrawal.dto.WithdrawalResDto;
 import com.tweety.SwithT.withdrawal.service.WithdrawalService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -35,12 +35,20 @@ public class WithdrawalController {
     }
 
     @GetMapping("/list/withdrawal")
-    public ResponseEntity<CommonResDto> getWithdrawalRequest() {
+    public ResponseEntity<CommonResDto> getWithdrawalRequest(@PageableDefault(size = 10) Pageable pageable) {
 
-        List<WithdrawalResDto> withdrawalResDtos = withdrawalService.getRequestList();
+        Page<WithdrawalResDto> withdrawalResDtos = withdrawalService.getRequestList(pageable);
 
         CommonResDto commonResDto
                 = new CommonResDto(HttpStatus.OK, "출금 리스트 조회 성공", withdrawalResDtos);
+        return new ResponseEntity<>(commonResDto, HttpStatus.CREATED);
+
+
+    }
+    @GetMapping("/chart/withdrawal")
+    public ResponseEntity<CommonResDto> getWithdrawalChartData(@RequestParam(required = false, defaultValue = "6") int months) {
+        CommonResDto commonResDto
+                = new CommonResDto(HttpStatus.OK, "출금 그래프 조회 성공", withdrawalService.getChartList(months));
         return new ResponseEntity<>(commonResDto, HttpStatus.CREATED);
 
 

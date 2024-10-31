@@ -5,6 +5,7 @@ import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.lecture.dto.LectureDetailResDto;
 import com.tweety.SwithT.lecture.dto.LectureInfoListResDto;
 import com.tweety.SwithT.lecture.dto.LectureListResDto;
+import com.tweety.SwithT.lecture.dto.LectureUpdateReqDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -115,19 +116,26 @@ public class Lecture extends BaseTimeEntity {
         this.status = status;
     }
 
+
     // update
-    public void updateTitle(String title){
-        this.title = title;
-    }
-    public void updateContents(String contents){
-        this.contents = contents;
-    }
-    public void updateImage(String image){
+    public void updateLecture(LectureUpdateReqDto dto, String image) {
+        this.title = dto.getTitle();
+        this.contents = dto.getContents();
+        this.category = dto.getCategory();
         this.image = image;
     }
-    public void updateCategory(Category category){
-        this.category = category;
-    }
+//    public void updateTitle(String title){
+//        this.title = title;
+//    }
+//    public void updateContents(String contents){
+//        this.contents = contents;
+//    }
+//    public void updateImage(String image){
+//        this.image = image;
+//    }
+//    public void updateCategory(Category category){
+//        this.category = category;
+//    }
 
     public void increaseCount(){
         this.searchCount++;

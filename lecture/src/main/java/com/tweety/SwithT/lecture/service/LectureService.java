@@ -2,10 +2,11 @@ package com.tweety.SwithT.lecture.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tweety.SwithT.board.domain.Board;
+import com.tweety.SwithT.board.dto.read.BoardDetailResDto;
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.dto.MemberNameResDto;
-import com.tweety.SwithT.common.dto.MemberProfileResDto;
 import com.tweety.SwithT.common.dto.MemberScoreResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
 import com.tweety.SwithT.common.service.OpenSearchService;
@@ -17,8 +18,9 @@ import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
-import com.tweety.SwithT.lecture_apply.dto.SingleLectureTuteeListDto;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
+import com.tweety.SwithT.lecture_assignment.domain.LectureAssignment;
+import com.tweety.SwithT.lecture_assignment.dto.read.LectureAssignmentDetailResDto;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatRoom;
 import com.tweety.SwithT.lecture_chat_room.dto.ChatRoomCheckDto;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatRoomRepository;
@@ -345,22 +347,24 @@ public class LectureService {
 
     // 강의 수정
     @Transactional
-    public LectureDetailResDto lectureUpdate(Long id, LectureUpdateReqDto dto){
+    public LectureDetailResDto lectureUpdate(Long id, LectureUpdateReqDto dto, MultipartFile image){
         Lecture lecture = lectureRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Lecture is not found"));
 
-        if (dto.getTitle() != null) {
-            lecture.updateTitle(dto.getTitle());
-        }
-        if (dto.getContents() != null) {
-            lecture.updateContents(dto.getContents());
-        }
-        if (dto.getImage() != null) {
-            lecture.updateImage(dto.getImage());
-        }
-        if (dto.getCategory() != null) {
-            lecture.updateCategory(dto.getCategory());
-        }
+//        if (dto.getTitle() != null) {
+//            lecture.updateTitle(dto.getTitle());
+//        }
+//        if (dto.getContents() != null) {
+//            lecture.updateContents(dto.getContents());
+//        }
+//        if (dto.getImage() != null) {
+//            lecture.updateImage(dto.getImage());
+//        }
+//        if (dto.getCategory() != null) {
+//            lecture.updateCategory(dto.getCategory());
+//        }
+        String imageUrl = s3Service.uploadFile(image, "lecture");
+        lecture.updateLecture(dto, imageUrl);
 
         // OpenSearch에 데이터 동기화
         try {
@@ -770,6 +774,7 @@ public class LectureService {
                     .lectureGroupId(lectureGroup.getId())
                     .groupTimes(groupTimesResDtos)
                     .isAvailable(lectureGroup.getIsAvailable())
+                    .limitPeople(lectureGroup.getLimitPeople())
                     .remaining(lectureGroup.getRemaining())
                     .price(lectureGroup.getPrice())
                     .address(lectureGroup.getAddress())
@@ -795,5 +800,43 @@ public class LectureService {
             case SUNDAY -> "일";
         };
     }
+
+    // 강의 아이디를 통해 각 강의 그룹의 게시글 5개 가져오기
+    public List<BoardDetailResDto> getPostsByLectureId(Long lectureId) {
+        List<Board> boardList =lectureGroupRepository.findTop5BoardsByLectureId(lectureId);
+        List<BoardDetailResDto> dtoList = new ArrayList<>();
+        for (Board board : boardList) {
+            BoardDetailResDto dto = BoardDetailResDto.builder()
+                    .id(board.getId())
+                    .title(board.getTitle())
+                    .contents(board.getContents())
+                    .memberName(board.getMemberName())
+                    .createdTime(board.getCreatedTime())
+                    .type(board.getType())
+                    .build();
+
+            dtoList.add(dto);
+        }
+        return dtoList;
+    }
+
+    // 강의 아이디를 통해 각 강의 그룹의 과제 5개 가져오기
+    public List<LectureAssignmentDetailResDto> getLectureAssignmentsByLectureId(Long lectureId) {
+        List<LectureAssignment> lectureAssignments = lectureGroupRepository.findTop5AssignmentsByLectureId(lectureId);
+        List<LectureAssignmentDetailResDto> dtoList = new ArrayList<>();
+        for(LectureAssignment lectureAssignment : lectureAssignments) {
+            LectureAssignmentDetailResDto dto = LectureAssignmentDetailResDto.builder()
+                    .lectureGroupId(lectureAssignment.getLectureGroup().getId())
+                    .id(lectureAssignment.getId())
+                    .title(lectureAssignment.getTitle())
+                    .endDate(lectureAssignment.getEndDate())
+                    .endTime(lectureAssignment.getEndTime())
+                    .build();
+            dtoList.add(dto);
+        }
+        return dtoList;
+    }
+
+
 
 }

@@ -30,7 +30,6 @@ public class SecurityConfigs {
 //                        .requestMatchers("**")
                         .permitAll()
                         .anyRequest().authenticated()
-
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

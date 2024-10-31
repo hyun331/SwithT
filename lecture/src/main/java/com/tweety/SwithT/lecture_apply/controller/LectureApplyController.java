@@ -95,6 +95,12 @@ public class LectureApplyController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
+//    @GetMapping("/lecture/group/{id}")
+//    public ResponseEntity<?> getLectureApplyPayInfo(@PathVariable Long id){
+//        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 그룹 정보",lectureApplyService.getLectureGroupByApplyId(id));
+//        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+//    }
+
 
     //리뷰 상태 변경 코드 추가
     @PutMapping("/lecture-apply/review/status")
@@ -132,7 +138,7 @@ public class LectureApplyController {
             System.out.println("강의 feign 넘어옴");
             System.out.println("그룹 번호: " + lectureGroupId);
             System.out.println("멤버 번호: " + memberId);
-            lectureApplyService.updateLectureStatus(lectureGroupId, memberId);
+            lectureApplyService.updateLectureGroupStatus(lectureGroupId, memberId);
             CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "신청 완료", null);
             return new ResponseEntity<>(commonResDto, HttpStatus.OK);
         } catch (EntityNotFoundException e){

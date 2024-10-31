@@ -37,13 +37,20 @@ public class JwtAuthFilter extends GenericFilter {
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 
+        System.out.println(
+                "lecture서버에 요청을 보내면 여기까지 옵니까?"
+        );
+
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         String bearerToken = request.getHeader("Authorization");
 
         try {
+            System.out.println( "lecture서버에 요청을 보내면 여기까지 옵니까? 2");
             if (bearerToken != null) {
                 if (!bearerToken.startsWith("Bearer ")) {
+                    System.out.println( "lecture서버에 요청을 보내면 여기까지 옵니까? 3");
                     throw new AuthenticationServiceException("Bearer 형식이 아닙니다.");
+
                 }
                 String token = bearerToken.substring(7);
                 Claims claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
@@ -55,12 +62,14 @@ public class JwtAuthFilter extends GenericFilter {
             }
             filterChain.doFilter(servletRequest, servletResponse);
         } catch (SecurityException e) {
+            System.out.println( "lecture서버에 요청을 보내면 여기까지 옵니까? 4");
             log.error(e.getMessage());
             HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
             httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
             httpServletResponse.setContentType("application/json");
             httpServletResponse.getWriter().write("token error");
         } catch (io.jsonwebtoken.ExpiredJwtException e){
+            System.out.println( "lecture서버에 요청을 보내면 여기까지 옵니까? 5");
             HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
             httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
             httpServletResponse.setContentType("application/json");
