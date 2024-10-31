@@ -42,7 +42,7 @@ public class SchedulerService {
         this.schedulerAlertService = schedulerAlertService;
     }
 
-    @KafkaListener(topics = "schedule-update", groupId = "member-group-schedule-update", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "schedule-update", groupId = "member-group", containerFactory = "kafkaListenerContainerFactory")
     public void updateScheduleFromKafka(String message) {
         try {
 //            System.out.println("수신된 Kafka 메시지: " + message);
@@ -153,7 +153,7 @@ public class SchedulerService {
     }
 
     // 과제 생성 관련 kafka 리스터 추가
-    @KafkaListener(topics = "assignment-create", groupId = "lecture-group-assignment-create", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "assignment-create", groupId = "member-group", containerFactory = "kafkaListenerContainerFactory")
     public void handleAssignmentCreateMessage(String message) {
         try {
 //            System.out.println("Kafka 메시지 수신됨: " + message);
@@ -201,7 +201,7 @@ public class SchedulerService {
     }
 
     // 과제 수정 관련 kafka 리스너 추가 및 스케쥴 수정
-    @KafkaListener(topics = "assignment-update", groupId = "lecture-group-assignment-update", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "assignment-update", groupId = "member-group", containerFactory = "kafkaListenerContainerFactory")
     public void assignmentUpdate(String message) {
         try {
             System.out.println("Kafka 메시지 수신됨: " + message);
@@ -231,7 +231,7 @@ public class SchedulerService {
     }
 
 // 과제 삭제 카프카 리스너 추가 및 assignment id 기준으로 삭제
-    @KafkaListener(topics = "assignment-delete", groupId = "lecture-group-assignment-delete", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "assignment-delete", groupId = "member-group", containerFactory = "kafkaListenerContainerFactory")
     public void assignmentDelete(String message) {
         try {
             System.out.println("Kafka 메시지 수신됨: " + message);
@@ -285,7 +285,7 @@ public class SchedulerService {
     }
 
     @Transactional
-    @KafkaListener(topics = "schedule-cancel-update", groupId = "member-group-schedule-cancel-update", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "schedule-cancel-update", groupId = "member-group", containerFactory = "kafkaListenerContainerFactory")
     public void deleteScheduleByRefund(Long lectureGroupId){
         List<Scheduler> schedulerList = schedulerRepository.findAllByLectureGroupId(lectureGroupId);
 
