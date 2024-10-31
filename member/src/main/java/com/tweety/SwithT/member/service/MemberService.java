@@ -202,7 +202,7 @@ public class MemberService {
         // Kafka 메시지 전송
         try {
             String message = objectMapper.writeValueAsString(statusUpdateDto);
-            kafkaTemplate.send(topicName, message);
+            kafkaTemplate.send(topicName, String.valueOf(lectureId), message);
             System.out.println("Kafka 메시지 전송됨: " +  message);
         } catch (JsonProcessingException e) {
             System.out.println("Kafka 메시지 변환 및 전송 실패: " + e.getMessage());
