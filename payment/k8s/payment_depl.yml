@@ -4,7 +4,7 @@ metadata:
   name: payment-deployment
   namespace: tweety
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: payment
@@ -23,11 +23,11 @@ spec:
             # 최대 할당 가능량
             limits:
               cpu: "1"
-              memory: "1000Mi"
+              memory: "3000Mi"
             # 최소 할당량
             requests:
               cpu: "0.5"
-              memory: "500Mi"
+              memory: "1000Mi"
           env:
             - name: REDIS_HOST
               valueFrom:
