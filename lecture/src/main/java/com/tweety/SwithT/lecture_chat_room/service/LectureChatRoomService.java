@@ -240,7 +240,7 @@ public class LectureChatRoomService {
 
     }
 
-    @KafkaListener(topics = "chat-room-topic", groupId = "lecture-group", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "chat-room-topic", containerFactory = "kafkaListenerContainerFactory")
     public void consumerChat(@Header(KafkaHeaders.RECEIVED_KEY) String chatRoomId, @Payload String msg) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
