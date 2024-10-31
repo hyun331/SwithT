@@ -230,7 +230,7 @@ public class LectureChatRoomService {
 
         try{
             System.out.println("kafka send전!!!");
-            kafkaTemplate.send("chat-topic", roomId, sendMessageDto);
+            kafkaTemplate.send("chat-room-topic", roomId, sendMessageDto);
             System.out.println("kafka send후!!!");
 
         }catch (Exception e){
@@ -240,7 +240,7 @@ public class LectureChatRoomService {
 
     }
 
-    @KafkaListener(topics = "chat-topic", groupId = "lecture-group", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "chat-room-topic", groupId = "lecture-group", containerFactory = "kafkaListenerContainerFactory")
     public void consumerChat(@Header(KafkaHeaders.RECEIVED_KEY) String chatRoomId, @Payload String msg) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
