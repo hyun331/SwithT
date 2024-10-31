@@ -8,6 +8,7 @@ server:
       max-request-size: 10MB
     session:
       cookie:
+        name: "tweety-session"
         same-site: none # SameSite 속성 설정
         secure: true
 spring:
