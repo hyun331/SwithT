@@ -29,7 +29,8 @@ public class KafkaConsumerConfig {
     public DefaultKafkaConsumerFactory<String, Object> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, groupId);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+//        props.put(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, groupId);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffset);
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 100);
 

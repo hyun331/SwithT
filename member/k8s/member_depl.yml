@@ -30,7 +30,7 @@ spec:
               memory: "1000Mi"
           env:
             - name: JAVA_OPTS
-              value: "-Xmx4096m"
+              value: "-Xmx3000m"
             - name: REDIS_HOST
               valueFrom:
                 secretKeyRef:
