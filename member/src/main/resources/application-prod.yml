@@ -2,7 +2,7 @@ server:
   servlet:
     session:
       cookie:
-        name: "member-session"
+        name: "tweety-session"
         same-site: none # SameSite 속성 설정
         secure: true
     encoding:
