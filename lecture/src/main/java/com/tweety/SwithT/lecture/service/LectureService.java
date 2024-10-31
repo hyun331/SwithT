@@ -495,7 +495,7 @@ public class LectureService {
     @Transactional
     public void lectureStatusUpdateFromKafka(String message) {
         try {
-//            System.out.println("수신된 Kafka 메시지: " + message);
+            System.out.println("수신된 Kafka 메시지: " + message);
 
 //            아래 코드 없으면 "{\"lectureId\":1,\"status\":\"ADMIT\"}" 이중 직렬화 되어있어 계속 에러 발생
             if (message.startsWith("\"") && message.endsWith("\"")) {
