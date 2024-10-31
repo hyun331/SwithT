@@ -35,37 +35,21 @@ public class KafkaTopicConfig {
         config.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, "120000"); // 타임아웃 시간 증가
 
-        int retries = 3;  // 재시도 횟수
-
-        for (int attempt = 1; attempt <= retries; attempt++) {
-            try (AdminClient adminClient = AdminClient.create(config)) {
-                // 토픽이 존재하지 않을 경우에만 생성
-                if (!adminClient.listTopics().names().get().contains(topicName)) {
-                    NewTopic topic = new NewTopic(topicName, numPartitions, replicationFactor);
-                    adminClient.createTopics(List.of(topic)).all().get(10, TimeUnit.SECONDS);
-                    logger.info("Kafka 토픽이 생성되었습니다: {}", topicName);
-                    break;
-                } else {
-                    logger.info("Kafka 토픽이 이미 존재합니다: {}", topicName);
-                    break;
-                }
-            } catch (ExecutionException e) {
-                logger.error("토픽 생성 중 ExecutionException 발생 (시도 횟수: {}/{}): {} - {}", attempt, retries, topicName, e.getMessage());
-            } catch (InterruptedException e) {
-                logger.error("토픽 생성 중 InterruptedException 발생 (시도 횟수: {}/{}): {} - {}", attempt, retries, topicName, e.getMessage());
-                Thread.currentThread().interrupt();
-                break;
-            } catch (Exception e) {
-                logger.error("토픽 생성 시 알 수 없는 오류 발생 (시도 횟수: {}/{}): {} - {}", attempt, retries, topicName, e.getMessage());
+        try (AdminClient adminClient = AdminClient.create(config)) {
+            if (adminClient.listTopics().names().get().contains(topicName)) {
+                logger.info("Kafka 토픽이 이미 존재합니다: {}", topicName);
+                return;
             }
 
-            try {
-                TimeUnit.SECONDS.sleep((long) Math.pow(2, attempt));
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-            logger.warn("Kafka 토픽 생성 재시도 중 (시도 횟수: {}/{})", attempt, retries);
+            // 토픽이 존재하지 않으면 생성
+            NewTopic topic = new NewTopic(topicName, numPartitions, replicationFactor);
+            adminClient.createTopics(List.of(topic)).all().get(10, TimeUnit.SECONDS);
+            logger.info("Kafka 토픽이 생성되었습니다: {}", topicName);
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("토픽 생성 중 오류 발생: {} - {}", topicName, e.getMessage());
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            logger.error("토픽 생성 시 알 수 없는 오류 발생: {} - {}", topicName, e.getMessage());
         }
     }
 }
