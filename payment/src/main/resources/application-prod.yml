@@ -30,6 +30,7 @@ spring:
       sasl.jaas.config: software.amazon.msk.auth.iam.IAMLoginModule required;
       sasl.client.callback.handler.class: software.amazon.msk.auth.iam.IAMClientCallbackHandler
 
+
 jwt:
   expiration: 300
   secretKey: ${JWT_SECRET}
