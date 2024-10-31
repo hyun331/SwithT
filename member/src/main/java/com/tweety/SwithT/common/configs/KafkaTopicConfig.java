@@ -1,8 +1,6 @@
 package com.tweety.SwithT.common.configs;
 
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.admin.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,14 +26,17 @@ public class KafkaTopicConfig {
     public KafkaAdmin kafkaAdmin() {
         Map<String, Object> configs = new HashMap<>();
         configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configs.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, "120000");  // 타임아웃 시간 증가
         return new KafkaAdmin(configs);
     }
 
     public void createTopicIfNotExists(String topicName, int numPartitions, short replicationFactor) {
         Map<String, Object> config = new HashMap<>();
         config.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        config.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, "120000"); // 타임아웃 시간 증가
 
         int retries = 3;  // 재시도 횟수
+
         for (int attempt = 1; attempt <= retries; attempt++) {
             try (AdminClient adminClient = AdminClient.create(config)) {
                 // 토픽이 존재하지 않을 경우에만 생성
@@ -49,17 +50,17 @@ public class KafkaTopicConfig {
                     break;
                 }
             } catch (ExecutionException e) {
-                logger.error("토픽 생성 중 ExecutionException 발생: {}", e.getMessage());
+                logger.error("토픽 생성 중 ExecutionException 발생 (시도 횟수: {}/{}): {} - {}", attempt, retries, topicName, e.getMessage());
             } catch (InterruptedException e) {
-                logger.error("토픽 생성 중 InterruptedException 발생: {}", e.getMessage());
+                logger.error("토픽 생성 중 InterruptedException 발생 (시도 횟수: {}/{}): {} - {}", attempt, retries, topicName, e.getMessage());
                 Thread.currentThread().interrupt();
+                break;
             } catch (Exception e) {
-                logger.error("토픽 생성 시 알 수 없는 오류 발생: {}", e.getMessage());
+                logger.error("토픽 생성 시 알 수 없는 오류 발생 (시도 횟수: {}/{}): {} - {}", attempt, retries, topicName, e.getMessage());
             }
 
-            // 재시도 대기
             try {
-                TimeUnit.SECONDS.sleep(2);
+                TimeUnit.SECONDS.sleep((long) Math.pow(2, attempt));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
