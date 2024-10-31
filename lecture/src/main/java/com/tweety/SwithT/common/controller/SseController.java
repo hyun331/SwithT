@@ -11,6 +11,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @RestController
 public class SseController {
@@ -30,7 +31,7 @@ public class SseController {
         SseEmitter emitter = new SseEmitter(14400*60*1000L); // 정도로 emitter유효시간 설정
         String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        System.out.println(LocalDate.now() +" subscribe 들어옴 : "+memberId+"\n");
+        System.out.println(LocalDateTime.now() +" subscribe 들어옴 : "+memberId+"\n");
         redisStreamSseConsumer.addClient(memberId, emitter);
 
 
