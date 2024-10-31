@@ -159,7 +159,7 @@ public class PaymentService {
                     lectureFeign.updateLectureApplyStatus(lecturePayResDto.getId(), returnResDto);
                 }
             } catch (FeignException e) {
-                System.out.println("case 5");
+                System.out.println("case 6");
 
                 // Feign 호출 실패 시 예외 처리 및 결제 취소 로직
                 try {

@@ -501,11 +501,13 @@ public class LectureApplyService {
     }
 
     @Transactional
-    public void updateLectureStatus(Long lectureGroupId, Long memberId){
+    public void updateLectureGroupStatus(Long lectureGroupId, Long memberId){
         LectureGroup lectureGroup = lectureGroupRepository.findById(lectureGroupId).orElseThrow(
                 ()-> new EntityNotFoundException("강의 그룹 정보를 불러오는 데 실패했습니다."));
 
         updateSchedule(lectureGroup, memberId);
+
+        lectureGroup.decreaseRemaining();
 
         CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -514,6 +516,7 @@ public class LectureApplyService {
 
         LectureApply lectureApply = LectureApply.builder()
                 .lectureGroup(lectureGroup)
+                .memberId(memberId)
                 .status(Status.ADMIT)
                 .memberName(memberName)
                 .location(lectureGroup.getAddress())
