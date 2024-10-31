@@ -2,6 +2,7 @@ package com.tweety.SwithT.member.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tweety.SwithT.common.configs.KafkaTopicConfig;
 import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.service.RedisService;
@@ -34,9 +35,10 @@ public class MemberService {
     private final LectureFeign lectureFeign;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ObjectMapper objectMapper;
+    private final KafkaTopicConfig kafkaTopicConfig;
 
     @Autowired
-    public MemberService(RedisService redisService, MemberRepository memberRepository, S3Service s3Service, PasswordEncoder passwordEncoder, LectureFeign lectureFeign, KafkaTemplate<String, Object> kafkaTemplate, ObjectMapper objectMapper) {
+    public MemberService(RedisService redisService, MemberRepository memberRepository, S3Service s3Service, PasswordEncoder passwordEncoder, LectureFeign lectureFeign, KafkaTemplate<String, Object> kafkaTemplate, ObjectMapper objectMapper, KafkaTopicConfig kafkaTopicConfig) {
         this.redisService = redisService;
         this.memberRepository = memberRepository;
         this.s3Service = s3Service;
@@ -44,6 +46,7 @@ public class MemberService {
         this.lectureFeign = lectureFeign;
         this.kafkaTemplate = kafkaTemplate;
         this.objectMapper = objectMapper;
+        this.kafkaTopicConfig = kafkaTopicConfig;
     }
 
     public Member login(MemberLoginDto dto){
@@ -182,18 +185,23 @@ public class MemberService {
 //    }
 
     public void lectureStatusUpdate(Long lectureId, Status newStatus) {
-        // Enum인 Status를 String으로 변환하여 LectureStatusUpdateDto 생성
+        String topicName = "lecture-status-update";
+        int numPartitions = 1;
+        short replicationFactor = 3;
+
+        // 필요한 경우에만 KafkaTopicConfig에서 토픽 생성
+        kafkaTopicConfig.createTopicIfNotExists(topicName, numPartitions, replicationFactor);
+
+        // 메시지 DTO 생성
         LectureStatusUpdateDto statusUpdateDto = LectureStatusUpdateDto.builder()
                 .lectureId(lectureId)
-                .status(newStatus.name())  // Enum Status를 String으로 변환
+                .status(newStatus.name())
                 .build();
 
         // Kafka 메시지 전송
         try {
             String message = objectMapper.writeValueAsString(statusUpdateDto);
-
-            kafkaTemplate.send("lecture-status-update", message);  // JSON 문자열 전송
-
+            kafkaTemplate.send(topicName, message);
             System.out.println("Kafka 메시지 전송됨: " + message);
         } catch (JsonProcessingException e) {
             System.err.println("Kafka 메시지 변환 및 전송 실패: " + e.getMessage());
