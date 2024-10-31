@@ -24,7 +24,7 @@ public class InitialDataLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        createTopicIfNotExists("chat-topic", 1, (short) 3);
+        createTopicIfNotExists("chat-room-topic", 1, (short) 3);
         System.out.println("채팅방 미리 생성");
     }
 
