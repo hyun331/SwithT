@@ -491,6 +491,12 @@ public class LectureApplyService {
                 }
                 chatRoom.updateDelYn();
             }
+            LectureGroup lectureGroup = lectureApply.getLectureGroup();
+            lectureGroup.updateDate(lectureApply.getStartDate(),lectureApply.getEndDate());
+            lectureGroup.updateAddress(lectureApply.getLocation());
+            lectureGroup.updateDetailAddress(lectureApply.getDetailAddress());
+            lectureGroupRepository.save(lectureGroup);
+
         } else{
             
         }
