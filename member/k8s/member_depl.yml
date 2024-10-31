@@ -29,108 +29,110 @@ spec:
               cpu: "0.5"
               memory: "500Mi"
           env:
-            - name: REDIS_HOST
-              valueFrom:
-                secretKeyRef:
-                  key: REDIS_HOST
-                  name: tweety-secrets
-            - name: DB_HOST
-              valueFrom:
-                secretKeyRef:
-                  key: DB_HOST
-                  name: tweety-secrets
-            - name: DB_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  key: DB_USERNAME
-                  name: tweety-secrets
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: DB_PASSWORD
-                  name: tweety-secrets
-            - name: JWT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  key: JWT_SECRET
-                  name: tweety-secrets
-            - name: JWT_SECRET_RT
-              valueFrom:
-                secretKeyRef:
-                  key: JWT_SECRET_RT
-                  name: tweety-secrets
-            - name: AWS_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  key: AWS_ACCESS_KEY
-                  name: tweety-secrets
-            - name: AWS_SECRET
-              valueFrom:
-                secretKeyRef:
-                  key: AWS_SECRET
-                  name: tweety-secrets
-            - name: GOOGLE_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  key: GOOGLE_CLIENT_ID
-                  name: tweety-secrets
-            - name: GOOGLE_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  key: GOOGLE_CLIENT_SECRET
-                  name: tweety-secrets
-            - name: KAKAO_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  key: KAKAO_CLIENT_ID
-                  name: tweety-secrets
-            - name: KAKAO_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  key: KAKAO_CLIENT_ID
-                  name: tweety-secrets
-            - name: KAFKA_SERVER
-              valueFrom:
-                secretKeyRef:
-                  key: KAFKA_SERVER
-                  name: tweety-secrets
-            - name: SMTP_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  key: SMTP_USERNAME
-                  name: tweety-secrets
-            - name: SMTP_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: SMTP_PASSWORD
-                  name: tweety-secrets
-            - name: MQ_HOST
-              valueFrom:
-                secretKeyRef:
-                  key: MQ_HOST
-                  name: tweety-secrets
-            - name: MQ_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  key: MQ_USERNAME
-                  name: tweety-secrets
-            - name: MQ_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: MQ_PASSWORD
-                  name: tweety-secrets
-            - name: TWILIO_ACCESS_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  key: TWILIO_ACCESS_TOKEN
-                  name: tweety-secrets
-            - name: TWILIO_SID
-              valueFrom:
-                secretKeyRef:
-                  key: TWILIO_SID
-                  name: tweety-secrets
-            - name: TWILIO_PHONE_NUMBER
-              valueFrom:
-                secretKeyRef:
-                  key: TWILIO_PHONE_NUMBER
-                  name: tweety-secrets
+              - name: JAVA_OPTS
+                value: "-Xmx2048m"
+              - name: REDIS_HOST
+                valueFrom:
+                  secretKeyRef:
+                    key: REDIS_HOST
+                    name: tweety-secrets
+              - name: DB_HOST
+                valueFrom:
+                  secretKeyRef:
+                    key: DB_HOST
+                    name: tweety-secrets
+              - name: DB_USERNAME
+                valueFrom:
+                  secretKeyRef:
+                    key: DB_USERNAME
+                    name: tweety-secrets
+              - name: DB_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    key: DB_PASSWORD
+                    name: tweety-secrets
+              - name: JWT_SECRET
+                valueFrom:
+                  secretKeyRef:
+                    key: JWT_SECRET
+                    name: tweety-secrets
+              - name: JWT_SECRET_RT
+                valueFrom:
+                  secretKeyRef:
+                    key: JWT_SECRET_RT
+                    name: tweety-secrets
+              - name: AWS_ACCESS_KEY
+                valueFrom:
+                  secretKeyRef:
+                    key: AWS_ACCESS_KEY
+                    name: tweety-secrets
+              - name: AWS_SECRET
+                valueFrom:
+                  secretKeyRef:
+                    key: AWS_SECRET
+                    name: tweety-secrets
+              - name: GOOGLE_CLIENT_ID
+                valueFrom:
+                  secretKeyRef:
+                    key: GOOGLE_CLIENT_ID
+                    name: tweety-secrets
+              - name: GOOGLE_CLIENT_SECRET
+                valueFrom:
+                  secretKeyRef:
+                    key: GOOGLE_CLIENT_SECRET
+                    name: tweety-secrets
+              - name: KAKAO_CLIENT_ID
+                valueFrom:
+                  secretKeyRef:
+                    key: KAKAO_CLIENT_ID
+                    name: tweety-secrets
+              - name: KAKAO_CLIENT_SECRET
+                valueFrom:
+                  secretKeyRef:
+                    key: KAKAO_CLIENT_ID
+                    name: tweety-secrets
+              - name: KAFKA_SERVER
+                valueFrom:
+                  secretKeyRef:
+                    key: KAFKA_SERVER
+                    name: tweety-secrets
+              - name: SMTP_USERNAME
+                valueFrom:
+                  secretKeyRef:
+                    key: SMTP_USERNAME
+                    name: tweety-secrets
+              - name: SMTP_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    key: SMTP_PASSWORD
+                    name: tweety-secrets
+              - name: MQ_HOST
+                valueFrom:
+                  secretKeyRef:
+                    key: MQ_HOST
+                    name: tweety-secrets
+              - name: MQ_USERNAME
+                valueFrom:
+                  secretKeyRef:
+                    key: MQ_USERNAME
+                    name: tweety-secrets
+              - name: MQ_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    key: MQ_PASSWORD
+                    name: tweety-secrets
+              - name: TWILIO_ACCESS_TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    key: TWILIO_ACCESS_TOKEN
+                    name: tweety-secrets
+              - name: TWILIO_SID
+                valueFrom:
+                  secretKeyRef:
+                    key: TWILIO_SID
+                    name: tweety-secrets
+              - name: TWILIO_PHONE_NUMBER
+                valueFrom:
+                  secretKeyRef:
+                    key: TWILIO_PHONE_NUMBER
+                    name: tweety-secrets
