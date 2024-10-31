@@ -491,7 +491,7 @@ public class LectureService {
         lectureRepository.save(lecture);
     }
 
-    @KafkaListener(topics = "lecture-status-update", groupId = "lecture-group", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "lecture-status-update", containerFactory = "kafkaListenerContainerFactory")
     @Transactional
     public void lectureStatusUpdateFromKafka(String message) {
         try {
