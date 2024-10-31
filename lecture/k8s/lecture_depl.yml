@@ -29,6 +29,8 @@ spec:
               cpu: "0.5"
               memory: "500Mi"
           env:
+            - name: JAVA_OPTS
+              value: "-Xmx2048m"
             - name: REDIS_HOST
               valueFrom:
                 secretKeyRef:
