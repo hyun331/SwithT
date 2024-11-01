@@ -47,9 +47,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -298,7 +300,11 @@ public class LectureApplyService {
 
             List<LectureApply> lectureApplyList = lectureApplyRepository.findByMemberIdAndLectureGroup(memberId, lectureGroup);
             if (!lectureApplyList.isEmpty()) {
-                throw new RuntimeException("이미 신청한 강의입니다.");
+                for(LectureApply lectureApply: lectureApplyList){
+                    if(lectureApply.getStatus().equals(Status.ADMIT)){
+                        throw new RuntimeException("이미 신청한 강의입니다.");
+                    }
+                }
             }
 
             // 대기열에 추가
@@ -514,6 +520,9 @@ public class LectureApplyService {
         updateSchedule(lectureGroup, memberId);
 
         lectureGroup.decreaseRemaining();
+        if(lectureGroup.getRemaining() == 0){
+            lectureGroup.updateIsAvailable("N");
+        }
 
         CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -744,6 +753,32 @@ public class LectureApplyService {
                 lectureApply.getMemberName() + "  수강생이 신청을 취소했습니다.", lectureApply.getId().toString());
 
         lectureApply.updateStatus(Status.CANCEL);
+    }
+
+    @Transactional
+    public void lectureCancel(Long lectureGroupId){
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+        LectureGroup lectureGroup = lectureGroupRepository.findById(lectureGroupId).orElseThrow(
+                ()-> new EntityNotFoundException("강의 정보를 불러오는 데 실패했습니다."));
+
+        // 강의 시작 날짜부터는 취소 불가
+        if(Objects.equals(lectureGroup.getStartDate(), LocalDate.now())){
+            throw new IllegalArgumentException("취소 가능 날짜가 지났습니다.");
+        }
+
+        lectureGroup.increseRemaining();
+        if(lectureGroup.getIsAvailable().equals("N")){
+            lectureGroup.updateIsAvailable("Y");
+        }
+
+        lectureChatRoomService.exitChatRoom(lectureGroup, memberId);
+
+        List<LectureApply> lectureApplyList = lectureApplyRepository.findByMemberIdAndLectureGroup(memberId, lectureGroup);
+        for(LectureApply lectureApply: lectureApplyList){
+            lectureApply.updateStatus(Status.CANCEL);
+        }
+
+        kafkaTemplate.send("schedule-cancel-update", lectureGroupId);
     }
 }
 
