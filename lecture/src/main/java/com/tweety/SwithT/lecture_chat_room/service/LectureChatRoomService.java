@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.dto.MemberNameResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
-import com.tweety.SwithT.lecture.domain.GroupTime;
-import com.tweety.SwithT.lecture.domain.LectureDay;
-import com.tweety.SwithT.lecture.domain.LectureGroup;
-import com.tweety.SwithT.lecture.domain.LectureType;
+import com.tweety.SwithT.lecture.domain.*;
 import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatLogs;
@@ -57,49 +54,55 @@ public class LectureChatRoomService {
     //튜티가 채팅하기 눌렀을 때 채팅방 가져오거나 없으면 생성하기
     @Transactional
     public ChatRoomResDto chatRoomCheckOrCreate(Long lectureGroupId) {
-        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
-        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(lectureGroupId, "N").orElseThrow(()->{
-            throw new EntityNotFoundException("강의그룹을 찾을 수 없습니다.");
-        });
-        List<LectureChatRoom> lectureChatRoomList = chatRoomRepository.findByLectureGroupAndDelYn(lectureGroup, "N");
-        for(LectureChatRoom chatRoom: lectureChatRoomList){
-            Long roomId = chatRoom.getId();
-            if(chatParticipantsRepository.findByLectureChatRoomAndMemberIdAndDelYn(chatRoom, memberId, "N").isPresent()){
-                System.out.println("있어요");
-                //채팅방 존재하면
-                return ChatRoomResDto.builder()
-                        .roomId(roomId)
-                        .build();
+        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(lectureGroupId, "N")
+                .orElseThrow(() -> new EntityNotFoundException("강의그룹을 찾을 수 없습니다."));
 
+        Lecture lecture = lectureGroup.getLecture();
+        Long tuteeId = lecture.getMemberId();
+
+        // 기존 채팅방 리스트 가져오기
+        List<LectureChatRoom> lectureChatRoomList = chatRoomRepository.findByLectureGroupAndDelYn(lectureGroup, "N");
+
+        for (LectureChatRoom chatRoom : lectureChatRoomList) {
+            // 튜티가 이미 참여 중인지 확인
+            if (chatParticipantsRepository.findByLectureChatRoomAndMemberIdAndDelYn(chatRoom, tuteeId, "N").isPresent()) {
+                return ChatRoomResDto.builder()
+                        .roomId(chatRoom.getId())
+                        .build();  // 이미 채팅방이 존재하면 그대로 반환
             }
         }
 
-        //채팅방 존재하지않음.
-        //채팅방 생성
+        // 채팅방 생성
         LectureChatRoom newChatRoom = LectureChatRoom.builder()
                 .lectureGroup(lectureGroup)
                 .build();
         chatRoomRepository.save(newChatRoom);
 
-        //튜티 참여자 추가
+        // 튜티 참가자 추가
         LectureChatParticipants tutee = LectureChatParticipants.builder()
                 .lectureChatRoom(newChatRoom)
-                .memberId(memberId)
+                .memberId(tuteeId)
                 .build();
         chatParticipantsRepository.save(tutee);
 
-        //튜터 참가자 추가
-        LectureChatParticipants tutor = LectureChatParticipants.builder()
-                .lectureChatRoom(newChatRoom)
-                .memberId(lectureGroup.getLecture().getMemberId())
-                .build();
+        // 튜터가 이미 해당 채팅방에 참여 중인지 확인
+        Long tutorId = lectureGroup.getLecture().getMemberId();
+        boolean isTutorAlreadyInRoom = chatParticipantsRepository
+                .findByLectureChatRoomAndMemberIdAndDelYn(newChatRoom, tutorId, "N")
+                .isPresent();
 
-        chatParticipantsRepository.save(tutor);
+        // 튜터가 없는 경우에만 추가
+        if (!isTutorAlreadyInRoom) {
+            LectureChatParticipants tutor = LectureChatParticipants.builder()
+                    .lectureChatRoom(newChatRoom)
+                    .memberId(tutorId)
+                    .build();
+            chatParticipantsRepository.save(tutor);
+        }
 
         return ChatRoomResDto.builder()
                 .roomId(newChatRoom.getId())
                 .build();
-
     }
 
     // 튜터가 채팅하기 클릭 (과외)
