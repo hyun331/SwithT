@@ -193,6 +193,7 @@ public class LectureController {
             List<String> suggestions = lectureService.getSuggestions(keyword);
             return ResponseEntity.ok(suggestions);
         } catch (IOException | InterruptedException e) {
+            System.out.println(e.getMessage());
             return ResponseEntity.status(500).build();
         }
     }
