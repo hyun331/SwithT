@@ -658,7 +658,7 @@ public class LectureApplyService {
                 .build();
     }
 
-    public Page<SingleLectureTuteeListDto> singleLectureTuteeList(Long id, Pageable pageable) {
+    public Page<SingleLectureTuteeListDto> lectureTuteeList(Long id, Pageable pageable) {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
 
         LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{

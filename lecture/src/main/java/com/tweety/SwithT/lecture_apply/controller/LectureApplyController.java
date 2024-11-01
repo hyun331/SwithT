@@ -38,9 +38,9 @@ public class LectureApplyController {
     }
 
     // 강의 홈 - 튜티 리스트. id는 강의 그룹
-    @GetMapping("/single-lecture-tutee-list/{id}")
+    @GetMapping("/lecture-tutee-list/{id}")
     public ResponseEntity<?> showSingleLectureTuteeList(@PathVariable("id") Long id, @PageableDefault(size = 5)Pageable pageable){
-        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의홈 튜티 리스트", lectureApplyService.singleLectureTuteeList(id, pageable));
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의홈 튜티 리스트", lectureApplyService.lectureTuteeList(id, pageable));
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 

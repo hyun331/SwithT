@@ -803,7 +803,7 @@ public class LectureService {
 
     // 강의 아이디를 통해 각 강의 그룹의 게시글 5개 가져오기
     public List<BoardDetailResDto> getPostsByLectureId(Long lectureId) {
-        List<Board> boardList =lectureGroupRepository.findTop5BoardsByLectureId(lectureId);
+        List<Board> boardList =lectureGroupRepository.findTop5BoardsByLectureId(lectureId, PageRequest.of(0, 5));
         List<BoardDetailResDto> dtoList = new ArrayList<>();
         for (Board board : boardList) {
             BoardDetailResDto dto = BoardDetailResDto.builder()
@@ -822,7 +822,7 @@ public class LectureService {
 
     // 강의 아이디를 통해 각 강의 그룹의 과제 5개 가져오기
     public List<LectureAssignmentDetailResDto> getLectureAssignmentsByLectureId(Long lectureId) {
-        List<LectureAssignment> lectureAssignments = lectureGroupRepository.findTop5AssignmentsByLectureId(lectureId);
+        List<LectureAssignment> lectureAssignments = lectureGroupRepository.findTop5AssignmentsByLectureId(lectureId, PageRequest.of(0, 5));
         List<LectureAssignmentDetailResDto> dtoList = new ArrayList<>();
         for(LectureAssignment lectureAssignment : lectureAssignments) {
             LectureAssignmentDetailResDto dto = LectureAssignmentDetailResDto.builder()
