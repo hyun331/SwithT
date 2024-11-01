@@ -1,8 +1,6 @@
 package com.tweety.SwithT.lecture_chat_room.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tweety.SwithT.common.auth.JwtTokenProvider;
 import com.tweety.SwithT.common.dto.CommonResDto;
 import com.tweety.SwithT.common.dto.MemberNameResDto;
 import com.tweety.SwithT.common.service.MemberFeign;
@@ -12,28 +10,22 @@ import com.tweety.SwithT.lecture.domain.LectureGroup;
 import com.tweety.SwithT.lecture.domain.LectureType;
 import com.tweety.SwithT.lecture.repository.GroupTimeRepository;
 import com.tweety.SwithT.lecture.repository.LectureGroupRepository;
-import com.tweety.SwithT.lecture_apply.domain.LectureApply;
-import com.tweety.SwithT.lecture_apply.dto.SingleLectureApplyListDto;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatLogs;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatParticipants;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatRoom;
-import com.tweety.SwithT.lecture_chat_room.dto.*;
+import com.tweety.SwithT.lecture_chat_room.dto.ChatRoomCheckDto;
+import com.tweety.SwithT.lecture_chat_room.dto.ChatRoomResDto;
+import com.tweety.SwithT.lecture_chat_room.dto.MyChatRoomListResDto;
+import com.tweety.SwithT.lecture_chat_room.dto.SendMessageDto;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatLogsRepository;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatParticipantsRepository;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatRoomRepository;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -41,17 +33,12 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -78,6 +65,7 @@ public class LectureChatRoomService {
         for(LectureChatRoom chatRoom: lectureChatRoomList){
             Long roomId = chatRoom.getId();
             if(chatParticipantsRepository.findByLectureChatRoomAndMemberIdAndDelYn(chatRoom, memberId, "N").isPresent()){
+                System.out.println("있어요");
                 //채팅방 존재하면
                 return ChatRoomResDto.builder()
                         .roomId(roomId)

@@ -491,11 +491,11 @@ public class LectureService {
         lectureRepository.save(lecture);
     }
 
-    @KafkaListener(topics = "lecture-status-update", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "lecture-status-update", groupId = "lecture-group",containerFactory = "kafkaListenerContainerFactory")
     @Transactional
     public void lectureStatusUpdateFromKafka(String message) {
         try {
-            System.out.println("수신된 Kafka 메시지: " + message);
+//            System.out.println("수신된 Kafka 메시지: " + message);
 
 //            아래 코드 없으면 "{\"lectureId\":1,\"status\":\"ADMIT\"}" 이중 직렬화 되어있어 계속 에러 발생
             if (message.startsWith("\"") && message.endsWith("\"")) {
@@ -510,14 +510,13 @@ public class LectureService {
             Lecture lecture = lectureRepository.findById(statusUpdateDto.getLectureId()).orElseThrow(
                     ()-> new EntityNotFoundException("상태 업데이트 중 문제가 발생했습니다."));
             if(lecture.getLectureType().equals(LectureType.LECTURE)){
-                updateLectureStatus(statusUpdateDto);
                 List<LectureGroup> lectureGroups = lecture.getLectureGroups();
                 for(LectureGroup lectureGroup: lectureGroups){
                     ChatRoomCheckDto chatRoomCheckDto = ChatRoomCheckDto.builder()
                             .lectureGroupId(lectureGroup.getId())
                             .tuteeId(lecture.getMemberId())
                             .build();
-                    lectureChatRoomService.tutorLessonChatCheckOrCreate(chatRoomCheckDto);
+                    lectureChatRoomService.chatRoomCheckOrCreate(lectureGroup.getId());
                 }
             }
             updateLectureStatus(statusUpdateDto);
