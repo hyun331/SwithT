@@ -449,7 +449,7 @@ public class OpenSearchService {
                     }
                 },
                 "sort": [
-                    { "search_count": { "order": "desc" } }
+                    { "searchCount": { "order": "desc" } }
                 ],
                 "size": 10
         }
