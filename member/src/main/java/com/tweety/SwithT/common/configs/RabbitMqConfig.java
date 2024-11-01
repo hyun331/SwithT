@@ -53,8 +53,5 @@ public class RabbitMqConfig {
     public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
         return new RabbitAdmin(connectionFactory);
     }
-    @Bean
-    public Jackson2JsonMessageConverter jackson2MessageConverter() {
-        return new Jackson2JsonMessageConverter();
-    }
+
 }
