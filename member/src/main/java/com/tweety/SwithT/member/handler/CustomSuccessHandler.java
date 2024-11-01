@@ -19,11 +19,11 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final JwtTokenProvider jwtTokenProvider;
     private final MemberRepository memberRepository;
     //배포 용도 주소
-//    private final String REDIRECT_URL = "https://www.switht.co.kr/member/explain";
-//    private final String REDIRECT_URL_EXIST = "https://www.switht.co.kr/loginSuccess";//테스트를 위해서 임시로 뒀음.
+    private final String REDIRECT_URL = "https://www.switht.co.kr/member/explain";
+    private final String REDIRECT_URL_EXIST = "https://www.switht.co.kr/loginSuccess";//테스트를 위해서 임시로 뒀음.
     // 로컬 용도 주소
-    private final String REDIRECT_URL = "http://localhost:8081/member/explain";
-    private final String REDIRECT_URL_EXIST = "http://localhost:8081/loginSuccess";
+//    private final String REDIRECT_URL = "http://localhost:8081/member/explain";
+//    private final String REDIRECT_URL_EXIST = "http://localhost:8081/loginSuccess";
 
     public CustomSuccessHandler(JwtTokenProvider jwtTokenProvider, MemberRepository memberRepository) {
         this.jwtTokenProvider = jwtTokenProvider;
@@ -52,62 +52,9 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
 
 //            배포용도 코드
-//            // Access Token을 쿠키에 저장 (HttpOnly로 설정하여 보안 강화)
-//            Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
-//            accessTokenCookie.setDomain("switht.co.kr");
-//            accessTokenCookie.setHttpOnly(false);  //
-//            accessTokenCookie.setPath("/");
-//            accessTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
-//            response.addCookie(accessTokenCookie);
-//
-//            // Refresh Token을 쿠키에 저장
-//            Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-//            refreshTokenCookie.setDomain("switht.co.kr");
-//            refreshTokenCookie.setHttpOnly(false); // 이게 true로 설정되어있으면 쿠키값 못 가져옴.
-//            refreshTokenCookie.setPath("/");
-//            refreshTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
-//            response.addCookie(refreshTokenCookie);
-//
-//            // memberId도 쿠키에 저장
-//            Cookie memberCookie = new Cookie("memberId", String.valueOf(memberId));
-//            memberCookie.setDomain("switht.co.kr");
-//            memberCookie.setHttpOnly(false);
-//            memberCookie.setSecure(true);
-//            memberCookie.setPath("/");
-//            memberCookie.setMaxAge(60 * 60 );  // 1시간 유지
-//            response.addCookie(memberCookie);
-
-            //            // Access Token을 쿠키에 저장 (HttpOnly로 설정하여 보안 강화)
-//            Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
-//            accessTokenCookie.setDomain("switht.co.kr");
-//            accessTokenCookie.setHttpOnly(false);  //
-//            accessTokenCookie.setPath("/");
-//            accessTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
-//            response.addCookie(accessTokenCookie);
-//
-//            // Refresh Token을 쿠키에 저장
-//            Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-//            refreshTokenCookie.setDomain("switht.co.kr");
-//            refreshTokenCookie.setHttpOnly(false); // 이게 true로 설정되어있으면 쿠키값 못 가져옴.
-//            refreshTokenCookie.setPath("/");
-//            refreshTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
-//            response.addCookie(refreshTokenCookie);
-//
-//            // memberId도 쿠키에 저장
-//            Cookie memberCookie = new Cookie("memberId", String.valueOf(memberId));
-//            memberCookie.setDomain("switht.co.kr");
-//            memberCookie.setHttpOnly(false);
-//            memberCookie.setSecure(true);
-//            memberCookie.setPath("/");
-//            memberCookie.setMaxAge(60 * 60 );  // 1시간 유지
-//            response.addCookie(memberCookie);
-
-
-
-//            🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟
-//          배포용도 코드
-//          Access Token을 쿠키에 저장 (HttpOnly로 설정하여 보안 강화)
+            // Access Token을 쿠키에 저장 (HttpOnly로 설정하여 보안 강화)
             Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
+            accessTokenCookie.setDomain("switht.co.kr");
             accessTokenCookie.setHttpOnly(false);  //
             accessTokenCookie.setPath("/");
             accessTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
@@ -115,6 +62,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
             // Refresh Token을 쿠키에 저장
             Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+            refreshTokenCookie.setDomain("switht.co.kr");
             refreshTokenCookie.setHttpOnly(false); // 이게 true로 설정되어있으면 쿠키값 못 가져옴.
             refreshTokenCookie.setPath("/");
             refreshTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
@@ -122,10 +70,62 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
             // memberId도 쿠키에 저장
             Cookie memberCookie = new Cookie("memberId", String.valueOf(memberId));
+            memberCookie.setDomain("switht.co.kr");
             memberCookie.setHttpOnly(false);
+            memberCookie.setSecure(true);
             memberCookie.setPath("/");
             memberCookie.setMaxAge(60 * 60 );  // 1시간 유지
             response.addCookie(memberCookie);
+
+//                        // Access Token을 쿠키에 저장 (HttpOnly로 설정하여 보안 강화)
+//            Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
+//            accessTokenCookie.setDomain("switht.co.kr");
+//            accessTokenCookie.setHttpOnly(false);  //
+//            accessTokenCookie.setPath("/");
+//            accessTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
+//            response.addCookie(accessTokenCookie);
+//
+//            // Refresh Token을 쿠키에 저장
+//            Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+//            refreshTokenCookie.setDomain("switht.co.kr");
+//            refreshTokenCookie.setHttpOnly(false); // 이게 true로 설정되어있으면 쿠키값 못 가져옴.
+//            refreshTokenCookie.setPath("/");
+//            refreshTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
+//            response.addCookie(refreshTokenCookie);
+//
+//            // memberId도 쿠키에 저장
+//            Cookie memberCookie = new Cookie("memberId", String.valueOf(memberId));
+//            memberCookie.setDomain("switht.co.kr");
+//            memberCookie.setHttpOnly(false);
+//            memberCookie.setSecure(true);
+//            memberCookie.setPath("/");
+//            memberCookie.setMaxAge(60 * 60 );  // 1시간 유지
+//            response.addCookie(memberCookie);
+
+
+
+//           🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟
+//          로컬용도 코드
+////          Access Token을 쿠키에 저장 (HttpOnly로 설정하여 보안 강화)
+//            Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
+//            accessTokenCookie.setHttpOnly(false);  //
+//            accessTokenCookie.setPath("/");
+//            accessTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
+//            response.addCookie(accessTokenCookie);
+//
+//            // Refresh Token을 쿠키에 저장
+//            Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+//            refreshTokenCookie.setHttpOnly(false); // 이게 true로 설정되어있으면 쿠키값 못 가져옴.
+//            refreshTokenCookie.setPath("/");
+//            refreshTokenCookie.setMaxAge(60 * 60);  // 1시간 유지
+//            response.addCookie(refreshTokenCookie);
+//
+//            // memberId도 쿠키에 저장
+//            Cookie memberCookie = new Cookie("memberId", String.valueOf(memberId));
+//            memberCookie.setHttpOnly(false);
+//            memberCookie.setPath("/");
+//            memberCookie.setMaxAge(60 * 60 );  // 1시간 유지
+//            response.addCookie(memberCookie);
 
             // phoneNumber 필드가 null인지 확인
             if (existingMember.getPhoneNumber() == null) {
