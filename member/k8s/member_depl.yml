@@ -136,3 +136,7 @@ spec:
                 secretKeyRef:
                   key: TWILIO_PHONE_NUMBER
                   name: tweety-secrets
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
