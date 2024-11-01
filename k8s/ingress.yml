@@ -6,8 +6,8 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/affinity: "cookie"  # 세션 스티키니스 활성화
     nginx.ingress.kubernetes.io/session-cookie-name: "tweety-session"  # 세션 쿠키 이름 #아래 김민성 수정 10-29
-#    nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"  # 쿠키 해시 알고리즘
-    nginx.ingress.kubernetes.io/session-cookie-hash: "ip-hash"  # 클라이언트 IP 기반 스티키니스 유지
+    nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"  # 쿠키 해시 알고리즘
+#    nginx.ingress.kubernetes.io/session-cookie-hash: "ip-hash"  # 클라이언트 IP 기반 스티키니스 유지  , 11-01 _ 테스트 결과 안됐음.
     nginx.ingress.kubernetes.io/affinity-mode: "persistent"
     nginx.ingress.kubernetes.io/session-cookie-max-age: "3600"
     kubernetes.io/ingress.class: nginx
