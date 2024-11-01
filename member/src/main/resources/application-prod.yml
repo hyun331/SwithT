@@ -1,15 +1,17 @@
 server:
   servlet:
+    session:
+      cookie:
+        name: "tweety-session"
+        same-site: none # SameSite 속성 설정
+        secure: true
     encoding:
       charset: UTF-8
       force: true
     multipart:
       max-file-size: 10MB  # 파일 하나의 최대 크기
       max-request-size: 10MB
-    session:
-      cookie:
-        same-site: none # SameSite 속성 설정
-        secure: true
+
 spring:
   config:
     activate:

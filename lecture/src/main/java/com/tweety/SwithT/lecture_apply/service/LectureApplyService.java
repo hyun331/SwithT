@@ -708,12 +708,20 @@ public class LectureApplyService {
 
     @Transactional
     public void lectureRefund(Long lectureGroupId){
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
         LectureGroup lectureGroup = lectureGroupRepository.findById(lectureGroupId).orElseThrow(
                 ()-> new EntityNotFoundException("강의 정보를 불러오는 데 실패했습니다."));
 
         lectureGroup.increseRemaining();
         if(lectureGroup.getIsAvailable().equals("N")){
             lectureGroup.updateIsAvailable("Y");
+        }
+
+        lectureChatRoomService.exitChatRoom(lectureGroup, memberId);
+
+        List<LectureApply> lectureApplyList = lectureApplyRepository.findByMemberIdAndLectureGroup(memberId, lectureGroup);
+        for(LectureApply lectureApply: lectureApplyList){
+            lectureApply.updateStatus(Status.CANCEL);
         }
 
         kafkaTemplate.send("schedule-cancel-update", lectureGroupId);
