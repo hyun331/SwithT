@@ -31,9 +31,14 @@ spring:
     bootstrap-servers: ${KAFKA_SERVER}
     consumer:
       #      group-id는 컨슈머 그룹을 식별하는 ID. 동일한 그룹 ID를 가진 컨슈머들을 메시지를 분담해서 consume.
-      group-id: lecture-group
+      group-id: lecture-group-${POD_NAME}
       #      가장 처음으로 사용 가능한 메시지부터 읽기 시작
       auto-offset-reset: earliest
+    properties:
+      security.protocol: SASL_SSL
+      sasl.mechanism: AWS_MSK_IAM
+      sasl.jaas.config: software.amazon.msk.auth.iam.IAMLoginModule required;
+      sasl.client.callback.handler.class: software.amazon.msk.auth.iam.IAMClientCallbackHandler
 
   opensearch:
     url: ${OPENSEARCH_URL}

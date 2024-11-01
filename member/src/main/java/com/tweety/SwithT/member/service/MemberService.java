@@ -190,7 +190,7 @@ public class MemberService {
         int numPartitions = 1;
         short replicationFactor = 3;
 
-        // 필요한 경우에만 KafkaTopicConfig에서 토픽 생성
+        // KafkaTopicConfig에서 필요한 경우에만 토픽 생성
         kafkaTopicConfig.createTopicIfNotExists(topicName, numPartitions, replicationFactor);
 
         // 메시지 DTO 생성
@@ -202,10 +202,10 @@ public class MemberService {
         // Kafka 메시지 전송
         try {
             String message = objectMapper.writeValueAsString(statusUpdateDto);
-            kafkaTemplate.send(topicName, message);
-            System.out.println("Kafka 메시지 전송됨: " + message);
+            kafkaTemplate.send(topicName, String.valueOf(lectureId), message);
+            System.out.println("Kafka 메시지 전송됨: " +  message);
         } catch (JsonProcessingException e) {
-            System.err.println("Kafka 메시지 변환 및 전송 실패: " + e.getMessage());
+            System.out.println("Kafka 메시지 변환 및 전송 실패: " + e.getMessage());
         }
     }
 

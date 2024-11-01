@@ -1,26 +1,34 @@
-package com.tweety.SwithT.common.configs;
+package com.tweety.SwithT.common.service;
 
-import org.apache.kafka.clients.admin.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.tweety.SwithT.lecture_chat_room.repository.LectureChatRoomRepository;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.KafkaAdmin;
+import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-@Configuration
-public class KafkaTopicConfig {
+@Component
+public class InitialDataLoader implements CommandLineRunner {
 
-    private static final Logger logger = LoggerFactory.getLogger(KafkaTopicConfig.class);
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
+
+    @Override
+    public void run(String... args) {
+        createTopicIfNotExists("chat-room-topic", 1, (short) 3);
+        System.out.println("채팅방 미리 생성");
+    }
+
+
 
     @Bean
     public KafkaAdmin kafkaAdmin() {
@@ -37,19 +45,20 @@ public class KafkaTopicConfig {
 
         try (AdminClient adminClient = AdminClient.create(config)) {
             if (adminClient.listTopics().names().get().contains(topicName)) {
-                logger.info("Kafka 토픽이 이미 존재합니다: {}", topicName);
+                System.out.println("Kafka 토픽이 이미 존재합니다: "+ topicName);
                 return;
             }
 
             // 토픽이 존재하지 않으면 생성
             NewTopic topic = new NewTopic(topicName, numPartitions, replicationFactor);
             adminClient.createTopics(List.of(topic)).all().get(10, TimeUnit.SECONDS);
-            logger.info("Kafka 토픽이 생성되었습니다: {}", topicName);
+            System.out.println("Kafka 토픽이 생성되었습니다: "+ topicName);
         } catch (ExecutionException | InterruptedException e) {
-            logger.error("토픽 생성 중 오류 발생: {} - {}", topicName, e.getMessage());
+            System.out.println("토픽 생성 중 오류 발생: "+ topicName+ e.getMessage());
             Thread.currentThread().interrupt();
         } catch (Exception e) {
-            logger.error("토픽 생성 시 알 수 없는 오류 발생: {} - {}", topicName, e.getMessage());
+            System.out.println("토픽 생성 시 알 수 없는 오류 발생: "+ topicName+e.getMessage());
         }
     }
+
 }

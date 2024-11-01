@@ -4,7 +4,7 @@ metadata:
   name: lecture-deployment
   namespace: tweety
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: lecture
@@ -91,3 +91,7 @@ spec:
                 secretKeyRef:
                   key: KAFKA_SERVER
                   name: tweety-secrets
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
