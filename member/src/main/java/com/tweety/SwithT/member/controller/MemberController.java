@@ -31,6 +31,9 @@ public class MemberController {
     @Value("${jwt.secretKeyRt}")
     private String secretKeyRt;
 
+    @Value("${POD_NAME:Unknown}")
+    private String podName;
+
     private final MemberService memberService;
     private final JwtTokenProvider jwtTokenProvider;
     @Qualifier("2")
@@ -195,5 +198,8 @@ public class MemberController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
-
+    @GetMapping("/pod-info")
+    public String getPodInfo() {
+        return String.format("현재 실행 중인 Pod 이름: %s", podName);
+    }
 }

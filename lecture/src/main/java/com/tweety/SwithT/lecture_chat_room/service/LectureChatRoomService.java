@@ -338,4 +338,17 @@ public class LectureChatRoomService {
             case SUNDAY -> "일";
         };
     }
+
+    @Transactional
+    public void exitChatRoom(LectureGroup lectureGroup, Long memberId){
+        List<LectureChatRoom> chatRooms = chatRoomRepository.findByLectureGroupAndDelYn(lectureGroup, "N");
+
+        for(LectureChatRoom lectureChatRoom: chatRooms){
+            LectureChatParticipants lectureChatParticipants = chatParticipantsRepository.
+                    findByLectureChatRoomAndMemberIdAndDelYn(lectureChatRoom, memberId, "N")
+                    .orElseThrow(() -> new EntityNotFoundException("참가 정보를 불러오는 데 실패했습니다"));
+            lectureChatParticipants.updateDelYn();
+        }
+//        나갔다는 정보 알려주는 게 있으면 좋을까요?
+    }
 }

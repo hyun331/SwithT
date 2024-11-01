@@ -45,7 +45,7 @@ public class SchedulerService {
     @KafkaListener(topics = "schedule-update", groupId = "member-group", containerFactory = "kafkaListenerContainerFactory")
     public void updateScheduleFromKafka(String message) {
         try {
-//            System.out.println("수신된 Kafka 메시지: " + message);
+            System.out.println("수신된 Kafka 메시지: " + message);
 
 //            아래 코드 없으면 "{\"lectureId\":1,\"status\":\"ADMIT\"}" 이중 직렬화 되어있어 계속 에러 발생
             if (message.startsWith("\"") && message.endsWith("\"")) {
@@ -75,18 +75,21 @@ public class SchedulerService {
                 // startDate부터 endDate까지 날짜를 반복하면서 요일을 확인
                 for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
                     if (date.getDayOfWeek().equals(lectureDay)) {
-                        // 요일이 일치하면 스케줄러 생성
-                        Scheduler scheduler = Scheduler.builder()
-                                .title(groupTimeResDto.getSchedulerTitle())
-                                .schedulerDate(date)
-                                .schedulerTime(LocalTime.parse(groupTimeResDto.getStartTime()))  // 강의 시작 시간 설정
-                                .content(groupTimeResDto.getSchedulerTitle() + "가 있는 날입니다.")
-                                .alertYn(groupTimeResDto.getAlertYn())
-                                .member(member)
-                                .lectureGroupId(groupTimeResDto.getLectureGroupId())
-                                .build();
+                        // kafka 멈췄을 때 대비해서 예외 추가
+                        if(schedulerRepository.findAllByMemberIdAndLectureGroupId(member.getId(), groupTimeResDto.getLectureGroupId()).isEmpty()){
+                            // 요일이 일치하면 스케줄러 생성
+                            Scheduler scheduler = Scheduler.builder()
+                                    .title(groupTimeResDto.getSchedulerTitle())
+                                    .schedulerDate(date)
+                                    .schedulerTime(LocalTime.parse(groupTimeResDto.getStartTime()))  // 강의 시작 시간 설정
+                                    .content(groupTimeResDto.getSchedulerTitle() + "가 있는 날입니다.")
+                                    .alertYn(groupTimeResDto.getAlertYn())
+                                    .member(member)
+                                    .lectureGroupId(groupTimeResDto.getLectureGroupId())
+                                    .build();
 
-                        schedulers.add(scheduler);
+                            schedulers.add(scheduler);
+                        }
                     }
                 }
                 schedulerRepository.saveAll(schedulers);
@@ -185,19 +188,21 @@ public class SchedulerService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 회원은 존재하지 않습니다."));
 
-        // 스케줄러 엔티티 생성 및 저장
-        Scheduler scheduler = Scheduler.builder()
-                .title(dto.getTitle())
-                .lectureAssignmentId(dto.getAssignmentId())
-                .schedulerDate(LocalDate.parse(dto.getSchedulerDate()))
-                .schedulerTime(LocalTime.parse(dto.getSchedulerTime()))
-                .content(dto.getContents())
-                .member(member)
-                .lectureGroupId(dto.getLectureGroupId())
-                .build();
+        if(schedulerRepository.findAllByLectureAssignmentIdAndMemberId(dto.getAssignmentId(), memberId).isEmpty()){
+            // 스케줄러 엔티티 생성 및 저장
+            Scheduler scheduler = Scheduler.builder()
+                    .title(dto.getTitle())
+                    .lectureAssignmentId(dto.getAssignmentId())
+                    .schedulerDate(LocalDate.parse(dto.getSchedulerDate()))
+                    .schedulerTime(LocalTime.parse(dto.getSchedulerTime()))
+                    .content(dto.getContents())
+                    .member(member)
+                    .lectureGroupId(dto.getLectureGroupId())
+                    .build();
 
-        schedulerRepository.save(scheduler);
-        System.out.println("스케줄 저장 완료: " + scheduler.getTitle() + " - " + member.getId());
+            schedulerRepository.save(scheduler);
+            System.out.println("스케줄 저장 완료: " + scheduler.getTitle() + " - " + member.getId());
+        }
     }
 
     // 과제 수정 관련 kafka 리스너 추가 및 스케쥴 수정

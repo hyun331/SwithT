@@ -180,4 +180,18 @@ public class LectureApplyController {
         }
     }
 
+    @PutMapping("/lecture-cancel/{id}")
+    public ResponseEntity<?> lectureCancelByTutee(@PathVariable Long id){
+        try {
+            lectureApplyService.lectureCancel(id);
+            CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "수강이 취소되었습니다.", null);
+            return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+        } catch (EntityNotFoundException e){
+            CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.NOT_FOUND.value(), e.getMessage());
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException e){
+            CommonErrorDto commonErrorDto = new CommonErrorDto(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+            return new ResponseEntity<>(commonErrorDto, HttpStatus.BAD_REQUEST);
+        }
+    }
 }

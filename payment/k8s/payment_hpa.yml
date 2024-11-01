@@ -1,0 +1,17 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: payment-hpa
+  namespace: tweety
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: payment-deployment
+  minReplicas: 1
+  maxReplicas: 3
+  # cpu 사용률이 50이상이면 pod 자동 증가시킴
+  targetCPUUtilizationPercentage: 50
+
+
+

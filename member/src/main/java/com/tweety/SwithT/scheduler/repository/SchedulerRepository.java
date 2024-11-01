@@ -10,8 +10,10 @@ import java.util.List;
 
 @Repository
 public interface SchedulerRepository extends JpaRepository<Scheduler,Long> {
+    List<Scheduler> findAllByLectureAssignmentIdAndMemberId(Long lectureAssignmentId, Long memberId);
     List<Scheduler> findByLectureAssignmentId(Long lectureAssignmentId);
     List<Scheduler> findAllByMemberAndSchedulerDateBetweenAndDelYn(
             Member member, LocalDate startDate, LocalDate endDate, String delYn);
     List<Scheduler> findAllByLectureGroupId(Long lectureGroupId);
+    List<Scheduler> findAllByMemberIdAndLectureGroupId(Long memberId, Long lectureGroupId);
 }

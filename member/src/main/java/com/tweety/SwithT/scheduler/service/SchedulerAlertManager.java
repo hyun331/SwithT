@@ -6,6 +6,7 @@ import com.tweety.SwithT.scheduler.dto.ScheduleAlertDto;
 import com.tweety.SwithT.scheduler.repository.SchedulerAlertRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -20,6 +21,7 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
+
 
 @Component
 public class SchedulerAlertManager {
@@ -40,6 +42,7 @@ public class SchedulerAlertManager {
     }
 
     @Transactional
+    @SchedulerLock(name = "SchedulerAlertManager_updateSchedulerQueue", lockAtMostFor = 3540000, lockAtLeastFor = 60000) // 최대 59분(3540000ms), 최소 1분(60000ms)
     @Scheduled(cron = "0 0 * * * *") // 매 시간마다 실행
     public void updateSchedulerQueue() {
         LocalDateTime now = LocalDateTime.now(); // 현재 시간
@@ -74,6 +77,7 @@ public class SchedulerAlertManager {
         }
     }
 
+    @SchedulerLock(name = "SchedulerAlertManager_processScheduledAlerts", lockAtMostFor = 120000, lockAtLeastFor = 60000) // 최대 2분(120000ms), 최소 1분(60000ms)
     @Scheduled(cron = "0 * * * * *") // 매 1분마다 실행
     public void processScheduledAlerts() {
         ZSetOperations<String, Object> zSetOperations = redisTemplate.opsForZSet();
@@ -98,14 +102,13 @@ public class SchedulerAlertManager {
 
             // 알림 ID로 DB에서 ScheduleAlert를 다시 조회
             ScheduleAlert alert = schedulerAlertRepository.findById(alertId).orElseThrow(
-                    ()-> new EntityNotFoundException("error"));
+                    () -> new EntityNotFoundException("error"));
 
             if (alert != null) {
                 // DTO로 변환하여 전송
                 ScheduleAlertDto alertDto = new ScheduleAlertDto(
                         alert.getId(), alert.getReserveDay(), alert.getReserveTime(), alert.getScheduler().getId());
                 rabbitTemplate.convertAndSend(RabbitMqConfig.SCHEDULER_ALERT_QUEUE, alertDto);
-//                System.out.println("완료!");
             }
         }
     }
