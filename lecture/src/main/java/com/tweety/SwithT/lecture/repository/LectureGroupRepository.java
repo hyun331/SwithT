@@ -29,11 +29,13 @@ public interface LectureGroupRepository extends JpaRepository<LectureGroup, Long
 
     // lectureId로 상위 5개 board 리스트 가져오기
     @Query("SELECT p FROM Board p WHERE p.lectureGroup.lecture.id = :lectureId AND p.delYn = 'N' ORDER BY p.createdTime DESC")
-    List<Board> findTop5BoardsByLectureId(@Param("lectureId") Long lectureId);
+    List<Board> findTop5BoardsByLectureId(@Param("lectureId") Long lectureId, Pageable pageable);
+
 
     // lectureId로 상위 5개 assignment 리스트 가져오기 (endDate가 가장 임박한 순서로 정렬)
-    @Query("SELECT p FROM LectureAssignment p WHERE p.lectureGroup.lecture.id = :lectureId AND p.delYn = 'N' ORDER BY p.endDate ASC")
-    List<LectureAssignment> findTop5AssignmentsByLectureId(@Param("lectureId") Long lectureId);
+    @Query("SELECT p FROM LectureAssignment p WHERE p.lectureGroup.lecture.id = :lectureId AND p.delYn = 'N' AND p.endDate > CURRENT_TIMESTAMP ORDER BY p.endDate ASC")
+    List<LectureAssignment> findTop5AssignmentsByLectureId(@Param("lectureId") Long lectureId, Pageable pageable);
+
 
 
 }

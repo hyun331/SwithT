@@ -226,7 +226,7 @@ public class LectureController {
     // 강의 아이디를 통해 각 강의 그룹의 과제 5개 가져오기
     @GetMapping("/lecture/assignment-list/{lectureId}")
     public ResponseEntity<?> getAssignmentsByLectureId(@PathVariable Long lectureId) {
-        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의별 과외 리스트", lectureService.getLectureAssignmentsByLectureId(lectureId));
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의별 과제 리스트", lectureService.getLectureAssignmentsByLectureId(lectureId));
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
