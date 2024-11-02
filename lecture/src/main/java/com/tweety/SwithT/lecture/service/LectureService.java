@@ -591,7 +591,7 @@ public class LectureService {
 
     // 무료 강의 10개 최신순 조회
     public List<LectureInfoListResDto> getFreeLectures(){
-        Pageable pageable = PageRequest.of(0, 3); // 첫 페이지, 10개 가져오기
+        Pageable pageable = PageRequest.of(0, 9); // 첫 페이지, 10개 가져오기
         List<Lecture> lectures = lectureRepository.findLecturesWithAvailableGroups(pageable);
         List<LectureInfoListResDto> lectureInfos = new ArrayList<>();
         for (Lecture lecture : lectures){
