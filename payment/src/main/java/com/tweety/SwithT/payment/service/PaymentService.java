@@ -317,7 +317,7 @@ public class PaymentService {
         // 로그인한 멤버의 ID를 가져옴
         Long loginMemberId = Long.valueOf(authentication.getName());
         System.out.println("왜 예상 수익금 안 나와???"+loginMemberId);
-        List<Balance> balances =  balanceRepository.findByMemberIdAndStatus(loginMemberId, Status.ADMIT);
+        List<Balance> balances =  balanceRepository.findByMemberIdAndStatus(loginMemberId, Status.STANDBY);
         System.out.println(balanceRepository.findByMemberId(loginMemberId));
         // balances 리스트에서 cost 필드를 모두 합산
         return balances.stream()
