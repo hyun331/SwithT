@@ -71,7 +71,7 @@ public class LectureService {
 
     // Create
     @Transactional
-    public Lecture lectureCreate(LectureCreateReqDto lectureCreateReqDto, List<LectureGroupReqDto> lectureGroupReqDtos, MultipartFile imgFile){
+    public Lecture lectureCreate(LectureCreateReqDto lectureCreateReqDto, List<LectureGroupReqDto> lectureGroupReqDtos, MultipartFile imgFile) {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
 
         CommonResDto commonResDto = memberFeign.getMemberNameById(memberId);
@@ -82,30 +82,35 @@ public class LectureService {
         String imageUrl = s3Service.uploadFile(imgFile, "lecture");
 
         // Lecture 정보 저장
-        Lecture createdLecture = lectureRepository.save(lectureCreateReqDto.toEntity(memberId, memberName, imageUrl));
+        Lecture lecture = lectureRepository.save(lectureCreateReqDto.toEntity(memberId, memberName, imageUrl));
 
-        for (LectureGroupReqDto groupDto : lectureGroupReqDtos){
-            // Lecture Group 정보 저장
-            LectureGroup createdGroup = lectureGroupRepository.save(groupDto.toEntity(createdLecture));
-            for (GroupTimeReqDto timeDto : groupDto.getGroupTimeReqDtos()){
+        boolean hasFreeGroup = false;
+        for (LectureGroupReqDto groupDto : lectureGroupReqDtos) {
+            LectureGroup createdGroup = lectureGroupRepository.save(groupDto.toEntity(lecture));
+            if (createdGroup.getPrice().equals(0)) {
+                System.out.println("있어요");
+                hasFreeGroup = true;
+            }
+            for (GroupTimeReqDto timeDto : groupDto.getGroupTimeReqDtos()) {
                 groupTimeRepository.save(timeDto.toEntity(createdGroup));
             }
-//            if (createdLecture.getLectureType()== LectureType.LECTURE){
-//                // LectureGroup 생성시 강의 타입이 Lecture일 경우 대기열 생성
-//                waitingService.createQueue(createdGroup.getId(), createdGroup.getLimitPeople());
-//            }
+        }
+
+        // hasFreeGroup 값 설정
+        if (hasFreeGroup) {
+            lecture.updateHasFree();
+            lectureRepository.save(lecture);
         }
 
         // OpenSearch에 데이터 동기화
         try {
-            openSearchService.registerLecture(createdLecture.fromEntityToLectureResDto());
+            openSearchService.registerLecture(lecture.fromEntityToLectureResDto());
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return createdLecture;
+        return lecture;
     }
-
 
     // 강의 검색
 //    public List<LectureDetailResDto> searchLectures(String keyword, Pageable pageable) {
@@ -121,63 +126,51 @@ public class LectureService {
         String keyword = searchDto.getSearchTitle(); // 검색 제목
 
         try {
-            if(!searchDto.getCategory().isEmpty()){
-                // OpenSearch에서 검색 수행
-                List<LectureDetailResDto> searchResults = openSearchService.searchLecturesByCategory(searchDto, pageable);
-//            System.out.println(searchResults.get(0));
-                // 검색 결과를 LectureListResDto로 변환하여 페이지 객체로 반환
-                List<LectureListResDto> lectureList = searchResults.stream()
-//                    여기서 필요한 데이터 조립
-                        .map(detail -> LectureListResDto.builder()
-                                .id(detail.getId())
-                                .title(detail.getTitle())
-                                .memberName(detail.getMemberName())
-                                .memberId(detail.getMemberId())
-                                .image(detail.getImage())
-                                .category(detail.getCategory())
-                                .isContainsFree(isContainsFreeGroup(detail.getId()))
-                                .build())
-                        .collect(Collectors.toList());
+            List<LectureDetailResDto> searchResults;
 
-                // PageImpl로 페이지네이션 적용하여 반환
-                return new PageImpl<>(lectureList, pageable, searchResults.size());
-            } else{
-                List<LectureDetailResDto> searchResults = openSearchService.searchLectures(keyword, pageable, searchDto);
-                // OpenSearch에서 검색 수행
-//            System.out.println(searchResults.get(0));
-                // 검색 결과를 LectureListResDto로 변환하여 페이지 객체로 반환
-                List<LectureListResDto> lectureList = searchResults.stream()
-//                    여기서 필요한 데이터 조립
-                        .map(detail -> LectureListResDto.builder()
-                                .id(detail.getId())
-                                .title(detail.getTitle())
-                                .memberName(detail.getMemberName())
-                                .memberId(detail.getMemberId())
-                                .image(detail.getImage())
-                                .category(detail.getCategory())
-                                .isContainsFree(isContainsFreeGroup(detail.getId()))
-                                .build())
-                        .collect(Collectors.toList());
-
-                // PageImpl로 페이지네이션 적용하여 반환
-                return new PageImpl<>(lectureList, pageable, searchResults.size());
+            if (!searchDto.getCategory().isEmpty()) {
+                // OpenSearch에서 카테고리별로 검색 수행
+                searchResults = openSearchService.searchLecturesByCategory(searchDto, pageable);
+            } else {
+                // 키워드를 통한 검색 수행
+                searchResults = openSearchService.searchLectures(keyword, pageable, searchDto);
             }
+
+            // 검색 결과를 LectureListResDto로 변환하여 페이지 객체로 반환
+            List<LectureListResDto> lectureList = searchResults.stream()
+                    .map(detail -> LectureListResDto.builder()
+                            .id(detail.getId())
+                            .title(detail.getTitle())
+                            .contents(detail.getContents())
+                            .memberName(detail.getMemberName())
+                            .memberId(detail.getMemberId())
+                            .image(detail.getImage())
+                            .status(detail.getStatus())
+                            .category(detail.getCategory())
+                            .isContainsFree("Y".equals(detail.getHasFreeGroup())) // OpenSearch 필드 사용
+                            .build())
+                    .collect(Collectors.toList());
+
+            // PageImpl로 페이지네이션 적용하여 반환
+            return new PageImpl<>(lectureList, pageable, searchResults.size());
+
         } catch (IOException | InterruptedException e) {
             // 예외 발생 시 로그 출력 및 빈 페이지 반환
             throw new IllegalArgumentException(e);
         }
     }
 
-//    그룹 중 하나라도 무료이면 재능 기부로 침.
-    private Boolean isContainsFreeGroup(Long lectureId){
-        List<LectureGroup> lectureGroups = lectureGroupRepository.findByLectureId(lectureId);
-        for(LectureGroup lectureGroup: lectureGroups){
-            if(lectureGroup.getPrice().equals(0)){
-                return true;
-            }
-        }
-        return false;
-    }
+
+    //    그룹 중 하나라도 무료이면 재능 기부로 침.
+//    private Boolean isContainsFreeGroup(Long lectureId){
+//        List<LectureGroup> lectureGroups = lectureGroupRepository.findByLectureId(lectureId);
+//        for(LectureGroup lectureGroup: lectureGroups){
+//            if(lectureGroup.getPrice().equals(0)){
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
     // 검색어 추천 메서드
     public List<String> getSuggestions(String keyword) throws IOException, InterruptedException {
