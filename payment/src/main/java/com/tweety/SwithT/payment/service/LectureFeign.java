@@ -22,6 +22,9 @@ public interface LectureFeign {
     @GetMapping(value = "/lecture-group/get/remaining/{id}")
     int getRemaining(@PathVariable("id")Long lectureGroupId);
 
+    @GetMapping(value = "/lecture-group/get-member/{id}")
+    Long getTutorId(@PathVariable("id") Long lectureGroupId);
+
     @PostMapping(value = "/lecture/after-paid")
     ResponseEntity<?> updateLectureStatus(@RequestParam("lectureGroupId") Long lectureGroupId,
                                           @RequestParam("memberId") Long memberId);

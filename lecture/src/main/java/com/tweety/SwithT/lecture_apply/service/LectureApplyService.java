@@ -657,6 +657,15 @@ public class LectureApplyService {
         return lectureGroup.getRemaining();
     }
 
+    public Long getTutorIdFromGroupId(Long id){
+        LectureGroup lectureGroup = lectureGroupRepository.findById(id).orElseThrow(
+                ()-> new EntityNotFoundException("수강 정보 불러오기 실패"));
+
+        Lecture lecture = lectureGroup.getLecture();
+
+        return lecture.getMemberId();
+    }
+
 //    public Long getTuteeIdFromApplyId(Long id){
 //        LectureApply lectureApply = lectureApplyRepository.findById(id).orElseThrow(
 //                ()-> new EntityNotFoundException("수강 정보 불러오기 실패"));

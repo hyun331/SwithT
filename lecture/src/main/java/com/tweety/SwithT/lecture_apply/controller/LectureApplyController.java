@@ -165,6 +165,11 @@ public class LectureApplyController {
         return lectureApplyService.getGroupRemainingFromApplyId(id);
     }
 
+    @GetMapping("/lecture-group/get-member/{id}")
+    public Long getTutorId(@PathVariable Long id){
+        return lectureApplyService.getTutorIdFromGroupId(id);
+    }
+
     @PutMapping("/lecture-apply/cancel/{id}")
     public ResponseEntity<?> applyCancelBeforePay(@PathVariable Long id){
         try {

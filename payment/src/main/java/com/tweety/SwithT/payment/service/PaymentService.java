@@ -131,9 +131,11 @@ public class PaymentService {
 
         paymentRepository.save(payments);
 
+        Long memberId = lectureFeign.getTutorId(lecturePayResDto.getLectureGroupId());
+
         Balance balance = Balance.builder()
                 .cost(lecturePrice)
-                .memberId(lecturePayResDto.getMemberId())
+                .memberId(memberId)
                 .status(Status.STANDBY)
                 .balancedTime(LocalDateTime.now())
                 .payments(payments)
