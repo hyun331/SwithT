@@ -26,4 +26,5 @@ public class LectureDetailResDto {
     private Category category;
     private LectureType lectureType;
     private Long searchCount;
+    private String hasFreeGroup;
 }

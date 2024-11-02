@@ -51,6 +51,9 @@ public class Lecture extends BaseTimeEntity {
     @Column(nullable = false)
     private Long searchCount;
 
+    @Column(nullable = false)
+    private String hasFreeGroup = "N";
+
     public LectureDetailResDto fromEntityToLectureResDto(){
         return LectureDetailResDto.builder()
                 .id(this.id)
@@ -63,6 +66,7 @@ public class Lecture extends BaseTimeEntity {
                 .memberName(this.memberName)
                 .lectureType(this.lectureType)
                 .searchCount(this.searchCount)
+                .hasFreeGroup(this.hasFreeGroup)
                 .build();
     }
 
@@ -139,5 +143,9 @@ public class Lecture extends BaseTimeEntity {
 
     public void increaseCount(){
         this.searchCount++;
+    }
+
+    public void updateHasFree(){
+        this.hasFreeGroup = "Y";
     }
 }

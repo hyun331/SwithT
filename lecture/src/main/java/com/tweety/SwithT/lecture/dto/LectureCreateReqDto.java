@@ -37,6 +37,7 @@ public class LectureCreateReqDto {
                 .status(this.status)
                 .lectureType(this.lectureType)
                 .searchCount(0L)
+                .hasFreeGroup("N")
                 .build();
     }
 }
