@@ -165,6 +165,13 @@ public class LectureController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
+    @GetMapping("/lectures/popular")
+    public ResponseEntity<?> getPopularLectures() {
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 조회", lectureService.getPopularLectures());
+        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+    }
+
+
 
     // 강의 홈 정보 - id : lecture group id
     @GetMapping("/lecture-group-home/{id}")
