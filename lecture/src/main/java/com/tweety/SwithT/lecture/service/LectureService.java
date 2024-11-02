@@ -600,6 +600,17 @@ public class LectureService {
         return lectureInfos;
     }
 
+    // 강의 검색 수 기준 10개 강의 조회
+    public List<LectureInfoListResDto> getPopularLectures(){
+        Pageable pageable = PageRequest.of(0, 8); // 첫 페이지, 8개 가져오기
+        List<Lecture> lectures = lectureRepository.findByDelYnOrderBySearchCount(pageable);
+        List<LectureInfoListResDto> lectureInfos = new ArrayList<>();
+        for (Lecture lecture : lectures){
+            lectureInfos.add(lecture.fromEntityToLectureInfoListResDto());
+        }
+        return lectureInfos;
+    }
+
     public LectureHomeResDto LectureHomeInfoGet(Long lectureGroupId) {
         // 강의 그룹 정보
         LectureGroup lectureGroup = lectureGroupRepository.findById(lectureGroupId)
