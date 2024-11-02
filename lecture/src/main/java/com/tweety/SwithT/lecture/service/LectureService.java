@@ -514,7 +514,7 @@ public class LectureService {
             }
             updateLectureStatus(statusUpdateDto);
             redisStreamProducer.publishMessage(
-                    lecture.getMemberId().toString(), "강의 승인", lecture.getTitle() + " 강의가 승인되었습니다.", "메롱");
+                    lecture.getMemberId().toString(), "강의 승인", lecture.getTitle() + " 강의가 승인되었습니다.", "");
             System.out.println("강의 승인!!\n");
             // 상태 업데이트
 //            System.out.println("Kafka 메시지 처리 완료: " + statusUpdateDto);
