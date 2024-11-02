@@ -91,7 +91,7 @@ public class PaymentController {
 
     @GetMapping("/list/balance")
     public ResponseEntity<?> myBalanceList(
-            @PageableDefault(size = 10)Pageable pageable) {
+            @PageableDefault(size = 5)Pageable pageable) {
         Page<BalanceResDto> balanceResDtos = paymentService.getBalanceList(pageable);
 
         CommonResDto commonResDto

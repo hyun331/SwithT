@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -96,18 +97,22 @@ public class WithdrawalService {
                         Collectors.summingLong(WithdrawalRequest::getAmount)
                 ));
 
-        // labels (연도/월)
-        List<String> labels = withdrawalByMonth.keySet().stream().sorted().collect(Collectors.toList());
+        // 기간 동안의 모든 달을 포함하는 labels 초기화
+        List<String> labels = new ArrayList<>();
+        for (int i = 0; i <= months; i++) {
+            String monthLabel = startDate.plusMonths(i).format(DateTimeFormatter.ofPattern("yyyy/MM"));
+            labels.add(monthLabel);
+        }
 
-        // dataset (각 달의 합산 금액)
+        // dataset (각 달의 합산 금액, 없으면 0으로 채움)
         List<Long> dataset = labels.stream()
-                .map(withdrawalByMonth::get)
+                .map(label -> withdrawalByMonth.getOrDefault(label, 0L))
                 .collect(Collectors.toList());
 
         // Chart.js에서 사용할 데이터 구조로 변환
         return Map.of(
                 "labels", labels,
-                "data",dataset
+                "data", dataset
         );
     }
 

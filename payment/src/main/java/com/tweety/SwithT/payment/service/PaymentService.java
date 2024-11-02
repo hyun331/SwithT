@@ -39,6 +39,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -315,7 +316,9 @@ public class PaymentService {
 
         // 로그인한 멤버의 ID를 가져옴
         Long loginMemberId = Long.valueOf(authentication.getName());
-        List<Balance> balances =  balanceRepository.findByMemberIdAndStatus(loginMemberId, Status.STANDBY);
+        System.out.println("왜 예상 수익금 안 나와???"+loginMemberId);
+        List<Balance> balances =  balanceRepository.findByMemberIdAndStatus(loginMemberId, Status.ADMIT);
+        System.out.println(balanceRepository.findByMemberId(loginMemberId));
         // balances 리스트에서 cost 필드를 모두 합산
         return balances.stream()
                 .mapToLong(Balance::getCost) // Balance 객체에서 cost 값을 추출
@@ -356,12 +359,16 @@ public class PaymentService {
                         Collectors.summingLong(Balance::getCost)
                 ));
 
-        // labels (연도/월)
-        List<String> labels = balanceByMonth.keySet().stream().sorted().collect(Collectors.toList());
+        // 기간 동안의 모든 달을 포함하는 labels 초기화
+        List<String> labels = new ArrayList<>();
+        for (int i = 0; i <= months; i++) {
+            String monthLabel = startDate.plusMonths(i).format(DateTimeFormatter.ofPattern("yyyy/MM"));
+            labels.add(monthLabel);
+        }
 
-        // dataset (각 달의 합산 금액)
+        // dataset (각 달의 합산 금액, 없으면 0으로 채움)
         List<Long> dataset = labels.stream()
-                .map(balanceByMonth::get)
+                .map(label -> balanceByMonth.getOrDefault(label, 0L))
                 .collect(Collectors.toList());
 
         // Chart.js에서 사용할 데이터 구조로 변환
