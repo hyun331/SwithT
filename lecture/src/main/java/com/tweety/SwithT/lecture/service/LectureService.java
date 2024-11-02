@@ -88,7 +88,6 @@ public class LectureService {
         for (LectureGroupReqDto groupDto : lectureGroupReqDtos) {
             LectureGroup createdGroup = lectureGroupRepository.save(groupDto.toEntity(lecture));
             if (createdGroup.getPrice().equals(0)) {
-                System.out.println("있어요");
                 hasFreeGroup = true;
             }
             for (GroupTimeReqDto timeDto : groupDto.getGroupTimeReqDtos()) {
@@ -146,6 +145,7 @@ public class LectureService {
                             .memberId(detail.getMemberId())
                             .image(detail.getImage())
                             .status(detail.getStatus())
+                            .lectureType(detail.getLectureType())
                             .category(detail.getCategory())
                             .isContainsFree("Y".equals(detail.getHasFreeGroup())) // OpenSearch 필드 사용
                             .build())
