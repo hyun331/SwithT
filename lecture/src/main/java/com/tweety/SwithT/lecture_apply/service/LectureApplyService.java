@@ -685,6 +685,47 @@ public class LectureApplyService {
                 .build();
     }
 
+    public Page<SingleLectureTuteeListDto> showLectureTuteeList(Long id, Pageable pageable) {
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+
+        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{
+            throw new EntityNotFoundException("해당 강의 그룹이 없습니다");
+        });
+
+        Lecture lecture = lectureGroup.getLecture();
+        // lecture apply admit이고 lectureGroupID
+//        if(lecture.getMemberId() != memberId){  //소유자가 아닌 경우
+//            throw new IllegalArgumentException("접근할 수 없는 강의 그룹입니다");
+//        }
+
+        List<LectureApply> lectureApplyList = lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(lectureGroup, Status.WAITING, "N");
+        List<LectureApply> lectureApplyStandByList =  lectureApplyRepository.findByLectureGroupAndStatusAndDelYn(lectureGroup, Status.STANDBY, "N");
+//        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+//        int start = (int) pageRequest.getOffset();
+//        int end = Math.min((start + pageRequest.getPageSize()), lectureApplyList.size());
+//        Page<LectureApply> lectureApplyPage = new PageImpl<>(lectureApplyList.subList(start, end), pageRequest, lectureApplyList.size());
+        List<SingleLectureTuteeListDto> dtoList = new ArrayList<>();
+        for(LectureApply apply : lectureApplyList){
+            CommonResDto commonResDto = memberFeign.getMemberProfileById(apply.getMemberId());
+            ObjectMapper objectMapper = new ObjectMapper();
+            MemberProfileResDto memberProfileResDto = objectMapper.convertValue(commonResDto.getResult(), MemberProfileResDto.class);
+            String image = memberProfileResDto.getImage();
+            SingleLectureTuteeListDto dto =  SingleLectureTuteeListDto.builder()
+                    .tuteeName(apply.getMemberName())
+                    .tuteeProfile(image)
+                    .memberId(apply.getMemberId())
+                    .build();
+            dtoList.add(dto);
+        }
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        int start = (int) pageRequest.getOffset();
+        int end = Math.min((start + pageRequest.getPageSize()), dtoList.size());
+        Page<SingleLectureTuteeListDto> result = new PageImpl<>(dtoList.subList(start, end), pageRequest, dtoList.size());
+//        return lectureApplyPage.map(a->a.fromEntityToSingleLectureTuteeListDto());
+        return result;
+    }
+
+
     public Page<SingleLectureTuteeListDto> lectureTuteeList(Long id, Pageable pageable) {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
 
