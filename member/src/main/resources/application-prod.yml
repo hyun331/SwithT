@@ -3,8 +3,8 @@ server:
     session:
       cookie:
         name: "tweety-session"
-        same-site: none # SameSite 속성 설정
-        secure: true
+#        same-site: none # SameSite 속성 설정
+#        secure: true
     encoding:
       charset: UTF-8
       force: true
