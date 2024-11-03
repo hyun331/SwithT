@@ -189,22 +189,19 @@ public class OpenSearchService {
         List<String> filters = new ArrayList<>();
 
         if (searchDto.getCategory() != null && !searchDto.getCategory().isEmpty()) {
-            filters.add(String.format("{\"match\": {\"category\": \"%s\"}}", searchDto.getCategory()));
+            filters.add("{\"match\": {\"category\": \"" + searchDto.getCategory() + "\"}}");
         }
 
         if (searchDto.getStatus() != null && !searchDto.getStatus().isEmpty()) {
-            filters.add(String.format("{\"match\": {\"status\": \"%s\"}}", searchDto.getStatus()));
+            filters.add("{\"match\": {\"status\": \"" + searchDto.getStatus() + "\"}}");
         }
 
         if (searchDto.getLectureType() != null && !searchDto.getLectureType().isEmpty()) {
-            filters.add(String.format("{\"match\": {\"lectureType\": \"%s\"}}", searchDto.getLectureType()));
+            filters.add("{\"match\": {\"lectureType\": \"" + searchDto.getLectureType() + "\"}}");
         }
 
         // 필터가 없으면 빈 배열로 처리, 있으면 join으로 연결
         String filterQuery = filters.isEmpty() ? "" : String.join(",", filters);
-
-        // OpenSearch 요청에 페이지네이션 값 적용
-        int size = 100; // `scroll` API의 최대 크기를 사용
 
         // OpenSearch 쿼리 생성
         String queryPart;
@@ -215,31 +212,30 @@ public class OpenSearchService {
         }
         """;
         } else {
-            queryPart = String.format("""
-        {
-            "multi_match": {
-                "query": "%s",
-                "fields": ["title", "contents", "memberName"],
-                "analyzer": "ngram_analyzer"
-            }
-        }
-        """, keyword);
+            queryPart = new StringBuilder()
+                    .append("{")
+                    .append("\"multi_match\": {")
+                    .append("\"query\": \"").append(keyword).append("\",")
+                    .append("\"fields\": [\"title^5\", \"contents^2\", \"memberName^3\"],") // title에 더 높은 가중치 적용
+                    .append("\"type\": \"best_fields\",") // 가장 일치하는 필드에 우선 적용
+                    .append("\"operator\": \"and\",") // 정확한 일치 결과 우선
+                    .append("\"analyzer\": \"ngram_analyzer\"")
+                    .append("}")
+                    .append("}")
+                    .toString();
         }
 
         // 필터가 있을 경우만 'filter'를 추가
-        String requestBody = String.format("""
-        {
-                "query": {
-                "bool": {
-                    "must": [%s]%s
-                }
-            },
-            "sort": [
-                {"id": {"order": "desc"}}
-            ],
-            "size": %d
-        }
-        """, queryPart, filters.isEmpty() ? "" : String.format(", \"filter\": [%s]", filterQuery), size);
+        StringBuilder requestBodyBuilder = new StringBuilder();
+        requestBodyBuilder.append("{ \"query\": { \"bool\": { \"must\": [")
+                .append(queryPart)
+                .append("]")
+                .append(filters.isEmpty() ? "" : ", \"filter\": [" + filterQuery + "]")
+                .append("}}, \"sort\": [{\"_score\": \"desc\"}, {\"searchCount\": {\"order\": \"desc\"}}], \"size\": ")
+                .append(100)
+                .append("}");
+
+        String requestBody = requestBodyBuilder.toString();
 
         // 첫 번째 요청
         HttpRequest request = HttpRequest.newBuilder()
@@ -262,12 +258,12 @@ public class OpenSearchService {
 
         // scroll API를 통해 계속해서 데이터를 가져옴
         while (true) {
-            String scrollRequestBody = String.format("""
-        {
-            "scroll": "1m",
-            "scroll_id": "%s"
-        }
-        """, scrollId);
+            String scrollRequestBody = new StringBuilder()
+                    .append("{")
+                    .append("\"scroll\": \"1m\",")
+                    .append("\"scroll_id\": \"").append(scrollId).append("\"")
+                    .append("}")
+                    .toString();
 
             HttpRequest scrollRequest = HttpRequest.newBuilder()
                     .uri(URI.create(openSearchUrl + "/_search/scroll"))
@@ -303,42 +299,37 @@ public class OpenSearchService {
 
         // 카테고리 필터
         if (searchDto.getCategory() != null && !searchDto.getCategory().isEmpty()) {
-            filters.add(String.format("{\"match\": {\"category\": \"%s\"}}", searchDto.getCategory()));
+            filters.add("{\"match\": {\"category\": \"" + searchDto.getCategory() + "\"}}");
         }
 
         // 상태 필터
         if (searchDto.getStatus() != null && !searchDto.getStatus().isEmpty()) {
-            filters.add(String.format("{\"match\": {\"status\": \"%s\"}}", searchDto.getStatus()));
+            filters.add("{\"match\": {\"status\": \"" + searchDto.getStatus() + "\"}}");
         }
 
         // 강의 유형 필터
         if (searchDto.getLectureType() != null && !searchDto.getLectureType().isEmpty()) {
-            filters.add(String.format("{\"match\": {\"lectureType\": \"%s\"}}", searchDto.getLectureType()));
+            filters.add("{\"match\": {\"lectureType\": \"" + searchDto.getLectureType() + "\"}}");
         }
-
-        // 필터를 연결하여 쿼리 생성
-        String filterQuery = filters.isEmpty() ? "" : String.join(",", filters);
-
-        // OpenSearch 요청에 페이지네이션 값 적용
-        int size = 100; // `scroll` API의 최대 크기를 사용
-
-        // 필터가 없으면 빈 배열로 처리, 있으면 join으로 연결
-        String filterPart = filters.isEmpty() ? "" : String.format(", \"filter\": [%s]", filterQuery);
 
         // 필터 쿼리 생성
-        String requestBody = String.format("""
-        {
-            "query": {
-                "bool": {
-                    "must": []%s
-                }
-            },
-            "sort": [
-                {"id": {"order": "desc"}}
-            ],
-            "size": %d
-        }
-        """, filterPart, size);
+        String filterQuery = filters.isEmpty() ? "" : String.join(",", filters);
+        String filterPart = filters.isEmpty() ? "" : ", \"filter\": [" + filterQuery + "]";
+
+        // 요청 본문 생성
+        StringBuilder requestBodyBuilder = new StringBuilder();
+        requestBodyBuilder.append("{")
+                .append("\"query\": {")
+                .append("\"bool\": {")
+                .append("\"must\": []")
+                .append(filterPart)
+                .append("}")
+                .append("},")
+                .append("\"sort\": [{\"_score\": \"desc\"}, {\"searchCount\": {\"order\": \"desc\"}}],") // score가 우선, 동일한 score는 searchCount로 정렬
+                .append("\"size\": ").append(100)
+                .append("}");
+
+        String requestBody = requestBodyBuilder.toString();
 
         // 첫 번째 요청
         HttpRequest request = HttpRequest.newBuilder()
@@ -361,12 +352,12 @@ public class OpenSearchService {
 
         // scroll API를 통해 계속해서 데이터를 가져옴
         while (true) {
-            String scrollRequestBody = String.format("""
-            {
-                "scroll": "1m",
-                "scroll_id": "%s"
-            }
-            """, scrollId);
+            String scrollRequestBody = new StringBuilder()
+                    .append("{")
+                    .append("\"scroll\": \"1m\",")
+                    .append("\"scroll_id\": \"").append(scrollId).append("\"")
+                    .append("}")
+                    .toString();
 
             HttpRequest scrollRequest = HttpRequest.newBuilder()
                     .uri(URI.create(openSearchUrl + "/_search/scroll"))
@@ -415,45 +406,23 @@ public class OpenSearchService {
     public List<String> getSuggestions(String keyword) throws IOException, InterruptedException {
         String endpoint = openSearchUrl + "/lecture-service/_search";
 
-        // 검색된 횟수를 기준으로 정렬하고 상위 10개의 검색어만 반환하는 쿼리
-        String requestBody = String.format("""
-        {
-                "query": {
-                    "bool": {
-                        "should": [
-                            {
-                                "match": {
-                                    "title": {
-                                        "query": "%s",
-                                        "operator": "and"
-                                    }
-                                }
-                            },
-                            {
-                                "match": {
-                                    "contents": {
-                                        "query": "%s",
-                                        "operator": "and"
-                                    }
-                                }
-                            },
-                            {
-                                "match": {
-                                    "memberName": {
-                                        "query": "%s",
-                                        "operator": "and"
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                },
-                "sort": [
-                    { "searchCount": { "order": "desc" } }
-                ],
-                "size": 10
-        }
-        """, keyword, keyword, keyword);
+        // 요청 본문 생성
+        StringBuilder requestBodyBuilder = new StringBuilder();
+        requestBodyBuilder.append("{")
+                .append("\"query\": {")
+                .append("\"bool\": {")
+                .append("\"should\": [")
+                .append("{\"match\": {\"title\": {\"query\": \"").append(keyword).append("\", \"operator\": \"and\"}}},")
+                .append("{\"match\": {\"contents\": {\"query\": \"").append(keyword).append("\", \"operator\": \"and\"}}},")
+                .append("{\"match\": {\"memberName\": {\"query\": \"").append(keyword).append("\", \"operator\": \"and\"}}}")
+                .append("]")
+                .append("}")
+                .append("},")
+                .append("\"sort\": [{\"_score\": \"desc\"}, {\"searchCount\": {\"order\": \"desc\"}}],") // score가 우선, 동일한 score는 searchCount로 정렬
+                .append("\"size\": 10")
+                .append("}");
+
+        String requestBody = requestBodyBuilder.toString();
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(endpoint))
