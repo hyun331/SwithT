@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
@@ -25,35 +26,59 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+        try {
+            // Super method to load the user information from the OAuth2 provider
+            OAuth2User oAuth2User = super.loadUser(userRequest);
 
-        OAuth2User oAuth2User = super.loadUser(userRequest);
-        String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        System.out.println(oAuth2User.getAttributes());
-        OAuth2Response oAuth2Response = null;
+            // Debugging: Log the OAuth2 attributes
+            System.out.println("OAuth2 User Attributes: " + oAuth2User.getAttributes());
 
-        if (registrationId.equals("google")) {
-            oAuth2Response = new GoogleResponse(oAuth2User.getAttributes());
-        } else if (registrationId.equals("kakao")) {
-            oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
-        } else {
-            throw new IllegalArgumentException("Unsupported provider: " + registrationId);
+            String registrationId = userRequest.getClientRegistration().getRegistrationId();
+            OAuth2Response oAuth2Response = null;
+
+            // Identify the provider and create the appropriate response object
+            if (registrationId.equals("google")) {
+                oAuth2Response = new GoogleResponse(oAuth2User.getAttributes());
+            } else if (registrationId.equals("kakao")) {
+                oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
+            } else {
+                throw new IllegalArgumentException("Unsupported provider: " + registrationId);
+            }
+
+            // Extract the information from the OAuth2 response
+            String provider = oAuth2Response.getProvider();
+            String providerId = oAuth2Response.getProviderId();
+            String socialName = oAuth2Response.getName();
+            String socialEmail = oAuth2Response.getEmail();
+
+            // Debugging: Log extracted information
+            System.out.println("Provider: " + provider);
+            System.out.println("Provider ID: " + providerId);
+            System.out.println("Name: " + socialName);
+            System.out.println("Email: " + socialEmail);
+
+            Member member = memberRepository.findByEmail(socialEmail)
+                    .map(existingMember -> updateExistingMember(existingMember, socialEmail))
+                    .orElse(createSocialMember(provider, providerId, socialName, socialEmail));
+            memberRepository.save(member);
+
+            return new CustomOAuth2User(member);
+
+        } catch (OAuth2AuthenticationException ex) {
+            // Log the exception details
+            System.err.println("OAuth2AuthenticationException occurred: " + ex.getMessage());
+            ex.printStackTrace();
+            throw ex;
+        } catch (Exception ex) {
+            // Catch any other exceptions and log details for debugging
+            System.err.println("An error occurred while loading the user: " + ex.getMessage());
+            ex.printStackTrace();
+            throw new OAuth2AuthenticationException(new OAuth2Error("token_error", "Failed to load user or obtain token", null), ex);
         }
-
-        String provider = oAuth2Response.getProvider();
-        String providerId = oAuth2Response.getProviderId();
-        String socialName = oAuth2Response.getName();
-        String socialEmail = oAuth2Response.getEmail();
-
-        Member member = memberRepository.findByEmail(socialEmail)
-                .map(existingMember -> updateExistingMember(existingMember, socialEmail))
-                .orElse(createSocialMember(provider, providerId, socialName, socialEmail));
-        memberRepository.save(member);
-
-        return new CustomOAuth2User(member);
     }
 
     private Member updateExistingMember(Member existingMember, String socialEmail) {
-        System.out.println("이미 가입한 이력이 있는 회원 체크, 이메일 :"+existingMember.getEmail());
+        System.out.println("Existing member found, updating email: " + existingMember.getEmail());
         existingMember.setEmail(socialEmail);
         return existingMember;
     }
