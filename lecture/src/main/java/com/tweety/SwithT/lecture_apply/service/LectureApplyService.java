@@ -725,6 +725,7 @@ public class LectureApplyService {
         return result;
     }
 
+
     public Page<SingleLectureTuteeListDto> lectureTuteeList(Long id, Pageable pageable) {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
 

@@ -27,6 +27,7 @@ public class SecurityConfigs {
                 .httpBasic(httpBasic -> httpBasic.disable()) // 기본 인증 비활성화
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/ws/**", "/list-of-lecture", "/lecture-detail/{id}", "/lecture/search","/lectures/popular", "/lectures/latest", "/lectures/free", "/lecture/search/category", "/lecture/lecture-group-info/{id}", "/lecture/recommend", "/lecture-add-queue")
+
                         .permitAll()
                         .anyRequest().authenticated()
                 )
