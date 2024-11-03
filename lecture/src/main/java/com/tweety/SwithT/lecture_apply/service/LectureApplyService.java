@@ -127,7 +127,7 @@ public class LectureApplyService {
     }
 
     //튜터가 보는 강의그룹 신청자 리스트
-    public Page<SingleLectureTuteeListDto> singleLectureApplyList(Long id, Pageable pageable) {
+    public Page<SingleLectureApplyListDto> singleLectureApplyList(Long id, Pageable pageable) {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
 
         LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{
@@ -144,25 +144,25 @@ public class LectureApplyService {
         int start = (int) pageRequest.getOffset();
         int end = Math.min((start + pageRequest.getPageSize()), lectureApplyList.size());
         Page<LectureApply> lectureApplyPage = new PageImpl<>(lectureApplyList.subList(start, end), pageRequest, lectureApplyList.size());
-        Page<SingleLectureTuteeListDto> result = lectureApplyPage.map(a->a.fromEntityToSingleLectureTuteeListDto());
-        for(SingleLectureTuteeListDto dto : result){
+        Page<SingleLectureApplyListDto> result = lectureApplyPage.map(a->a.fromEntityToSingleLectureApplyListDto());
+        for(SingleLectureApplyListDto dto : result){
             // chatroomlist
-//            List<LectureChatRoom> lectureChatRoomList = lectureChatRoomRepository.findByLectureGroupAndDelYn(lectureGroup,"N");
-//            for(LectureChatRoom chatRoom : lectureChatRoomList){
-//                Long roomId = chatRoom.getId();
-//                if(lectureChatParticipantsRepository.findByLectureChatRoomIdAndMemberIdAndDelYn(roomId,dto.getMemberId(),"N" ).isEmpty()){
-//                    dto.setChatRoomId(null);
-//                }
-//                else{
-//                    dto.setChatRoomId(roomId);
-//                }
-//            }
+            List<LectureChatRoom> lectureChatRoomList = lectureChatRoomRepository.findByLectureGroupAndDelYn(lectureGroup,"N");
+            for(LectureChatRoom chatRoom : lectureChatRoomList){
+                Long roomId = chatRoom.getId();
+                if(lectureChatParticipantsRepository.findByLectureChatRoomIdAndMemberIdAndDelYn(roomId,dto.getMemberId(),"N" ).isEmpty()){
+                    dto.setChatRoomId(null);
+                }
+                else{
+                    dto.setChatRoomId(roomId);
+                }
+            }
 
             //튜티 프로필 이미지
             CommonResDto commonResDto = memberFeign.getMemberProfileById(dto.getMemberId());
             ObjectMapper objectMapper = new ObjectMapper();
             MemberProfileResDto memberProfileResDto = objectMapper.convertValue(commonResDto.getResult(), MemberProfileResDto.class);
-            dto.setTuteeProfile(memberProfileResDto.getImage());
+            dto.setTuteeProfileImage(memberProfileResDto.getImage());
         }
         return result;
     }
