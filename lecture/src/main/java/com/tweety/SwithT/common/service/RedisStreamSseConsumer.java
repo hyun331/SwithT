@@ -33,11 +33,11 @@ public class RedisStreamSseConsumer implements StreamListener<String, MapRecord<
         String contents = record.getValue().get("contents");
         String lectureGroupId = record.getValue().get("lectureGroupId"); // 강의 ID (없을 수도 있음)
 
-        sendSseNotification(lectureGroupId, memberId, messageType, contents);
+        sendSseNotification(lectureGroupId, memberId, messageType, title, contents);
     }
 
     // SSE 알림 전송 메서드
-    public void sendSseNotification(String lectureGroupId, String memberId, String messageType, String contents) {
+    public void sendSseNotification(String lectureGroupId, String memberId, String messageType, String title,String contents) {
         SseEmitter emitter = clients.get(memberId);
 
         if (emitter != null) {
@@ -45,6 +45,7 @@ public class RedisStreamSseConsumer implements StreamListener<String, MapRecord<
                 Map<String, String> structuredMessage = new HashMap<>();
                 structuredMessage.put("id", String.valueOf(System.currentTimeMillis())); // 고유 ID로 시간 사용
                 structuredMessage.put("messageType", messageType);
+                structuredMessage.put("title", title);
                 structuredMessage.put("contents", contents);
 
                 // lectureGroupId가 존재하는 경우에만 메시지에 포함

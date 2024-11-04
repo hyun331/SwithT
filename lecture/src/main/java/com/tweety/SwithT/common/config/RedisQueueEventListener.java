@@ -47,13 +47,13 @@ public class RedisQueueEventListener implements MessageListener {
     private void handleQueueEntryEvent(String lectureGroupId, String memberId, String rank) {
         // 상위 50명에게만 실시간 위치 업데이트 알림
         if (Integer.parseInt(rank) < 50) {
-            sseConsumer.sendSseNotification(lectureGroupId, memberId, "WAITING", rank);
+            sseConsumer.sendSseNotification(lectureGroupId, memberId, "WAITING", "",rank);
         }
     }
 
     private void handleQueueExitEvent(String lectureGroupId, String memberId) {
         // 최상위 유저 알림 및 대기열에서 제거
-        sseConsumer.sendSseNotification(lectureGroupId, memberId, "WAITING-SUCCESS", "0");
+        sseConsumer.sendSseNotification(lectureGroupId, memberId, "WAITING-SUCCESS", "","0");
         String queueKey = "lecture-queue-" + lectureGroupId;
         redisTemplate.opsForZSet().remove(queueKey, memberId);
     }
