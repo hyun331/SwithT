@@ -39,8 +39,8 @@ public class SecurityConfigs {
                 )// CORS 활성화
                 .httpBasic(httpBasic -> httpBasic.disable()) // 기본 인증 비활성화
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/doLogin/**","/member/create", "/public-infoGet", "/member/AddInfoUpdate",
-                                "/email/**","/member-health", "/pod-info").permitAll()
+                        .requestMatchers("/doLogin/**","/member/create", "/public-infoGet/**", "/member/AddInfoUpdate",
+                                "/email/**","/member-health", "/pod-info", "/member-score-get/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
