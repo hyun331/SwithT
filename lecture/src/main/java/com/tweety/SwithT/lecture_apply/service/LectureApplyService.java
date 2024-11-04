@@ -32,6 +32,7 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -206,6 +207,7 @@ public class LectureApplyService {
         return "튜터가 해당 수강신청을 승인했습니다.";
     }
 
+    @SchedulerLock(name = "updatePendingLecturesStatusLock", lockAtMostFor = "1h", lockAtLeastFor = "5m")
     @Scheduled(cron = "0 * * * * *")
     public void updatePendingLecuturesStatus(){
         List<LectureApply> lectureApplyList = lectureApplyRepository.findByStatusAndDelYn(Status.WAITING, "N");
@@ -463,6 +465,7 @@ public class LectureApplyService {
         return memberId;
     }
 
+    @SchedulerLock(name = "waitingSchedulerLock", lockAtMostFor = "5s", lockAtLeastFor = "1s")
     @Scheduled(fixedRate = 50)
     public void waitingScheduler() {
         Set<String> keys = redisTemplate.keys("lecture-queue-*"); // 모든 강의의 대기열 키 가져오기

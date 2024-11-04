@@ -42,21 +42,21 @@ public class SchedulerAlertManager {
     }
 
     @Transactional
-    @SchedulerLock(name = "SchedulerAlertManager_updateSchedulerQueue", lockAtMostFor = 3540000, lockAtLeastFor = 60000) // 최대 59분(3540000ms), 최소 1분(60000ms)
-    @Scheduled(cron = "0 0 * * * *") // 매 시간마다 실행
+    @SchedulerLock(name = "SchedulerAlertManager_updateSchedulerQueue", lockAtMostFor = 600000, lockAtLeastFor = 60000) // 최대 10분(600000ms), 최소 1분(60000ms)
+    @Scheduled(cron = "0 0/10 * * * *") // 매 10분마다 실행
     public void updateSchedulerQueue() {
         LocalDateTime now = LocalDateTime.now(); // 현재 시간
-        LocalDateTime oneHourLater = now.plusHours(1); // 1시간 뒤까지
+        LocalDateTime tenMinutesLater = now.plusMinutes(10); // 10분 뒤까지
 
         // LocalTime으로 변환하여 사용
         LocalTime currentTime = now.toLocalTime();
-        LocalTime timeOneHourLater = oneHourLater.toLocalTime();
+        LocalTime timeTenMinutesLater = tenMinutesLater.toLocalTime();
 
-        // 현재 시간과 1시간 뒤 사이의 예약된 알림들 가져오기
-        List<ScheduleAlert> upcomingAlerts = schedulerAlertRepository.findByReserveTimeBetween(currentTime, timeOneHourLater);
+        // 현재 시간과 10분 뒤 사이의 예약된 알림들 가져오기
+        List<ScheduleAlert> upcomingAlerts = schedulerAlertRepository.findByReserveTimeBetween(currentTime, timeTenMinutesLater);
 
         if (upcomingAlerts.isEmpty()) {
-            System.out.println("현재 시간과 1시간 후 사이에 예약된 알림이 없습니다.");
+            System.out.println("현재 시간과 10분 후 사이에 예약된 알림이 없습니다.");
             return; // 알림이 없을 경우 종료
         }
 

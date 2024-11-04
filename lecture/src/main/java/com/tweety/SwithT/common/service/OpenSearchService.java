@@ -7,6 +7,7 @@ import com.tweety.SwithT.lecture.dto.LectureDetailResDto;
 import com.tweety.SwithT.lecture.dto.LectureSearchDto;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import jakarta.annotation.PostConstruct;
+import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -464,21 +465,22 @@ public class OpenSearchService {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     @Autowired
-    @Qualifier("14")
+    @Qualifier("14") // RedisTemplate for OpenSearch sync
     private RedisTemplate<String, String> redisTemplate;
 
-    // 마지막 동기화 시간을 가져오는 메서드
+    // 마지막 동기화 시간을 Redis에서 가져오는 메서드
     public LocalDateTime getLastSyncTime() {
         String lastSyncTime = redisTemplate.opsForValue().get(LAST_SYNC_TIME_KEY);
         return lastSyncTime != null ? LocalDateTime.parse(lastSyncTime, FORMATTER) : LocalDateTime.MIN;
     }
 
-    // 마지막 동기화 시간을 업데이트하는 메서드
+    // Redis에 마지막 동기화 시간을 업데이트하는 메서드
     public void updateLastSyncTime(LocalDateTime lastSyncTime) {
         redisTemplate.opsForValue().set(LAST_SYNC_TIME_KEY, lastSyncTime.format(FORMATTER));
     }
 
     @PostConstruct
+    @SchedulerLock(name = "syncOpenSearchAndDB", lockAtMostFor = 3540000, lockAtLeastFor = 600000) // 최대 59분, 최소 10분 잠금 유지
     @Scheduled(cron = "0 0 * * * *") // 1시간마다 실행
     public void syncLecturesToOpenSearch() {
         int pageSize = 500;
@@ -486,16 +488,16 @@ public class OpenSearchService {
         LocalDateTime lastSyncTime = getLastSyncTime();
 
         while (true) {
-            // `updatedTime` 필드를 기준으로 변경된 데이터를 페이지 단위로 조회
+            // updatedTime 필드를 기준으로 변경된 데이터를 페이지 단위로 조회
             Page<Lecture> updatedLectures = lectureRepository.findByUpdatedTimeAfter(lastSyncTime, PageRequest.of(page, pageSize));
             if (updatedLectures.isEmpty()) break;
 
             for (Lecture lecture : updatedLectures) {
                 try {
-                    // OpenSearch에서 기존 데이터를 조회하여 `updatedTime` 비교
+                    // OpenSearch에서 기존 데이터를 조회하여 updatedTime 비교
                     LectureDetailResDto existingLecture = fetchLectureFromOpenSearch(lecture.getId());
 
-                    // OpenSearch에 등록된 데이터가 없거나 DB의 `updatedTime`이 더 최신인 경우 업데이트
+                    // OpenSearch에 등록된 데이터가 없거나 DB의 updatedTime이 더 최신인 경우 업데이트
                     if (existingLecture == null || lecture.getUpdatedTime().isAfter(existingLecture.getUpdatedTime())) {
                         registerLecture(lecture.fromEntityToLectureResDto());
                     }
