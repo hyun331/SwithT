@@ -561,7 +561,7 @@ public class LectureService {
                             .lectureGroupId(lectureGroup.getId())
                             .tuteeId(lecture.getMemberId())
                             .build();
-                    lectureChatRoomService.chatRoomCheckOrCreate(lectureGroup.getId());
+                    lectureChatRoomService.tutorLectureChatCheck(lectureGroup.getId());
                 }
             }
             updateLectureStatus(statusUpdateDto);
