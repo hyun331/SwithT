@@ -632,6 +632,9 @@ public class LectureApplyService {
             lectureGroup.decreaseRemaining();
         }
 
+     // 결제한 튜티와 튜터가 있는 채팅방 확인 또는 생성
+        lectureChatRoomService.chatRoomCheckOrCreate(lectureApply.getLectureGroup().getId());
+
         Long paidTuteeId = lectureApply.getMemberId();
 //        System.out.println("결제한 튜티: " + paidTuteeId);
         Long tutorId = lectureApply.getLectureGroup().getLecture().getMemberId();
