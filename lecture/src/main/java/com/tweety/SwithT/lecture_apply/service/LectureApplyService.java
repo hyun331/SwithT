@@ -463,7 +463,7 @@ public class LectureApplyService {
         return memberId;
     }
 
-    @Scheduled(fixedRate = 500)
+    @Scheduled(fixedRate = 50)
     public void waitingScheduler() {
         Set<String> keys = redisTemplate.keys("lecture-queue-*"); // 모든 강의의 대기열 키 가져오기
 

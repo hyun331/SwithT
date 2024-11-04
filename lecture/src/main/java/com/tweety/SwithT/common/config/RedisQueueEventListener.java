@@ -46,7 +46,7 @@ public class RedisQueueEventListener implements MessageListener {
 
     private void handleQueueEntryEvent(String lectureGroupId, String memberId, String rank) {
         // 상위 50명에게만 실시간 위치 업데이트 알림
-        if (Integer.parseInt(rank) < 50) {
+        if (Integer.parseInt(rank) < 500) {
             sseConsumer.sendSseNotification(lectureGroupId, memberId, "WAITING", "",rank);
         }
     }
