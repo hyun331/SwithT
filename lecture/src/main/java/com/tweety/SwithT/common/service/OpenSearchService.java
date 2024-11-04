@@ -2,6 +2,8 @@ package com.tweety.SwithT.common.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.tweety.SwithT.lecture.domain.Lecture;
 import com.tweety.SwithT.lecture.dto.LectureDetailResDto;
 import com.tweety.SwithT.lecture.dto.LectureSearchDto;
@@ -159,7 +161,14 @@ public class OpenSearchService {
 
     public void registerLecture(LectureDetailResDto lecture) throws IOException, InterruptedException {
         String endpoint = openSearchUrl + "/lecture-service/_doc/" + lecture.getId();
-        String requestBody = objectMapper.writeValueAsString(lecture);
+
+        // Custom ObjectMapper with JavaTimeModule for LocalDateTime handling
+        ObjectMapper localObjectMapper = new ObjectMapper();
+        localObjectMapper.registerModule(new JavaTimeModule()); // Enable Java 8 date/time support
+        localObjectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Use ISO-8601 format
+
+        // Convert lecture object to JSON string using the custom ObjectMapper
+        String requestBody = localObjectMapper.writeValueAsString(lecture);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(endpoint))
@@ -485,8 +494,20 @@ public class OpenSearchService {
     }
 
     @PostConstruct
+    public void initLecturesToOpenSearch() {
+        List<Lecture> lectures = lectureRepository.findAll();
+        for (Lecture lecture : lectures) {
+            try {
+                registerLecture(lecture.fromEntityToLectureResDto());
+                System.out.println("등록 완료");
+            } catch (IOException | InterruptedException e) {
+                System.out.println("에러에러에러" +e.getMessage());
+            }
+        }
+    }
+
     @SchedulerLock(name = "syncOpenSearchAndDB", lockAtMostFor = 3540000, lockAtLeastFor = 600000) // 최대 59분, 최소 10분 잠금 유지
-    @Scheduled(cron = "0 0 * * * *") // 1시간마다 실행
+    @Scheduled(cron = "0 * * * * *") // 1시간마다 실행
     public void syncLecturesToOpenSearch() {
         int pageSize = 500;
         int page = 0;
@@ -503,11 +524,7 @@ public class OpenSearchService {
                     LectureDetailResDto existingLecture = fetchLectureFromOpenSearch(lecture.getId());
 
                     // OpenSearch에 등록된 데이터가 없거나 DB의 updatedTime이 더 최신인 경우 업데이트
-                    LocalDateTime lectureUpdatedTime = lecture.getUpdatedTime();
-                    LocalDateTime existingUpdatedTime = existingLecture != null ? existingLecture.getUpdatedTime() : null;
-
-                    if (existingUpdatedTime == null ||
-                            (lectureUpdatedTime != null && lectureUpdatedTime.isAfter(existingUpdatedTime))) {
+                    if (existingLecture == null || lecture.getUpdatedTime().isAfter(existingLecture.getUpdatedTime())) {
                         registerLecture(lecture.fromEntityToLectureResDto());
                     }
                 } catch (IOException | InterruptedException e) {
@@ -532,8 +549,12 @@ public class OpenSearchService {
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() == 200) {
-            JsonNode jsonNode = objectMapper.readTree(response.body());
-            return objectMapper.treeToValue(jsonNode.path("_source"), LectureDetailResDto.class);
+            // Custom ObjectMapper with JavaTimeModule for LocalDateTime handling
+            ObjectMapper localObjectMapper = new ObjectMapper();
+            localObjectMapper.registerModule(new JavaTimeModule()); // Enable Java 8 date/time support
+
+            JsonNode jsonNode = localObjectMapper.readTree(response.body());
+            return localObjectMapper.treeToValue(jsonNode.path("_source"), LectureDetailResDto.class);
         } else if (response.statusCode() == 404) {
             return null; // OpenSearch에 해당 데이터가 없는 경우
         } else {
