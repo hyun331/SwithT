@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -246,13 +247,13 @@ public class LectureChatRoomService {
 
 
     //내 채팅방 리스트
-    public List<MyChatRoomListResDto> myChatRoomList(String chatRoomId) {
+    public Page<MyChatRoomListResDto> myChatRoomList(String chatRoomId, Pageable pageable) {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
-
+        System.out.println("채팅방 : "+chatRoomId);
         List<LectureChatParticipants> lectureChatParticipantsList = new ArrayList<>();
 
         //특정 채팅방으로 입장하는 경우
-        if(chatRoomId != null && !chatRoomId.isEmpty()){
+        if(chatRoomId != null && !chatRoomId.isEmpty() && chatRoomId!=""){
             LectureChatParticipants selectedChatRoom = chatParticipantsRepository.findByLectureChatRoomIdAndMemberIdAndDelYn(Long.parseLong(chatRoomId), memberId, "N").orElseThrow(()->{
                 throw new EntityNotFoundException("채팅방이 존재하지 않습니다.");
             });
@@ -300,8 +301,13 @@ public class LectureChatRoomService {
             return a.fromEntityToMyChatRoomListResDto(memberName);
         }).toList();
 
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        int start = (int) pageRequest.getOffset();
+        int end = Math.min((start + pageRequest.getPageSize()), myChatRoomListResDtoList.size());
+        Page<MyChatRoomListResDto> result = new PageImpl<>(myChatRoomListResDtoList.subList(start, end), pageRequest, myChatRoomListResDtoList.size());
 
-        return myChatRoomListResDtoList;
+
+        return result;
     }
 
     //채팅 내역 가져오기
