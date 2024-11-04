@@ -48,6 +48,11 @@ public class MemberController {
         this.redisTemplate = redisTemplate;
     }
 
+    @GetMapping("/member-health")
+    public String healthCheck() {
+        return "member 서버 hello";
+    }
+
     @PostMapping("/member/create")
     public ResponseEntity<?> memberCreate(
             @Valid
