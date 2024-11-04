@@ -68,7 +68,7 @@ public class RedisStreamSseConsumer implements StreamListener<String, MapRecord<
                 clients.remove(memberId);
             }
         } else {
-            System.out.println(memberId + " emitter 없음");
+//            System.out.println(memberId + " emitter 없음");
         }
     }
 

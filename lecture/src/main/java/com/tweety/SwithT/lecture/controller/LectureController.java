@@ -56,10 +56,22 @@ public class LectureController {
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
+//    //과외/강의 상세화면
+//    @GetMapping("/lecture-detail/{id}")
+//    public ResponseEntity<?> lectureDetail(@PathVariable Long id) {
+//        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 안내 화면", lectureService.lectureDetail(id));
+//        return new ResponseEntity<>(commonResDto, HttpStatus.OK);
+//    }
+
     //과외/강의 상세화면
     @GetMapping("/lecture-detail/{id}")
-    public ResponseEntity<?> lectureDetail(@PathVariable Long id) {
-        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 안내 화면", lectureService.lectureDetail(id));
+    public ResponseEntity<?> lectureDetail(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Forwarded-For", required = false) String ipAddress,
+            @RequestHeader(value = "User-Agent", required = false) String userAgent,
+            @RequestParam(value = "userId", required = false) String userId) {
+
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "강의 안내 화면", lectureService.lectureDetail(id, ipAddress, userAgent, userId));
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
