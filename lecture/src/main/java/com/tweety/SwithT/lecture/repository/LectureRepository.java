@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,4 +30,6 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             "WHERE lg.price = 0 AND lg.isAvailable = 'Y' AND l.status = 'ADMIT' " +
             "ORDER BY l.createdTime DESC")
     List<Lecture> findLecturesWithAvailableGroups(Pageable pageable);
+
+    Page<Lecture> findByUpdatedTimeAfter(LocalDateTime updatedTime, Pageable pageable);
 }

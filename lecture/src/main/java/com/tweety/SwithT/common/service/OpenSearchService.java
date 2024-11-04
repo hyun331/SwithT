@@ -8,8 +8,12 @@ import com.tweety.SwithT.lecture.dto.LectureSearchDto;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -29,6 +33,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -454,16 +460,73 @@ public class OpenSearchService {
         return suggestions;
     }
 
+    private static final String LAST_SYNC_TIME_KEY = "openSearch:lastSyncTime";
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+    @Autowired
+    @Qualifier("14")
+    private RedisTemplate<String, String> redisTemplate;
+
+    // 마지막 동기화 시간을 가져오는 메서드
+    public LocalDateTime getLastSyncTime() {
+        String lastSyncTime = redisTemplate.opsForValue().get(LAST_SYNC_TIME_KEY);
+        return lastSyncTime != null ? LocalDateTime.parse(lastSyncTime, FORMATTER) : LocalDateTime.MIN;
+    }
+
+    // 마지막 동기화 시간을 업데이트하는 메서드
+    public void updateLastSyncTime(LocalDateTime lastSyncTime) {
+        redisTemplate.opsForValue().set(LAST_SYNC_TIME_KEY, lastSyncTime.format(FORMATTER));
+    }
+
     @PostConstruct
-    @Scheduled(cron = "0 */10 * * * *")
+    @Scheduled(cron = "0 0 * * * *") // 1시간마다 실행
     public void syncLecturesToOpenSearch() {
-        List<Lecture> lectures = lectureRepository.findAll();
-        for (Lecture lecture : lectures) {
-            try {
-                registerLecture(lecture.fromEntityToLectureResDto());
-            } catch (IOException | InterruptedException e) {
-                e.printStackTrace();
+        int pageSize = 500;
+        int page = 0;
+        LocalDateTime lastSyncTime = getLastSyncTime();
+
+        while (true) {
+            // `updatedTime` 필드를 기준으로 변경된 데이터를 페이지 단위로 조회
+            Page<Lecture> updatedLectures = lectureRepository.findByUpdatedTimeAfter(lastSyncTime, PageRequest.of(page, pageSize));
+            if (updatedLectures.isEmpty()) break;
+
+            for (Lecture lecture : updatedLectures) {
+                try {
+                    // OpenSearch에서 기존 데이터를 조회하여 `updatedTime` 비교
+                    LectureDetailResDto existingLecture = fetchLectureFromOpenSearch(lecture.getId());
+
+                    // OpenSearch에 등록된 데이터가 없거나 DB의 `updatedTime`이 더 최신인 경우 업데이트
+                    if (existingLecture == null || lecture.getUpdatedTime().isAfter(existingLecture.getUpdatedTime())) {
+                        registerLecture(lecture.fromEntityToLectureResDto());
+                    }
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
+            page++;
+        }
+        updateLastSyncTime(LocalDateTime.now()); // 마지막 동기화 시간 갱신
+    }
+
+    public LectureDetailResDto fetchLectureFromOpenSearch(Long lectureId) throws IOException, InterruptedException {
+        String endpoint = openSearchUrl + "/lecture-service/_doc/" + lectureId;
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(endpoint))
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes()))
+                .header("Content-Type", "application/json")
+                .GET()
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() == 200) {
+            JsonNode jsonNode = objectMapper.readTree(response.body());
+            return objectMapper.treeToValue(jsonNode.path("_source"), LectureDetailResDto.class);
+        } else if (response.statusCode() == 404) {
+            return null; // OpenSearch에 해당 데이터가 없는 경우
+        } else {
+            throw new IOException("OpenSearch 데이터 조회 실패: " + response.body());
         }
     }
 }
