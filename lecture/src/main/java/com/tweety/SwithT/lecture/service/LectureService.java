@@ -248,64 +248,64 @@ public class LectureService {
         return lectures.map(Lecture::fromEntityToLectureListResDto);
     }
 
-//    //강의 상세 화면
-//    public LectureDetailResDto lectureDetail(Long id) {
-//        Lecture lecture = lectureRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{
-//            throw new EntityNotFoundException("해당 id에 맞는 강의가 존재하지 않습니다.");
-//        });
-//
-//        CommonResDto commonResDto = memberFeign.getMemberScoreById(lecture.getMemberId());
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        MemberScoreResDto memberScoreResDto = objectMapper.convertValue(commonResDto.getResult(), MemberScoreResDto.class);
-//        BigDecimal avgScore = memberScoreResDto.getAvgScore();
-//
-//        lecture.increaseCount();
-//        lectureRepository.save(lecture);
-//        return lecture.fromEntityToLectureDetailResDto(avgScore);
-//    }
-    public LectureDetailResDto lectureDetail(Long id, String ipAddress, String userAgent, String userId) {
-        // Redis 캐시 키 생성
-        String cacheKey;
-        if (userId != null && !userId.isEmpty()) {
-            // 로그인한 사용자: 사용자 ID 기반 캐시 키 생성
-            cacheKey = "lecture:" + id + ":user:" + userId;
-        } else {
-            // 비로그인 사용자: IP 주소와 User-Agent를 조합하여 캐시 키 생성
-            cacheKey = "lecture:" + id + ":visitor:" + ipAddress + ":" + userAgent.hashCode();
-        }
+   //강의 상세 화면
+   public LectureDetailResDto lectureDetail(Long id) {
+       Lecture lecture = lectureRepository.findByIdAndDelYn(id, "N").orElseThrow(()->{
+           throw new EntityNotFoundException("해당 id에 맞는 강의가 존재하지 않습니다.");
+       });
 
-        // Redis에 캐시 키가 있는지 확인
-        if (!redisTemplate.hasKey(cacheKey)) {
-            // 캐시 키가 없으면 searchCount 증가 및 캐시 생성
-            Lecture lecture = lectureRepository.findByIdAndDelYn(id, "N").orElseThrow(() -> {
-                throw new EntityNotFoundException("해당 id에 맞는 강의가 존재하지 않습니다.");
-            });
+       CommonResDto commonResDto = memberFeign.getMemberScoreById(lecture.getMemberId());
+       ObjectMapper objectMapper = new ObjectMapper();
+       MemberScoreResDto memberScoreResDto = objectMapper.convertValue(commonResDto.getResult(), MemberScoreResDto.class);
+       BigDecimal avgScore = memberScoreResDto.getAvgScore();
 
-            CommonResDto commonResDto = memberFeign.getMemberScoreById(lecture.getMemberId());
-            ObjectMapper objectMapper = new ObjectMapper();
-            MemberScoreResDto memberScoreResDto = objectMapper.convertValue(commonResDto.getResult(), MemberScoreResDto.class);
-            BigDecimal avgScore = memberScoreResDto.getAvgScore();
+       lecture.increaseCount();
+       lectureRepository.save(lecture);
+       return lecture.fromEntityToLectureDetailResDto(avgScore);
+   }
+    // public LectureDetailResDto lectureDetail(Long id, String ipAddress, String userAgent, String userId) {
+    //     // Redis 캐시 키 생성
+    //     String cacheKey;
+    //     if (userId != null && !userId.isEmpty()) {
+    //         // 로그인한 사용자: 사용자 ID 기반 캐시 키 생성
+    //         cacheKey = "lecture:" + id + ":user:" + userId;
+    //     } else {
+    //         // 비로그인 사용자: IP 주소와 User-Agent를 조합하여 캐시 키 생성
+    //         cacheKey = "lecture:" + id + ":visitor:" + ipAddress + ":" + userAgent.hashCode();
+    //     }
 
-            lecture.increaseCount();
-            lectureRepository.save(lecture);
+    //     // Redis에 캐시 키가 있는지 확인
+    //     if (!redisTemplate.hasKey(cacheKey)) {
+    //         // 캐시 키가 없으면 searchCount 증가 및 캐시 생성
+    //         Lecture lecture = lectureRepository.findByIdAndDelYn(id, "N").orElseThrow(() -> {
+    //             throw new EntityNotFoundException("해당 id에 맞는 강의가 존재하지 않습니다.");
+    //         });
 
-            // 캐시에 키 저장, 일정 시간(예: 10분) 동안 유지
-            redisTemplate.opsForValue().set(cacheKey, "visited", 10, TimeUnit.MINUTES);
-            return lecture.fromEntityToLectureDetailResDto(avgScore);
-        } else {
-            // Redis에 캐시가 있다면 searchCount 증가 없이 데이터를 반환
-            Lecture lecture = lectureRepository.findByIdAndDelYn(id, "N").orElseThrow(() -> {
-                throw new EntityNotFoundException("해당 id에 맞는 강의가 존재하지 않습니다.");
-            });
+    //         CommonResDto commonResDto = memberFeign.getMemberScoreById(lecture.getMemberId());
+    //         ObjectMapper objectMapper = new ObjectMapper();
+    //         MemberScoreResDto memberScoreResDto = objectMapper.convertValue(commonResDto.getResult(), MemberScoreResDto.class);
+    //         BigDecimal avgScore = memberScoreResDto.getAvgScore();
 
-            CommonResDto commonResDto = memberFeign.getMemberScoreById(lecture.getMemberId());
-            ObjectMapper objectMapper = new ObjectMapper();
-            MemberScoreResDto memberScoreResDto = objectMapper.convertValue(commonResDto.getResult(), MemberScoreResDto.class);
-            BigDecimal avgScore = memberScoreResDto.getAvgScore();
+    //         lecture.increaseCount();
+    //         lectureRepository.save(lecture);
 
-            return lecture.fromEntityToLectureDetailResDto(avgScore);
-        }
-    }
+    //         // 캐시에 키 저장, 일정 시간(예: 10분) 동안 유지
+    //         redisTemplate.opsForValue().set(cacheKey, "visited", 10, TimeUnit.MINUTES);
+    //         return lecture.fromEntityToLectureDetailResDto(avgScore);
+    //     } else {
+    //         // Redis에 캐시가 있다면 searchCount 증가 없이 데이터를 반환
+    //         Lecture lecture = lectureRepository.findByIdAndDelYn(id, "N").orElseThrow(() -> {
+    //             throw new EntityNotFoundException("해당 id에 맞는 강의가 존재하지 않습니다.");
+    //         });
+
+    //         CommonResDto commonResDto = memberFeign.getMemberScoreById(lecture.getMemberId());
+    //         ObjectMapper objectMapper = new ObjectMapper();
+    //         MemberScoreResDto memberScoreResDto = objectMapper.convertValue(commonResDto.getResult(), MemberScoreResDto.class);
+    //         BigDecimal avgScore = memberScoreResDto.getAvgScore();
+
+    //         return lecture.fromEntityToLectureDetailResDto(avgScore);
+    //     }
+    // }
 
 
     //강의 그룹 및 그룹 시간 조회
