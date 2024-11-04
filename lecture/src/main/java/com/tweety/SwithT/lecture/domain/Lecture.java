@@ -67,6 +67,7 @@ public class Lecture extends BaseTimeEntity {
                 .lectureType(this.lectureType)
                 .searchCount(this.searchCount)
                 .hasFreeGroup(this.hasFreeGroup)
+                .updatedTime(this.getUpdatedTime())
                 .build();
     }
 
