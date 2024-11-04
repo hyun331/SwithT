@@ -32,6 +32,8 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -71,6 +73,10 @@ public class LectureApplyService {
 
     @Qualifier("5")
     private final RedisTemplate<String,Object> redisTemplate;
+
+    @Autowired
+    @Qualifier("lockProvider5")  // 원하는 LockProvider를 명시적으로 지정
+    private LockProvider lockProvider;
 
     private final Object lock = new Object();
 
@@ -206,6 +212,7 @@ public class LectureApplyService {
         return "튜터가 해당 수강신청을 승인했습니다.";
     }
 
+    @SchedulerLock(name = "updatePendingLecturesStatusLock", lockAtMostFor = "1h", lockAtLeastFor = "5m")
     @Scheduled(cron = "0 * * * * *")
     public void updatePendingLecuturesStatus(){
         List<LectureApply> lectureApplyList = lectureApplyRepository.findByStatusAndDelYn(Status.WAITING, "N");
@@ -463,6 +470,7 @@ public class LectureApplyService {
         return memberId;
     }
 
+    @SchedulerLock(name = "waitingSchedulerLock", lockAtMostFor = "5s", lockAtLeastFor = "1s")
     @Scheduled(fixedRate = 50)
     public void waitingScheduler() {
         Set<String> keys = redisTemplate.keys("lecture-queue-*"); // 모든 강의의 대기열 키 가져오기
@@ -623,6 +631,9 @@ public class LectureApplyService {
             LectureGroup lectureGroup = lectureApply.getLectureGroup();
             lectureGroup.decreaseRemaining();
         }
+
+     // 결제한 튜티와 튜터가 있는 채팅방 확인 또는 생성
+        lectureChatRoomService.chatRoomCheckOrCreate(lectureApply.getLectureGroup().getId());
 
         Long paidTuteeId = lectureApply.getMemberId();
 //        System.out.println("결제한 튜티: " + paidTuteeId);
