@@ -69,8 +69,8 @@ public class LectureChatRoomController {
 
     //채팅방 목록
     @GetMapping("/room/list")
-    public ResponseEntity<?>  myRoomList(String chatRoomId){
-        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "나의 채팅방 리스트", lectureChatRoomService.myChatRoomList(chatRoomId));
+    public ResponseEntity<?>  myRoomList(@RequestParam String chatRoomId, Pageable pageable){
+        CommonResDto commonResDto = new CommonResDto(HttpStatus.OK, "나의 채팅방 리스트", lectureChatRoomService.myChatRoomList(chatRoomId, pageable));
         return new ResponseEntity<>(commonResDto, HttpStatus.OK);
     }
 
