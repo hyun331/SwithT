@@ -59,7 +59,8 @@ public class LectureChatRoomService {
                 .orElseThrow(() -> new EntityNotFoundException("강의그룹을 찾을 수 없습니다."));
 
         Lecture lecture = lectureGroup.getLecture();
-        Long tuteeId = lecture.getMemberId();
+
+        Long tuteeId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
 
         // 기존 채팅방 리스트 가져오기
         List<LectureChatRoom> lectureChatRoomList = chatRoomRepository.findByLectureGroupAndDelYn(lectureGroup, "N");
