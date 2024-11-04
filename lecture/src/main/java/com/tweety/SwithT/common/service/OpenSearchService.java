@@ -7,6 +7,7 @@ import com.tweety.SwithT.lecture.dto.LectureDetailResDto;
 import com.tweety.SwithT.lecture.dto.LectureSearchDto;
 import com.tweety.SwithT.lecture.repository.LectureRepository;
 import jakarta.annotation.PostConstruct;
+import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -468,6 +469,10 @@ public class OpenSearchService {
     @Qualifier("14") // RedisTemplate for OpenSearch sync
     private RedisTemplate<String, String> redisTemplate;
 
+    @Autowired
+    @Qualifier("lockProvider14")  // 원하는 LockProvider를 명시적으로 지정
+    private LockProvider lockProvider;
+
     // 마지막 동기화 시간을 Redis에서 가져오는 메서드
     public LocalDateTime getLastSyncTime() {
         String lastSyncTime = redisTemplate.opsForValue().get(LAST_SYNC_TIME_KEY);
@@ -498,7 +503,11 @@ public class OpenSearchService {
                     LectureDetailResDto existingLecture = fetchLectureFromOpenSearch(lecture.getId());
 
                     // OpenSearch에 등록된 데이터가 없거나 DB의 updatedTime이 더 최신인 경우 업데이트
-                    if (existingLecture == null || lecture.getUpdatedTime().isAfter(existingLecture.getUpdatedTime())) {
+                    LocalDateTime lectureUpdatedTime = lecture.getUpdatedTime();
+                    LocalDateTime existingUpdatedTime = existingLecture != null ? existingLecture.getUpdatedTime() : null;
+
+                    if (existingUpdatedTime == null ||
+                            (lectureUpdatedTime != null && lectureUpdatedTime.isAfter(existingUpdatedTime))) {
                         registerLecture(lecture.fromEntityToLectureResDto());
                     }
                 } catch (IOException | InterruptedException e) {
