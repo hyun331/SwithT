@@ -119,5 +119,39 @@ public class RedisConfig {
         return redisTemplate;
     }
 
+    @Bean
+    @Qualifier("15")
+    public RedisConnectionFactory redisCachingConnectionFactory() {
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
+        config.setHostName(host);
+        config.setPort(port);
+        config.setDatabase(14); // DB 14 사용
+        return new LettuceConnectionFactory(config);
+    }
+
+//    조회수 캐싱용 redis
+    @Bean
+    @Qualifier("15")
+    public RedisTemplate<String, Object> redisCachingTemplate(@Qualifier("15") RedisConnectionFactory redisConnectionFactory15) {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory15);
+
+        // Key Serializer 설정 (StringRedisSerializer 사용)
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+
+        // ObjectMapper 생성 및 설정
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule()); // Java 8 날짜/시간 지원
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // ISO-8601 날짜 형식 사용
+
+        // GenericJackson2JsonRedisSerializer 설정
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+
+        // Value 및 Hash Value Serializer 설정
+        redisTemplate.setValueSerializer(serializer);
+        redisTemplate.setHashValueSerializer(serializer);
+
+        return redisTemplate;
+    }
 }
 
