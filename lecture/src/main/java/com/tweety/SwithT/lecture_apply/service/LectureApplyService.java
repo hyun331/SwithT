@@ -236,6 +236,60 @@ public class LectureApplyService {
     }
 
     //튜티 - 내 강의 리스트
+//    public Page<TuteeMyLectureListResDto> myLectureList(String status, Pageable pageable) {
+//        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+//
+//        Specification<LectureApply> specification = new Specification<LectureApply>() {
+//            @Override
+//            public Predicate toPredicate(Root<LectureApply> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+//                List<Predicate> predicates = new ArrayList<>();
+//                predicates.add(criteriaBuilder.equal(root.get("memberId"), memberId));
+//                predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
+//
+//                if (status != null && !status.isEmpty()) {
+//                    predicates.add(criteriaBuilder.equal(root.get("status"), status));
+//                }
+////                Predicate[] predicateArr = new Predicate[predicates.size()];
+////                for(int i=0; i<predicateArr.length; i++){
+////                    predicateArr[i] = predicates.get(i);
+////                }
+//
+//                query.where(predicates.toArray(new Predicate[0]));
+//                query.orderBy(criteriaBuilder.desc(root.get("createdTime")));
+////                return criteriaBuilder.and(predicateArr);
+//                return query.getRestriction();
+//
+//
+//            }
+//        };
+//        Page<LectureApply> lectureApplyPage = lectureApplyRepository.findAll(specification, pageable);
+//        List<TuteeMyLectureListResDto> tuteeMyLectureListResDtos = new ArrayList<>();
+//        for(LectureApply lectureApply : lectureApplyPage){
+//            tuteeMyLectureListResDtos.add(TuteeMyLectureListResDto.builder()
+//                            .title(lectureApply.getLectureGroup().getLecture().getTitle())
+//                            .startDate(lectureApply.getStartDate())
+//                            .endDate(lectureApply.getEndDate())
+//                            .tutorName(lectureApply.getLectureGroup().getLecture().getMemberName())
+//                            .tutorId(lectureApply.getLectureGroup().getLecture().getMemberId())
+//                            .price(lectureApply.getLectureGroup().getPrice())
+//                            .applyId(lectureApply.getId())
+//                            .lectureGroupId(lectureApply.getLectureGroup().getId())
+//                            .status(lectureApply.getStatus())
+//                            .lectureType(lectureApply.getLectureGroup().getLecture().getLectureType())
+//                            .createdTime(lectureApply.getCreatedTime())
+//                            .lectureImage(lectureApply.getLectureGroup().getLecture().getImage())
+//                            .reviewStatus(lectureApply.getReviewStatus()) //김민성 추가
+//                    .build());
+//        }
+//
+//
+//        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+//        int start = (int) pageRequest.getOffset();
+//        int end = Math.min((start + pageRequest.getPageSize()), tuteeMyLectureListResDtos.size());
+//        return new PageImpl<>(tuteeMyLectureListResDtos.subList(start, end), pageRequest, tuteeMyLectureListResDtos.size());
+//
+//    }
+
     public Page<TuteeMyLectureListResDto> myLectureList(String status, Pageable pageable) {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
 
@@ -246,49 +300,43 @@ public class LectureApplyService {
                 predicates.add(criteriaBuilder.equal(root.get("memberId"), memberId));
                 predicates.add(criteriaBuilder.equal(root.get("delYn"), "N"));
 
-                if (status != null && !status.isEmpty()) {
+                // status가 "ALL"이 아닌 경우에만 조건 추가
+                if (status != null && !status.equalsIgnoreCase("ALL") && !status.isEmpty()) {
                     predicates.add(criteriaBuilder.equal(root.get("status"), status));
                 }
-//                Predicate[] predicateArr = new Predicate[predicates.size()];
-//                for(int i=0; i<predicateArr.length; i++){
-//                    predicateArr[i] = predicates.get(i);
-//                }
 
                 query.where(predicates.toArray(new Predicate[0]));
                 query.orderBy(criteriaBuilder.desc(root.get("createdTime")));
-//                return criteriaBuilder.and(predicateArr);
                 return query.getRestriction();
-
-
             }
         };
+
         Page<LectureApply> lectureApplyPage = lectureApplyRepository.findAll(specification, pageable);
         List<TuteeMyLectureListResDto> tuteeMyLectureListResDtos = new ArrayList<>();
-        for(LectureApply lectureApply : lectureApplyPage){
+        for (LectureApply lectureApply : lectureApplyPage) {
             tuteeMyLectureListResDtos.add(TuteeMyLectureListResDto.builder()
-                            .title(lectureApply.getLectureGroup().getLecture().getTitle())
-                            .startDate(lectureApply.getStartDate())
-                            .endDate(lectureApply.getEndDate())
-                            .tutorName(lectureApply.getLectureGroup().getLecture().getMemberName())
-                            .tutorId(lectureApply.getLectureGroup().getLecture().getMemberId())
-                            .price(lectureApply.getLectureGroup().getPrice())
-                            .applyId(lectureApply.getId())
-                            .lectureGroupId(lectureApply.getLectureGroup().getId())
-                            .status(lectureApply.getStatus())
-                            .lectureType(lectureApply.getLectureGroup().getLecture().getLectureType())
-                            .createdTime(lectureApply.getCreatedTime())
-                            .lectureImage(lectureApply.getLectureGroup().getLecture().getImage())
-                            .reviewStatus(lectureApply.getReviewStatus()) //김민성 추가
+                    .title(lectureApply.getLectureGroup().getLecture().getTitle())
+                    .startDate(lectureApply.getStartDate())
+                    .endDate(lectureApply.getEndDate())
+                    .tutorName(lectureApply.getLectureGroup().getLecture().getMemberName())
+                    .tutorId(lectureApply.getLectureGroup().getLecture().getMemberId())
+                    .price(lectureApply.getLectureGroup().getPrice())
+                    .applyId(lectureApply.getId())
+                    .lectureGroupId(lectureApply.getLectureGroup().getId())
+                    .status(lectureApply.getStatus())
+                    .lectureType(lectureApply.getLectureGroup().getLecture().getLectureType())
+                    .createdTime(lectureApply.getCreatedTime())
+                    .lectureImage(lectureApply.getLectureGroup().getLecture().getImage())
+                    .reviewStatus(lectureApply.getReviewStatus()) // 김민성 추가
                     .build());
         }
-
 
         PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         int start = (int) pageRequest.getOffset();
         int end = Math.min((start + pageRequest.getPageSize()), tuteeMyLectureListResDtos.size());
         return new PageImpl<>(tuteeMyLectureListResDtos.subList(start, end), pageRequest, tuteeMyLectureListResDtos.size());
-
     }
+
 
 //    public String lectureAddQueue(Long lectureGroupId, Long memberId, String memberName) throws InterruptedException {
 //        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(lectureGroupId, "N")
