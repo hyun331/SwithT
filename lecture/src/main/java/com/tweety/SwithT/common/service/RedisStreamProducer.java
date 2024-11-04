@@ -8,7 +8,6 @@ import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.springframework.data.redis.stream.StreamReceiver;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
