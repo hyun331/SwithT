@@ -507,7 +507,7 @@ public class OpenSearchService {
     }
 
     @SchedulerLock(name = "syncOpenSearchAndDB", lockAtMostFor = 3540000, lockAtLeastFor = 600000) // 최대 59분, 최소 10분 잠금 유지
-    @Scheduled(cron = "0 * * * * *") // 1시간마다 실행
+    @Scheduled(cron = "0 0 * * * *") // 1시간마다 실행
     public void syncLecturesToOpenSearch() {
         int pageSize = 500;
         int page = 0;
