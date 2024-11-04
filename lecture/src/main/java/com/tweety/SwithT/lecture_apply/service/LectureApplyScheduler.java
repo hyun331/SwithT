@@ -4,7 +4,10 @@ import com.tweety.SwithT.common.domain.Status;
 import com.tweety.SwithT.lecture_apply.domain.LectureApply;
 import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
 import lombok.RequiredArgsConstructor;
+import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +19,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LectureApplyScheduler {
     private final LectureApplyRepository lectureApplyRepository;
+
+    @Autowired
+    @Qualifier("lockProvider5")  // 원하는 LockProvider를 명시적으로 지정
+    private LockProvider lockProvider;
 
     //endDate 지난 강의 수강 status를 TERMINATE 변경
     @SchedulerLock(name = "update_status_to_terminate", lockAtLeastFor = "20s", lockAtMostFor = "50s")

@@ -32,6 +32,7 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -72,6 +73,10 @@ public class LectureApplyService {
 
     @Qualifier("5")
     private final RedisTemplate<String,Object> redisTemplate;
+
+    @Autowired
+    @Qualifier("lockProvider5")  // 원하는 LockProvider를 명시적으로 지정
+    private LockProvider lockProvider;
 
     private final Object lock = new Object();
 
