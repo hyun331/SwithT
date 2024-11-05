@@ -633,7 +633,7 @@ public class LectureApplyService {
         }
 
      // 결제한 튜티와 튜터가 있는 채팅방 확인 또는 생성
-        lectureChatRoomService.chatRoomCheckOrCreate(lectureApply.getLectureGroup().getId());
+        lectureChatRoomService.chatRoomCheckOrCreateApply(lectureApply.getLectureGroup().getId(), lectureApply.getMemberId());
 
         Long paidTuteeId = lectureApply.getMemberId();
 //        System.out.println("결제한 튜티: " + paidTuteeId);
@@ -780,6 +780,8 @@ public class LectureApplyService {
         lectureApply.updateStatus(Status.ADMIT);
         LectureGroup lectureGroup = lectureApply.getLectureGroup();
         lectureGroup.decreaseRemaining();
+
+        lectureChatRoomService.chatRoomCheckOrCreateApply(lectureApply.getLectureGroup().getId(), lectureApply.getMemberId());
 
         Long tuteeId = lectureApply.getMemberId();
         Long tutorId = lectureApply.getLectureGroup().getLecture().getMemberId();
@@ -961,6 +963,13 @@ public class LectureApplyService {
         if(!lectureApply.getMemberId().equals(memberId)){
             throw new IllegalArgumentException("접근 권한이 없습니다.");
         }
+
+        LectureGroup lectureGroup = lectureApply.getLectureGroup();
+        if(lectureGroup.getIsAvailable().equals("N")){
+            lectureGroup.updateIsAvailable("Y");
+        }
+
+        lectureChatRoomService.exitChatRoom(lectureGroup, memberId);
 
         Long tutorId = lectureApply.getLectureGroup().getLecture().getMemberId();
 
