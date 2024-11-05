@@ -197,6 +197,9 @@ public class LectureApplyService {
         if(lectureApply.getLectureGroup().getPrice()==0){
             lectureApply.updateStatus(Status.ADMIT);
             updateFreeLectureApplyStatus(id);
+            lectureGroup.updateAddress(lectureApply.getLocation());
+            lectureGroup.updateDetailAddress(lectureApply.getDetailAddress());
+            lectureGroup.updateDate(lectureApply.getStartDate(), lectureApply.getEndDate());
             redisStreamProducer.publishMessage(lectureApply.getMemberId().toString(),
                     "강의 승인", lectureGroup.getLecture().getTitle()+" 강의가 승인되었습니다. 스케줄을 확인해보세요!", lectureApply.getId().toString());
         }else{
