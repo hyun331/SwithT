@@ -33,7 +33,82 @@ public class RedisStreamSseConsumer implements StreamListener<String, MapRecord<
         String contents = record.getValue().get("contents");
         String lectureGroupId = record.getValue().get("lectureGroupId"); // 강의 ID (없을 수도 있음)
 
-        sendSseNotification(lectureGroupId, memberId, messageType, title, contents);
+        if(messageType.equals("WAITING")){
+            sendSseNotification(lectureGroupId, memberId, messageType, title, contents);
+        }
+        else{
+            sendSseNoti(record);
+        }
+    }
+
+    //대기열 제외 알림 전송
+    public void sendSseNoti(MapRecord<String, String, String> record) {
+        String recordId = record.getId().getValue(); // Redis Stream 고유 ID
+        String memberId = record.getValue().get("memberId");
+        String messageType = record.getValue().get("messageType");
+        String title = record.getValue().get("title");
+        String contents = record.getValue().get("contents");
+        String lectureGroupId = record.getValue().get("lectureGroupId");
+
+        SseEmitter emitter = clients.get(memberId);
+
+        if (emitter != null) {
+            try {
+                Map<String, String> structuredMessage = new HashMap<>();
+                structuredMessage.put("id", String.valueOf(recordId)); // 고유 ID로 시간 사용
+                structuredMessage.put("messageType", messageType);
+                structuredMessage.put("title", title);
+                structuredMessage.put("contents", contents);
+
+                // lectureGroupId가 존재하는 경우에만 메시지에 포함
+                if (lectureGroupId != null) {
+                    structuredMessage.put("lectureGroupId", lectureGroupId);
+                }
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                String jsonMessage = objectMapper.writeValueAsString(structuredMessage);
+
+                emitter.send(SseEmitter.event()
+                        .name("notification")
+                        .data(jsonMessage));
+
+                redisTemplate.opsForStream().acknowledge("sse-notifications", "sse-group", record.getId());
+
+
+                System.out.println("SSE notification sent to " + memberId + ": " + jsonMessage);
+
+            } catch (IOException e) {
+                System.out.println("IOException while sending SSE: " + e.getMessage());
+                emitter.completeWithError(e);
+                clients.remove(memberId);
+                List<MapRecord<String, Object, Object>> records = redisTemplate.opsForStream().read(
+                        Consumer.from("sse-group", memberId),
+                        StreamReadOptions.empty().count(1),
+                        StreamOffset.create("sse-notifications", ReadOffset.lastConsumed())
+                );
+            }catch (IllegalStateException e2) {
+                System.out.println("illegalStateException "+ e2.getMessage());
+                clients.remove(memberId);
+                List<MapRecord<String, Object, Object>> records = redisTemplate.opsForStream().read(
+                        Consumer.from("sse-group", memberId),
+                        StreamReadOptions.empty().count(1),
+                        StreamOffset.create("sse-notifications", ReadOffset.lastConsumed())
+                );
+            }
+        } else {
+            System.out.println(memberId + " emitter 없음");
+            System.out.println(memberId+" emitter 없음. pending 처리될 record id : "+record.getId().getValue());
+            List<MapRecord<String, Object, Object>> records = redisTemplate.opsForStream().read(
+                    Consumer.from("sse-group", memberId),
+                    StreamReadOptions.empty().count(1),
+                    StreamOffset.create("sse-notifications", ReadOffset.lastConsumed())
+            );
+
+            for(MapRecord<String, Object, Object> rs: records){
+                System.out.println(rs);
+            }
+            System.out.println("pending 처리됨");
+        }
     }
 
     // SSE 알림 전송 메서드
