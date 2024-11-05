@@ -75,17 +75,19 @@ public class SchedulerService {
                 // startDate부터 endDate까지 날짜를 반복하면서 요일을 확인
                 for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
                     if (date.getDayOfWeek().equals(lectureDay)) {
-                        // kafka 멈췄을 때 대비해서 예외 추가
-                        if(schedulerRepository.findAllByMemberIdAndLectureGroupId(member.getId(), groupTimeResDto.getLectureGroupId()).isEmpty()){
-                            // 요일이 일치하면 스케줄러 생성
+                        // groupTimeId를 포함하여 조건을 검사하여 중복 등록을 방지
+                        if (schedulerRepository.findAllByMemberIdAndLectureGroupIdAndGroupTimeId(
+                                member.getId(), groupTimeResDto.getLectureGroupId(), groupTimeResDto.getGroupTimeId()
+                        ).isEmpty()) {
                             Scheduler scheduler = Scheduler.builder()
                                     .title(groupTimeResDto.getSchedulerTitle())
                                     .schedulerDate(date)
-                                    .schedulerTime(LocalTime.parse(groupTimeResDto.getStartTime()))  // 강의 시작 시간 설정
+                                    .schedulerTime(LocalTime.parse(groupTimeResDto.getStartTime()))
                                     .content(groupTimeResDto.getSchedulerTitle() + "가 있는 날입니다.")
                                     .alertYn(groupTimeResDto.getAlertYn())
                                     .member(member)
                                     .lectureGroupId(groupTimeResDto.getLectureGroupId())
+                                    .groupTimeId(groupTimeResDto.getGroupTimeId())
                                     .build();
 
                             schedulers.add(scheduler);
