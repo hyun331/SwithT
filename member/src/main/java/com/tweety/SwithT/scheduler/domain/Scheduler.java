@@ -32,6 +32,8 @@ public class Scheduler extends BaseTimeEntity {
     @Column(nullable = false)
     private String title;
 
+    private Long groupTimeId;
+
     @Column(nullable = false)
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate schedulerDate;
