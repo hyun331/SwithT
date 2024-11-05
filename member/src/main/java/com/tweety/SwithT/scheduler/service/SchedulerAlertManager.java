@@ -15,10 +15,7 @@ import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.List;
 import java.util.Set;
 
@@ -43,9 +40,9 @@ public class SchedulerAlertManager {
 
     @Transactional
     @SchedulerLock(name = "SchedulerAlertManager_updateSchedulerQueue", lockAtMostFor = 600000, lockAtLeastFor = 60000) // 최대 10분(600000ms), 최소 1분(60000ms)
-    @Scheduled(cron = "0 0/10 * * * *") // 매 10분마다 실행
+    @Scheduled(cron = "0 0/9 * * * *") // 매 9분마다 실행
     public void updateSchedulerQueue() {
-        LocalDateTime now = LocalDateTime.now(); // 현재 시간
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Seoul")); // 한국 시간 기준 현재 시간
         LocalDateTime tenMinutesLater = now.plusMinutes(10); // 10분 뒤까지
 
         // LocalTime으로 변환하여 사용
@@ -67,7 +64,7 @@ public class SchedulerAlertManager {
             LocalTime reserveTime = alert.getReserveTime();
 
             // LocalDate와 결합하여 LocalDateTime 생성 (필요한 날짜는 상황에 맞게 조정 가능)
-            LocalDateTime alertTime = LocalDateTime.of(LocalDate.now(), reserveTime);
+            LocalDateTime alertTime = LocalDateTime.of(LocalDate.now(ZoneId.of("Asia/Seoul")), reserveTime);
 
             // LocalDateTime을 Unix 타임스탬프로 변환하여 Redis Zset의 score로 사용
             double score = alertTime.toEpochSecond(ZoneOffset.UTC);
@@ -81,7 +78,7 @@ public class SchedulerAlertManager {
     @Scheduled(cron = "0 * * * * *") // 매 1분마다 실행
     public void processScheduledAlerts() {
         ZSetOperations<String, Object> zSetOperations = redisTemplate.opsForZSet();
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
         double currentTimestamp = now.toEpochSecond(ZoneOffset.UTC);
 
         // Zset에서 현재 시간까지의 알림을 모두 가져옴
