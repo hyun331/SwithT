@@ -726,6 +726,7 @@ public class LectureApplyService {
                     .memberId(memberId)
                     .lectureGroupId(lectureGroup.getId())
                     .lectureDay(groupTime.getLectureDay().name()) // MON, TUE, 등
+                    .groupTimeId(groupTime.getId())
                     .startTime(groupTime.getStartTime().toString()) // HH:mm
                     .endTime(groupTime.getEndTime().toString()) // HH:mm
                     .startDate(lectureApply.getStartDate().toString()) // 강의 시작 날짜
@@ -760,6 +761,7 @@ public class LectureApplyService {
                     .startTime(groupTime.getStartTime().toString()) // HH:mm
                     .endTime(groupTime.getEndTime().toString()) // HH:mm
                     .startDate(lectureGroup.getStartDate().toString()) // 강의 시작 날짜
+                    .groupTimeId(groupTime.getId())
                     .endDate(lectureGroup.getEndDate().toString()) // 강의 종료 날짜
                     .schedulerTitle(lectureGroup.getLecture().getTitle()) // 강의 제목을 일정 제목으로 설정
                     .alertYn('N') // 기본값 'N'

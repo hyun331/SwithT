@@ -39,7 +39,7 @@ public class SchedulerAlertManager {
     }
 
     @Transactional
-    @SchedulerLock(name = "SchedulerAlertManager_updateSchedulerQueue", lockAtMostFor = 600000, lockAtLeastFor = 60000) // 최대 10분(600000ms), 최소 1분(60000ms)
+    @SchedulerLock(name = "SchedulerAlertManager_updateSchedulerQueue", lockAtMostFor = 6000000, lockAtLeastFor = 600000) // 최대 100분(600000ms), 최소 10분(60000ms)
     @Scheduled(cron = "0 0/9 * * * *") // 매 9분마다 실행
     public void updateSchedulerQueue() {
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Seoul")); // 한국 시간 기준 현재 시간
@@ -74,7 +74,7 @@ public class SchedulerAlertManager {
         }
     }
 
-    @SchedulerLock(name = "SchedulerAlertManager_processScheduledAlerts", lockAtMostFor = 120000, lockAtLeastFor = 60000) // 최대 2분(120000ms), 최소 1분(60000ms)
+    @SchedulerLock(name = "SchedulerAlertManager_processScheduledAlerts", lockAtMostFor = 1200000, lockAtLeastFor = 600000) // 최대 20분(120000ms), 최소 10분(60000ms)
     @Scheduled(cron = "0 * * * * *") // 매 1분마다 실행
     public void processScheduledAlerts() {
         ZSetOperations<String, Object> zSetOperations = redisTemplate.opsForZSet();

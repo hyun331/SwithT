@@ -59,7 +59,7 @@ public class SchedulerAlertService {
 
                 // 메시지 내용 생성
                 String messageContent = name + "님, " + alert.getScheduler().getTitle() + " 스케줄이 예정되어 있습니다.";
-
+                System.out.println(messageContent);
                 // Twilio를 통해 SMS 전송
                 twilioService.sendSms(sendPhoneNumber, messageContent);
 
