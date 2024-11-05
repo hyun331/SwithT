@@ -57,8 +57,7 @@ public class LectureApply extends BaseTimeEntity {
     private ReviewStatus reviewStatus = ReviewStatus.N;
 
     public void updateReviewStatus(ReviewStatus updateReviewStatus){
-
-        this.reviewStatus = updateReviewStatus;
+        this.reviewStatus = ReviewStatus.Y;
 
     }
 

@@ -132,7 +132,7 @@ public class LectureController {
     }
 
     // 강의 수정
-    @PostMapping("/update/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<?> lectureUpdate(@PathVariable Long id,
                                            @RequestPart(value = "data") LectureUpdateReqDto dto,
                                            @RequestPart(value = "file", required = false) MultipartFile imgFile) {
