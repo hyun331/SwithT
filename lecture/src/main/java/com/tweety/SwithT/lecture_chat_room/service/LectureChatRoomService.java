@@ -243,6 +243,24 @@ public class LectureChatRoomService {
         }
     }
 
+    //강의 승인 후 채팅방 생성 및 튜터 넣어주기
+    @Transactional
+    public void lectureChatRoomCreateAndTutorParticipant(Long lectureGroupId){
+        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(lectureGroupId, "N").orElseThrow(()->{
+            throw new EntityNotFoundException("id에 맞는 lectureGroup 없습니다.");
+        });
+        LectureChatRoom newRoom = LectureChatRoom.builder().lectureGroup(lectureGroup).build();
+        chatRoomRepository.save(newRoom);
+        System.out.println("새 채팅방 id" + newRoom.getId()+"\n\n\n");
+        long tutorId = lectureGroup.getLecture().getMemberId();
+        LectureChatParticipants participants = LectureChatParticipants.builder()
+                .lectureChatRoom(newRoom)
+                .memberId(tutorId)
+                .build();
+        chatParticipantsRepository.save(participants);
+
+    }
+
     //채팅방 입장
     public void chatRoomEntered(String roomId) {
         System.out.println(roomId + "방에 입장했습니다.");

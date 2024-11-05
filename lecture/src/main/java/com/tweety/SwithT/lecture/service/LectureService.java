@@ -557,11 +557,7 @@ public class LectureService {
             if(lecture.getLectureType().equals(LectureType.LECTURE)){
                 List<LectureGroup> lectureGroups = lecture.getLectureGroups();
                 for(LectureGroup lectureGroup: lectureGroups){
-                    ChatRoomCheckDto chatRoomCheckDto = ChatRoomCheckDto.builder()
-                            .lectureGroupId(lectureGroup.getId())
-                            .tuteeId(lecture.getMemberId())
-                            .build();
-                    lectureChatRoomService.tutorLessonChatCheckOrCreate(chatRoomCheckDto);
+                    lectureChatRoomService.lectureChatRoomCreateAndTutorParticipant(lectureGroup.getId());
                 }
             }
             updateLectureStatus(statusUpdateDto);
@@ -837,6 +833,7 @@ public class LectureService {
                     .detailAddress(lectureGroup.getDetailAddress())
                     .startDate(lectureGroup.getStartDate())
                     .endDate(lectureGroup.getEndDate())
+                    .participants(lectureGroup.getLimitPeople())
                     .build();
 
             lectureGroupsResDtos.add(dto);
