@@ -404,12 +404,18 @@ public class OpenSearchService {
 
     private List<LectureDetailResDto> parseSearchResults(String responseBody) throws IOException {
         List<LectureDetailResDto> lectureList = new ArrayList<>();
-        JsonNode jsonNode = objectMapper.readTree(responseBody);
+
+        // ObjectMapper에 JavaTimeModule을 등록하여 LocalDateTime 처리를 지원
+        ObjectMapper localObjectMapper = new ObjectMapper();
+        localObjectMapper.registerModule(new JavaTimeModule());
+        localObjectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // ISO-8601 포맷 사용
+
+        JsonNode jsonNode = localObjectMapper.readTree(responseBody);
         JsonNode hits = jsonNode.path("hits").path("hits");
 
         for (JsonNode hit : hits) {
             JsonNode source = hit.path("_source");
-            LectureDetailResDto lecture = objectMapper.treeToValue(source, LectureDetailResDto.class);
+            LectureDetailResDto lecture = localObjectMapper.treeToValue(source, LectureDetailResDto.class);
             lectureList.add(lecture);
         }
 
