@@ -16,4 +16,5 @@ public interface SchedulerRepository extends JpaRepository<Scheduler,Long> {
             Member member, LocalDate startDate, LocalDate endDate, String delYn);
     List<Scheduler> findAllByLectureGroupId(Long lectureGroupId);
     List<Scheduler> findAllByMemberIdAndLectureGroupId(Long memberId, Long lectureGroupId);
+    List<Scheduler> findAllByMemberIdAndLectureGroupIdAndGroupTimeId(Long memberId, Long lectureGroupId, Long groupTimeId);
 }
