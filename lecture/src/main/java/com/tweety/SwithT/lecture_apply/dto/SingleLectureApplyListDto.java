@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,6 +19,8 @@ public class SingleLectureApplyListDto {
     private Status status;
     private Long chatRoomId;
     private String tuteeProfileImage;
+    private LocalDate startDate;
+    private String location;
 
 
 }

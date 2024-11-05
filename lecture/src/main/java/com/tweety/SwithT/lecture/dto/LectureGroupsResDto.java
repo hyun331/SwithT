@@ -23,5 +23,6 @@ public class LectureGroupsResDto {
     private String detailAddress;
     private LocalDate startDate;
     private LocalDate endDate;
+    private int participants;
 
 }
