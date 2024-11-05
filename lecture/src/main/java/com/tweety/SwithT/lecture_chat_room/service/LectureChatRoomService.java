@@ -58,7 +58,6 @@ public class LectureChatRoomService {
         LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(lectureGroupId, "N")
                 .orElseThrow(() -> new EntityNotFoundException("강의그룹을 찾을 수 없습니다."));
 
-        Lecture lecture = lectureGroup.getLecture();
 
         Long tuteeId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
 
@@ -106,6 +105,59 @@ public class LectureChatRoomService {
                 .roomId(newChatRoom.getId())
                 .build();
     }
+
+    @Transactional
+    public ChatRoomResDto chatRoomCheckOrCreateApply(Long lectureGroupId, Long tuteeId) {
+        LectureGroup lectureGroup = lectureGroupRepository.findByIdAndDelYn(lectureGroupId, "N")
+                .orElseThrow(() -> new EntityNotFoundException("강의그룹을 찾을 수 없습니다."));
+
+        Long tutorId = lectureGroup.getLecture().getMemberId();
+
+        // 기존에 튜티와 튜터가 모두 참여 중인 채팅방이 있는지 확인
+        List<LectureChatRoom> lectureChatRoomList = chatRoomRepository.findByLectureGroupAndDelYn(lectureGroup, "N");
+
+        for (LectureChatRoom chatRoom : lectureChatRoomList) {
+            boolean isTuteeInRoom = chatParticipantsRepository
+                    .findByLectureChatRoomAndMemberIdAndDelYn(chatRoom, tuteeId, "N")
+                    .isPresent();
+
+            boolean isTutorInRoom = chatParticipantsRepository
+                    .findByLectureChatRoomAndMemberIdAndDelYn(chatRoom, tutorId, "N")
+                    .isPresent();
+
+            // 튜티와 튜터가 모두 참여하는 채팅방이 있으면 해당 채팅방 반환
+            if (isTuteeInRoom && isTutorInRoom) {
+                return ChatRoomResDto.builder()
+                        .roomId(chatRoom.getId())
+                        .build();
+            }
+        }
+
+        // 여기까지 왔다는 것은 튜티와 튜터가 모두 포함된 채팅방이 없다는 의미이므로, 새로운 채팅방 생성
+        LectureChatRoom newChatRoom = LectureChatRoom.builder()
+                .lectureGroup(lectureGroup)
+                .build();
+        chatRoomRepository.save(newChatRoom);
+
+        // 새 채팅방에 튜티 추가
+        LectureChatParticipants tuteeParticipant = LectureChatParticipants.builder()
+                .lectureChatRoom(newChatRoom)
+                .memberId(tuteeId)
+                .build();
+        chatParticipantsRepository.save(tuteeParticipant);
+
+        // 새 채팅방에 튜터 추가
+        LectureChatParticipants tutorParticipant = LectureChatParticipants.builder()
+                .lectureChatRoom(newChatRoom)
+                .memberId(tutorId)
+                .build();
+        chatParticipantsRepository.save(tutorParticipant);
+
+        return ChatRoomResDto.builder()
+                .roomId(newChatRoom.getId())
+                .build();
+    }
+
 
     // 튜터가 채팅하기 클릭 (과외)
     @Transactional
