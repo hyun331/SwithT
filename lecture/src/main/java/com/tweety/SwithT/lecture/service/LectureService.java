@@ -564,6 +564,15 @@ public class LectureService {
                     lectureChatRoomService.tutorLessonChatCheckOrCreate(chatRoomCheckDto);
                 }
             }
+
+            try {
+                openSearchService.registerLecture(lecture.fromEntityToLectureResDto());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
             updateLectureStatus(statusUpdateDto);
             redisStreamProducer.publishMessage(
                     lecture.getMemberId().toString(), "강의 승인", lecture.getTitle() + " 강의가 승인되었습니다.", "");
