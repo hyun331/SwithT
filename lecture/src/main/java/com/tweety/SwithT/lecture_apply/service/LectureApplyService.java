@@ -181,7 +181,9 @@ public class LectureApplyService {
         });
 
         lectureApply.updateReviewStatus(ReviewStatus.Y); // JPA가 알아서 체킹?
-        return lectureApply.getReviewStatus();
+
+        LectureApply save = lectureApplyRepository.save(lectureApply);
+        return save.getReviewStatus();
     }
     //튜터 - 튜티의 신청 승인
     @Transactional
