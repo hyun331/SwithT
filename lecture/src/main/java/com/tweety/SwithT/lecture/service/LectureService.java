@@ -22,7 +22,6 @@ import com.tweety.SwithT.lecture_apply.repository.LectureApplyRepository;
 import com.tweety.SwithT.lecture_assignment.domain.LectureAssignment;
 import com.tweety.SwithT.lecture_assignment.dto.read.LectureAssignmentDetailResDto;
 import com.tweety.SwithT.lecture_chat_room.domain.LectureChatRoom;
-import com.tweety.SwithT.lecture_chat_room.dto.ChatRoomCheckDto;
 import com.tweety.SwithT.lecture_chat_room.repository.LectureChatRoomRepository;
 import com.tweety.SwithT.lecture_chat_room.service.LectureChatRoomService;
 import jakarta.persistence.EntityNotFoundException;
@@ -563,15 +562,16 @@ public class LectureService {
                 }
             }
 
+            updateLectureStatus(statusUpdateDto);
+
             try {
                 openSearchService.registerLecture(lecture.fromEntityToLectureResDto());
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                System.out.println(e.getMessage());
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                System.out.println(e.getMessage());
             }
 
-            updateLectureStatus(statusUpdateDto);
             redisStreamProducer.publishMessage(
                     lecture.getMemberId().toString(), "강의 승인", lecture.getTitle() + " 강의가 승인되었습니다.", "");
             System.out.println("강의 승인!!\n");
