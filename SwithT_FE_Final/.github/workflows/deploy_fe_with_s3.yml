@@ -1,0 +1,43 @@
+name: deploy to aws s3
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: source code checkout
+        uses: actions/checkout@v2
+
+      - name: setup node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+
+      - name: npm install
+        working-directory: .
+        run: npm install
+
+      - name: npm build
+        working-directory: .
+        run: npm run build
+
+      - name: setup aws cli
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY}}
+          aws-secret-access-key: ${{secrets.AWS_SECRET_KEY}}
+          aws-region: "ap-northeast-2"
+      
+      - name: clear s3 bucket
+        run: aws s3 rm s3://www.switht.co.kr/ --recursive
+
+
+      #s3에 dist폴더 내의 파일들을 copy해서 넣기
+      - name: deploy to s3
+        run: aws s3 cp ./dist s3://www.switht.co.kr/ --recursive
+
+      #cloudfront 무효화 작업으로 cloudfront id 가져오기
+      - name: invalidate cloudfront caches
+        run: aws cloudfront create-invalidation --distribution-id E38UM67NIYGOR3 --paths "/*"

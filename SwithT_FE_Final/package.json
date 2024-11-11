@@ -1,0 +1,74 @@
+{
+  "name": "swithf_front",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve --port 8081",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "@fullcalendar/core": "^6.1.15",
+    "@fullcalendar/daygrid": "^6.1.15",
+    "@fullcalendar/interaction": "^6.1.15",
+    "@fullcalendar/timegrid": "^6.1.15",
+    "@fullcalendar/vue3": "^6.1.15",
+    "@jamescoyle/vue-icon": "^0.1.2",
+    "@mdi/font": "^7.4.47",
+    "@mdi/js": "^7.4.47",
+    "@portone/browser-sdk": "^0.0.10",
+    "@stomp/stompjs": "^7.0.0",
+    "@vuepic/vue-datepicker": "^9.0.3",
+    "axios": "^1.7.7",
+    "bootstrap": "^5.3.3",
+    "bootstrap-vue-3": "^0.5.1",
+    "chart.js": "^4.4.5",
+    "core-js": "^3.8.3",
+    "dayjs": "^1.11.13",
+    "event-source-polyfill": "^1.0.31",
+    "font-awesome": "^4.7.0",
+    "js-cookie": "^3.0.5",
+    "jwt-decode": "^4.0.0",
+    "slick-carousel": "^1.8.1",
+    "sockjs-client": "^1.6.1",
+    "vue": "^3.2.13",
+    "vue-chartjs": "^5.3.1",
+    "vue-material-design-icons": "^5.3.1",
+    "vue-router": "^4.4.5",
+    "vue-simple-calendar": "^7.1.0",
+    "vue-slick-carousel": "^1.0.6",
+    "vue-toastification": "^2.0.0-rc.5",
+    "vue3-kakao-maps": "^2.3.9",
+    "vuetify": "^3.7.3",
+    "vuex": "^4.0.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.16",
+    "@babel/eslint-parser": "^7.12.16",
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-eslint": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "eslint": "^7.32.0",
+    "eslint-plugin-vue": "^8.0.3"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/vue3-essential",
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "parser": "@babel/eslint-parser"
+    },
+    "rules": {}
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ]
+}
